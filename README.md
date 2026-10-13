@@ -1,4 +1,6 @@
-# freeprint
+# iPreent (freeprint)
+
+![iPreent](assets/brand/logo.svg)
 
 Offline, account-free driver for the cheap BLE thermal "mini printers" (cat-face printer,
 GB01/GB02/GB03, X6, MX…) that normally need the **iPrint** / **Tiny Print** app.

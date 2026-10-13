@@ -73,3 +73,10 @@ and macOS. Android and Windows 11 come first.
       or reusing Microsoft's "Print to PDF"-style pipeline and watching a folder. Needs research.
 - [ ] Reddit research for Android features before building phase 2.
 - [ ] Widths for A4 models (GT08/09/10) are approximate (`addMorPix` left padding not handled). Low priority.
+
+### Brand (later on 2026-10-13)
+- App brand name: **iPreent** (same as the repo); the Python package/CLI is still `freeprint` for now. Decide whether to rename it.
+- Logo in `assets/brand/`: cat-eared printer printing an "i" receipt, teal `#0B6770`. Variants: full icon, small (16–32 px)
+  simplified icon, mono `currentColor`, wordmark.
+- Rendered and checked: the first wordmark got clipped ("iPreer") because the fallback font was wider. Fixed with
+  `textLength`. The full icon gets muddy at 16 px, hence `icon-small.svg`.

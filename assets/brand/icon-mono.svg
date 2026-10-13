@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="iPreent">
+  <title>iPreent (monochrome)</title>
+  <path d="M132 176 L160 104 Q166 92 176 102 L228 160 Z" fill="currentColor"/>
+  <path d="M380 176 L352 104 Q346 92 336 102 L284 160 Z" fill="currentColor"/>
+  <path fill="currentColor" fill-rule="evenodd" d="M156 148 H356 A60 60 0 0 1 416 208 V264 A60 60 0 0 1 356 324 H342 V272 H364 A10 10 0 0 0 364 252 H148 A10 10 0 0 0 148 272 H170 V324 H156 A60 60 0 0 1 96 264 V208 A60 60 0 0 1 156 148 Z"/>
+  <path fill="currentColor" fill-rule="evenodd" d="M170 278 H342 V404 L320 424 L298 404 L277 424 L256 404 L235 424 L214 404 L192 424 L170 404 Z M206 293 A13 13 0 1 0 206.01 293 Z M203 330 A10 10 0 0 0 193 340 V374 A10 10 0 0 0 203 384 H209 A10 10 0 0 0 219 374 V340 A10 10 0 0 0 209 330 Z M247 296 A9 9 0 0 0 247 314 H309 A9 9 0 0 0 309 296 Z M247 332 A9 9 0 0 0 247 350 H293 A9 9 0 0 0 293 332 Z M247 366 A9 9 0 0 0 247 384 H309 A9 9 0 0 0 309 366 Z"/>
+</svg>
