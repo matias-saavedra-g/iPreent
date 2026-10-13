@@ -1,0 +1,6 @@
+*.apk
+*:Zone.Identifier
+__pycache__/
+*.egg-info/
+.venv/
+preview.png
