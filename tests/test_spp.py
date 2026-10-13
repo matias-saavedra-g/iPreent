@@ -1,8 +1,8 @@
 """Drive SppPrinter against a fake serial link that behaves like the printer."""
 import asyncio
 
-from freeprint import protocol, spp
-from freeprint.models import lookup
+from ipreent import protocol, spp
+from ipreent.models import lookup
 
 
 class FakeLink:

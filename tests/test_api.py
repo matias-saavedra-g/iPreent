@@ -3,7 +3,7 @@ import asyncio
 
 import pytest
 
-from freeprint import api, config
+from ipreent import api, config
 
 
 class FakePrinter:

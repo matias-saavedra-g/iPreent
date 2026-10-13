@@ -1,9 +1,9 @@
 """High-level API. Everything here also works from other Python programs:
 
-    import freeprint
-    freeprint.print_text("Hello")
-    freeprint.print_file("ticket.pdf")
-    print(freeprint.status())
+    import ipreent
+    ipreent.print_text("Hello")
+    ipreent.print_file("ticket.pdf")
+    print(ipreent.status())
 """
 import asyncio
 import contextlib

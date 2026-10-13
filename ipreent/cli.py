@@ -1,11 +1,11 @@
-"""freeprint: print to iPrint-style thermal mini printers. No app, no account, no internet.
+"""ipreent: print to iPrint-style thermal mini printers. No app, no account, no internet.
 
 Examples:
-  freeprint scan                       find printers
-  freeprint print photo.jpg doc.pdf    print any image / PDF / text file
-  freeprint text "Hello"               print text (or: echo hi | freeprint text)
-  freeprint status                     paper, battery
-The printer used last is remembered; `freeprint forget` clears it.
+  ipreent scan                       find printers
+  ipreent print photo.jpg doc.pdf    print any image / PDF / text file
+  ipreent text "Hello"               print text (or: echo hi | ipreent text)
+  ipreent status                     paper, battery
+The printer used last is remembered; `ipreent forget` clears it.
 """
 import argparse
 import asyncio
@@ -122,7 +122,7 @@ async def cmd_forget(args):
 
 
 def main(argv=None):
-    ap = argparse.ArgumentParser(prog="freeprint", description=__doc__,
+    ap = argparse.ArgumentParser(prog="ipreent", description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     g = ap.add_argument_group("connection (normally automatic)")
     g.add_argument("-a", "--address", help="BLE address")

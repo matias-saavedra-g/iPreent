@@ -12,7 +12,7 @@ def _path():
         base = Path.home() / "Library" / "Application Support"
     else:
         base = Path(os.environ.get("XDG_CONFIG_HOME", Path.home() / ".config"))
-    return base / "freeprint" / "config.json"
+    return base / "ipreent" / "config.json"
 
 
 def load():

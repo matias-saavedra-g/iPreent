@@ -1,18 +1,18 @@
 [project]
-name = "freeprint"
+name = "ipreent"
 version = "0.1.0"
 description = "Offline, account-free driver for iPrint / cat-style BLE thermal mini printers"
 requires-python = ">=3.9"
 dependencies = ["bleak>=0.22", "Pillow>=10", "pyserial>=3.5", "pypdfium2>=4"]
 
 [project.scripts]
-freeprint = "freeprint.cli:main"
+ipreent = "ipreent.cli:main"
 
 [tool.setuptools]
-packages = ["freeprint"]
+packages = ["ipreent"]
 
 [tool.setuptools.package-data]
-freeprint = ["models.json"]
+ipreent = ["models.json"]
 
 [build-system]
 requires = ["setuptools>=61"]

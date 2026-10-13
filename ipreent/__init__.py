@@ -1,4 +1,4 @@
-"""freeprint: an offline, account-free driver for "iPrint"/cat-style thermal mini printers."""
+"""iPreent: an offline, account-free driver for "iPrint"/cat-style thermal mini printers."""
 
 __version__ = "0.2.0"
 

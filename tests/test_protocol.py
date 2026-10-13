@@ -1,5 +1,5 @@
 """Check frame building against byte arrays hard-coded in the vendor app (BluetoothOrder.java)."""
-from freeprint import protocol as p
+from ipreent import protocol as p
 
 
 def b(*vals):

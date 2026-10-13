@@ -80,3 +80,8 @@ and macOS. Android and Windows 11 come first.
   simplified icon, mono `currentColor`, wordmark.
 - Rendered and checked: the first wordmark got clipped ("iPreer") because the fallback font was wider. Fixed with
   `textLength`. The full icon gets muddy at 16 px, hence `icon-small.svg`.
+
+### Rename (2026-10-13)
+- Python package and CLI renamed `freeprint` → **`ipreent`** (`pip install .` then `ipreent scan`, `import ipreent`).
+  The config folder moved too (`%APPDATA%\ipreent`), so a printer saved under the old name has to be found again once.
+  The old journal entries still say `freeprint`; that's history, not a mistake.
