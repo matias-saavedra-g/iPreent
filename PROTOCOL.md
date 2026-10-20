@@ -17,6 +17,7 @@ This is the same family as the community "cat printer" (GB01/GB02/GB03/MX05/X6â€
 ### SC03h (the cat-face printer, BLE name `SC03h-XXXX`)
 `useSPP=true`: found by BLE name, but the app prints over classic SPP/RFCOMM (BLESPPUtils):
 180-byte writes, ~4 ms apart, paused while the printer reports its buffer full.
+**Hardware-tested (2026-10-13): it also prints over BLE** (AE01 write), no pairing needed. Both paths work.
 Profile: 384 dots, 200 dpi, speed 10, energy 5000 (text 8000), RLE lines allowed. Gray mode available (energy 4100).
 
 ## Frame

@@ -70,3 +70,12 @@ def test_body_errors_are_not_retried(env):
     with pytest.raises(ValueError):
         asyncio.run(go())
     assert len(FakePrinter.opened) == 1
+
+
+def test_ble_verified_spp_model_prefers_ble():
+    from ipreent import api
+    m = api.lookup("SC03h")
+    _, how = api._transport(api.Target(name="SC03h-5363", address="63:53:D0:9A:FE:58"), m, print)
+    assert how["transport"] == "ble"
+    _, how = api._transport(api.Target(name="SC03h-5363", port="COM5"), m, print)
+    assert how == {"port": "COM5"}

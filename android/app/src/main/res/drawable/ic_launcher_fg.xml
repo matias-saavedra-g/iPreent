@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- assets/brand/icon-small.svg without its rounded background (the adaptive icon background is the baby blue) -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp" android:viewportWidth="108" android:viewportHeight="108">
+    <group android:scaleX="2.6" android:scaleY="2.6" android:translateX="12.4" android:translateY="11.1">
+        <path android:fillColor="#F7F7F4" android:pathData="M7,11 L9,5 L14,10 Z M25,11 L23,5 L18,10 Z" />
+        <path android:fillColor="#F7F7F4" android:pathData="M9,9 H23 A4,4 0 0 1 27,13 V17 A4,4 0 0 1 23,21 H9 A4,4 0 0 1 5,17 V13 A4,4 0 0 1 9,9 Z" />
+        <path android:fillColor="#4A90B8" android:pathData="M9,16 H23 A1,1 0 0 1 23,18 H9 A1,1 0 0 1 9,16 Z" />
+        <path android:fillColor="#FFFFFF" android:pathData="M10,17 H22 V26 L19,28 L16,26 L13,28 L10,26 Z" />
+        <path android:fillColor="#1B1B1F" android:pathData="M12,19 H14.5 V25 H12 Z M16,19.5 H20 V21.5 H16 Z M16,23 H20 V25 H16 Z" />
+    </group>
+</vector>

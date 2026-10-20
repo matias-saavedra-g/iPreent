@@ -18,11 +18,25 @@ from . import api, config, convert, imaging, protocol
 from .models import lookup
 
 
+ENERGY_PRESETS = {"lightest": 5000, "lighter": 6000, "normal": 8000, "darker": 12000, "darkest": 17000}
+DEFAULT_ENERGY = ENERGY_PRESETS["normal"]
+
+
+def _energy(v):
+    if v.lower() in ENERGY_PRESETS:
+        return ENERGY_PRESETS[v.lower()]
+    try:
+        return int(v)
+    except ValueError:
+        raise argparse.ArgumentTypeError(
+            f"expected a number or one of: {', '.join(ENERGY_PRESETS)}") from None
+
+
 def _target(args):
     return api.Target(
         address=args.address or "", port=args.port or "", rfcomm=args.rfcomm or "",
         model=args.model or "", ble=args.ble,
-        overrides={"width": args.width, "energy": args.energy or None, "rle": args.rle,
+        overrides={"width": args.width, "energy": args.energy or DEFAULT_ENERGY, "rle": args.rle,
                    "img_speed": args.speed, "text_speed": args.speed},
     )
 
@@ -124,19 +138,30 @@ async def cmd_forget(args):
 def main(argv=None):
     ap = argparse.ArgumentParser(prog="ipreent", description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
-    g = ap.add_argument_group("connection (normally automatic)")
-    g.add_argument("-a", "--address", help="BLE address")
-    g.add_argument("-p", "--port", help="Bluetooth serial port, e.g. COM5 or /dev/cu.SC03h-5363")
-    g.add_argument("--rfcomm", metavar="MAC", help="RFCOMM socket to this MAC (Windows/Linux)")
-    g.add_argument("--ble", action="store_true", help="force Bluetooth LE even for serial models")
-    g.add_argument("-m", "--model", help="force a model profile, e.g. SC03h, GB01")
-    g = ap.add_argument_group("print tuning")
-    g.add_argument("--width", type=int, help="dots per line (default from model)")
-    g.add_argument("--energy", type=int, help="heat: ~5000 light .. ~17500 dark")
-    g.add_argument("--speed", type=int, help="lower = slower and darker")
-    g.add_argument("--rle", action=argparse.BooleanOptionalAction, default=None,
-                   help="compressed lines on/off")
+    def common_args(p, rle_default=None):
+        g = p.add_argument_group("connection (normally automatic)")
+        g.add_argument("-a", "--address", help="BLE address")
+        g.add_argument("-p", "--port", help="Bluetooth serial port, e.g. COM5 or /dev/cu.SC03h-5363")
+        g.add_argument("--rfcomm", metavar="MAC", help="RFCOMM socket to this MAC (Windows/Linux)")
+        g.add_argument("--ble", action="store_true", help="force Bluetooth LE even for serial models")
+        g.add_argument("-m", "--model", help="force a model profile, e.g. SC03h, GB01")
+        g = p.add_argument_group("print tuning")
+        g.add_argument("--width", type=int, help="dots per line (default from model)")
+        g.add_argument("--energy", type=_energy,
+                       help="heat: lightest (5000), lighter (6000), normal (8000, default), "
+                            "darker (12000), darkest (17000), or a number")
+        g.add_argument("--speed", type=int, help="lower = slower and darker")
+        g.add_argument("--rle", action=argparse.BooleanOptionalAction, default=rle_default,
+                       help="compressed lines on/off")
+
+    common_args(ap)
+    # Same options after the subcommand (`ipreent text hi --ble`); SUPPRESS keeps the
+    # values given before it.
+    common = argparse.ArgumentParser(add_help=False, argument_default=argparse.SUPPRESS)
+    common_args(common, argparse.SUPPRESS)
     sub = ap.add_subparsers(dest="cmd", required=True)
+    _add = sub.add_parser
+    sub.add_parser = lambda *a, **k: _add(*a, parents=[common], **k)
 
     def job_args(s):
         s.add_argument("-n", "--copies", type=int, default=1)

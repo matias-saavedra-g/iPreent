@@ -1,0 +1,4 @@
+<resources>
+    <style name="Theme.IPreent" parent="android:Theme.Material.NoActionBar" />
+    <color name="ic_bg">#89CFF0</color>
+</resources>

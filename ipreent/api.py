@@ -16,6 +16,12 @@ from . import ble, config, convert, imaging, protocol, spp
 from .models import Model, lookup
 
 
+# Serial (useSPP) models confirmed on hardware to also print over BLE. BLE needs no pairing,
+# so these default to it. Unverified SPP models keep using serial: over BLE they may connect
+# and silently print nothing.
+BLE_VERIFIED = {"SC03h"}
+
+
 class PrinterNotFound(Exception):
     pass
 
@@ -52,7 +58,7 @@ async def discover(timeout=6.0):
 def _transport(t, m, log):
     if t.port:
         return spp.SppPrinter(m, port=t.port), {"port": t.port}
-    if t.ble or not m.use_spp:
+    if t.ble or not m.use_spp or (m.name in BLE_VERIFIED and t.address and not t.rfcomm):
         if not t.address:
             raise PrinterNotFound("no BLE address")
         return ble.Printer(t.address, m), {"address": t.address, "transport": "ble"}

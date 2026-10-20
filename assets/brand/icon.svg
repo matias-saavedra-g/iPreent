@@ -1,13 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="iPreent">
   <title>iPreent</title>
-  <rect width="512" height="512" rx="112" fill="#0B6770"/>
+  <rect width="512" height="512" rx="112" fill="#89CFF0"/>
   <!-- cat ears: a nod to the cat-face printers -->
   <path d="M132 176 L160 104 Q166 92 176 102 L228 160 Z" fill="#F7F7F4"/>
   <path d="M380 176 L352 104 Q346 92 336 102 L284 160 Z" fill="#F7F7F4"/>
   <!-- printer body -->
   <rect x="96" y="148" width="320" height="176" rx="60" fill="#F7F7F4"/>
   <!-- paper slot -->
-  <rect x="148" y="252" width="216" height="20" rx="10" fill="#0B4F56"/>
+  <rect x="148" y="252" width="216" height="20" rx="10" fill="#4A90B8"/>
   <!-- paper strip with torn edge -->
   <path d="M170 262 H342 V404 L320 424 L298 404 L277 424 L256 404 L235 424 L214 404 L192 424 L170 404 Z" fill="#FFFFFF"/>
   <!-- printed "i" + lines -->

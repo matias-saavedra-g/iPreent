@@ -12,7 +12,8 @@ No login, no internet, no vendor server. Protocol notes: [PROTOCOL.md](PROTOCOL.
 3. Turn the printer on (hold power 3 s) and close the phone app (one connection at a time).
 4. Run `ipreent scan` to see the name. Then it depends on the model:
    - **Bluetooth LE models** (GB01, X6, …): don't pair; ipreent connects directly.
-   - **Serial models** (`SC03h`, `Mini Printer`, X6H, … the app's `useSPP` flag): pair it in
+   - **SC03h** (cat-face printer): works over BLE too (checked on hardware), so no pairing needed.
+   - **Other serial models** (`Mini Printer`, X6H, … the app's `useSPP` flag): pair it in
      *Settings → Bluetooth & devices → Add device*. Windows creates a COM port
      (*More Bluetooth settings → COM Ports*, the "Outgoing" one). ipreent looks for it on its own,
      or pass it yourself:
@@ -35,6 +36,7 @@ ipreent feed 100                    # feed blank paper
 ipreent preview doc.pdf             # PNG of exactly what would print (no printer needed)
 ipreent forget                      # forget the remembered printer
 ```
+Options can go before or after the command (`ipreent text hi --ble`).
 Common options: `-n 3` copies, `--size 40` bigger text, `--energy` darker/lighter, `--speed`.
 
 ### From Python

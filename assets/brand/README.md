@@ -11,10 +11,10 @@
 "i" and lines of text. The torn zigzag edge says "thermal paper" even at small sizes.
 
 **Colors**
-- Teal `#0B6770` (primary, taken from the blue printer) · dark teal `#0B4F56` (slot, pressed states)
+- Baby blue `#89CFF0` (primary) · deeper blue `#4A90B8` (slot, wordmark, pressed states). Was teal `#0B6770` until 2026-10-20.
 - Ink `#1B1B1F` · Paper `#F7F7F4` / `#FFFFFF`
 
-**Type:** IBM Plex Sans Bold for the wordmark ("i" in ink, "Preent" in teal). IBM Plex Sans/Mono in the UI.
+**Type:** IBM Plex Sans Bold for the wordmark ("i" in ink, "Preent" in deeper blue). IBM Plex Sans/Mono in the UI.
 The wordmark is live text: convert it to outlines before using it anywhere the font might be missing.
 
 **Rules:** keep the rounded-square background on app icons; don't recolor the paper; leave clear space of at
