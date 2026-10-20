@@ -1,4 +1,6 @@
 """Turn images and text into rows of 0/1 pixels at the printer's width."""
+from functools import lru_cache
+
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 
@@ -21,6 +23,7 @@ def image_rows(img, width, dither=True, threshold=128, auto_rotate=True):
     return [[0 if px[x, y] else 1 for x in range(width)] for y in range(bw.height)]
 
 
+@lru_cache(maxsize=32)
 def _font(size):
     for name in ("DejaVuSans.ttf", "arial.ttf", "Arial.ttf", "Helvetica.ttc", "segoeui.ttf"):
         try:
@@ -30,14 +33,83 @@ def _font(size):
     return ImageFont.load_default(size)
 
 
+# Tried in order for characters the main font lacks: emoji (Segoe UI Emoji's plain outlines are
+# black and white, which suits thermal paper), symbols, then Chinese/Japanese/Korean and Indic.
+FALLBACKS = ("seguiemj.ttf", "NotoEmoji-Regular.ttf", "seguisym.ttf", "msyh.ttc", "YuGothR.ttc",
+             "malgun.ttf", "Nirmala.ttf", "NotoSansCJK-Regular.ttc", "DejaVuSans.ttf")
+JOINERS = "‍️⃣"    # zero-width joiner, emoji style, keycap
+
+
+@lru_cache(maxsize=32)
+def _fallbacks(size):
+    fonts = []
+    for name in FALLBACKS:
+        try:
+            fonts.append(ImageFont.truetype(name, size))
+        except OSError:
+            continue
+    return tuple(fonts)
+
+
+@lru_cache(maxsize=4096)
+def _has_glyph(font, ch):
+    """False when the font would draw its "missing glyph" box for ch."""
+    def mask(c):
+        m = font.getmask(c)
+        return m.size, bytes(m)
+    return ch.isspace() or mask(ch) != mask("􏿽")
+
+
+def _is_emoji(ch):
+    c = ord(ch)
+    return (c >= 0x1F000 or 0x2190 <= c <= 0x21FF or 0x2300 <= c <= 0x23FF or 0x25A0 <= c <= 0x27BF
+            or 0x2B00 <= c <= 0x2BFF or c in (0x00A9, 0x00AE, 0x2122))
+
+
+def _runs(text, size):
+    """Split text into [piece, font] runs, each character in the first font that has it."""
+    main, extra = _font(size), _fallbacks(size)
+    runs = []
+    for ch in text:
+        if ch in JOINERS and runs:
+            f = runs[-1][1]                      # joiners stay with the emoji they belong to
+            if ch == "⃣" or (ch == "️" and f is main):
+                # keycap 1️⃣ or text-style symbol made emoji: move the base character over
+                f = next((e for e in extra if _has_glyph(e, "⃣")), f)
+                if f is not runs[-1][1]:
+                    base = runs[-1][0][-1]
+                    runs[-1][0] = runs[-1][0][:-1]
+                    if not runs[-1][0]:
+                        runs.pop()
+                    ch = base + ch
+        else:
+            order = (*extra, main) if _is_emoji(ch) else (main, *extra)
+            f = next((o for o in order if _has_glyph(o, ch)), main)
+        if runs and runs[-1][1] is f:
+            runs[-1][0] += ch
+        else:
+            runs.append([ch, f])
+    return runs
+
+
+def text_length(text, size):
+    return sum(f.getlength(t) for t, f in _runs(text, size))
+
+
+def draw_text(draw, xy, text, size):
+    x, y = xy
+    for t, f in _runs(text, size):
+        draw.text((x, y), t, font=f, fill=0)
+        x += f.getlength(t)
+
+
 def text_image(text, width, size=28, margin=4):
-    font = _font(size)
     lines = []
     for para in text.splitlines() or [""]:
         words, cur = para.split(" "), ""
         for w in words:
             trial = f"{cur} {w}".strip()
-            if font.getlength(trial) <= width - 2 * margin or not cur:
+            if text_length(trial, size) <= width - 2 * margin or not cur:
                 cur = trial
             else:
                 lines.append(cur)
@@ -47,7 +119,7 @@ def text_image(text, width, size=28, margin=4):
     img = Image.new("L", (width, line_h * len(lines) + 2 * margin), 255)
     draw = ImageDraw.Draw(img)
     for i, line in enumerate(lines):
-        draw.text((margin, margin + i * line_h), line, font=font, fill=0)
+        draw_text(draw, (margin, margin + i * line_h), line, size)
     return img
 
 
@@ -136,10 +208,10 @@ def checklist_image(title, items, width, size=28):
 
 def banner_image(text, width):
     """Huge text running along the paper (rotated 90°)."""
-    font = _font(round(width * 0.85))
-    l, t, r, b = font.getbbox(text or " ")
-    strip = Image.new("L", (r + 20, b + 4), 255)
-    ImageDraw.Draw(strip).text((10, 0), text, font=font, fill=0)
+    size = round(width * 0.85)
+    b = max(f.getbbox(t)[3] for t, f in _runs(text or " ", size))
+    strip = Image.new("L", (round(text_length(text or " ", size)) + 20, b + 4), 255)
+    draw_text(ImageDraw.Draw(strip), (10, 0), text, size)
     strip = strip.rotate(-90, expand=True)
     img = Image.new("L", (width, strip.height), 255)
     img.paste(strip, ((width - strip.width) // 2, 0))
@@ -159,4 +231,53 @@ def qr_image(content, width):
         for x, v in enumerate(row):
             if v:
                 px[left + x, 8 + y] = 0
+    return img
+
+
+# Code 128: bar/space widths for values 0..105, then the stop pattern.
+_C128 = ("212222 222122 222221 121223 121322 131222 122213 122312 132212 221213 221312 231212 112232 "
+         "122132 122231 113222 123122 123221 223211 221132 221231 213212 223112 312131 311222 321122 "
+         "321221 312212 322112 322211 212123 212321 232121 111323 131123 131321 112313 132113 132311 "
+         "211313 231113 231311 112133 112331 132131 113123 113321 133121 313121 211331 231131 213113 "
+         "213311 213131 311123 311321 331121 312113 312311 332111 314111 221411 431111 111224 111422 "
+         "121124 121421 141122 141221 112214 112412 122114 122411 142112 142211 241211 221114 413111 "
+         "241112 134111 111242 121142 121241 114212 124112 124211 411212 421112 421211 212141 214121 "
+         "412121 111143 111341 131141 114113 114311 411113 411311 113141 114131 311141 411131 211412 "
+         "211214 211232").split()
+_C128_STOP = "2331112"
+
+
+def code128(data):
+    """Module pattern (list of 0/1, 1 = bar) for data in Code 128 (set C for digits, else set B)."""
+    if not data:
+        raise ValueError("nothing to encode")
+    if any(not 32 <= ord(c) < 127 for c in data):
+        raise ValueError("barcodes can only hold plain ASCII letters, digits and symbols")
+    if data.isdigit() and len(data) % 2 == 0:
+        values = [105] + [int(data[i:i + 2]) for i in range(0, len(data), 2)]
+    else:
+        values = [104] + [ord(c) - 32 for c in data]
+    values.append((values[0] + sum(i * v for i, v in enumerate(values[1:], 1))) % 103)
+    mods = []
+    for widths in [_C128[v] for v in values] + [_C128_STOP]:
+        for i, w in enumerate(widths):
+            mods += [1 if i % 2 == 0 else 0] * int(w)
+    return mods
+
+
+def barcode_image(data, width, height=96, size=24):
+    """Code 128 barcode as wide as the paper allows, with the text underneath."""
+    mods = [0] * 10 + code128(data) + [0] * 10           # quiet zones
+    scale = width // len(mods)
+    if scale < 1:
+        raise ValueError(f"too long for this paper ({len(data)} characters)")
+    left = (width - len(mods) * scale) // 2
+    label = text_image(data, width, size=size)
+    img = Image.new("L", (width, height + label.height + 16), 255)
+    d = ImageDraw.Draw(img)
+    for i, m in enumerate(mods):
+        if m:
+            d.rectangle((left + i * scale, 8, left + (i + 1) * scale - 1, 8 + height), fill=0)
+    tw = round(text_length(data, size))
+    img.paste(label.crop((4, 0, min(width, tw + 8), label.height)), (max(0, (width - tw) // 2 - 4), height + 12))
     return img

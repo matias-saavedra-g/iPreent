@@ -1,3 +1,5 @@
+import pytest
+
 from PIL import Image
 
 from ipreent import imaging
@@ -25,3 +27,31 @@ def test_generated_pictures_fit_the_paper():
     for img in (imaging.checklist_image("T", ["a", "b"], 384), imaging.banner_image("Hi", 384),
                 imaging.qr_image("https://example.com", 384)):
         assert img.width == 384
+
+
+def test_code128_patterns_are_11_modules():
+    assert all(sum(map(int, p)) == 11 for p in imaging._C128)
+    assert len(imaging._C128) == 106
+
+
+def test_code128_known_encoding():
+    # "PJJ123C" from the Code 128 Wikipedia example: checksum value 54
+    mods = imaging.code128("PJJ123C")
+    assert len(mods) == 11 * 9 + 13
+    assert imaging.code128("1234")[:11] == [1, 1, 0, 1, 0, 0, 1, 1, 1, 0, 0]     # start C
+
+
+def test_barcode_image_and_errors():
+    img = imaging.barcode_image("ABC-123", 384)
+    assert img.width == 384
+    with pytest.raises(ValueError):
+        imaging.code128("café")
+    with pytest.raises(ValueError):
+        imaging.barcode_image("X" * 200, 384)
+
+
+def test_emoji_text_uses_emoji_font():
+    runs = imaging._runs("hi 👍🏽 ok", 28)
+    if imaging._fallbacks(28):
+        assert [t for t, _ in runs] == ["hi ", "👍🏽", " ok"]
+    assert imaging.text_image("hi 👍 ❤️ 👨‍👩‍👧", 384).getbbox() is not None

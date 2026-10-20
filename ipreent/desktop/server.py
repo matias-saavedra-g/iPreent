@@ -12,6 +12,7 @@ Endpoints (all answer JSON):
     POST /checklist           JSON {"title", "items": [...]}
     POST /banner              body = plain text, or JSON {"text"}
     POST /qr                  body = plain text, or JSON {"text"}
+    POST /barcode             body = plain text, or JSON {"text"} (Code 128)
     POST /feed                ?lines=100
 Query options for every print: dither=atkinson|floyd|threshold, darkness=1..5, copies=N,
 pages=1-2,5, trim=0|1, rotate=0|1, brightness=-50..50, contrast=50..200, wait=1 (answer when printed).
@@ -244,6 +245,14 @@ class _Handler(BaseHTTPRequestHandler):
         if not text.strip():
             raise ApiError(400, "no text")
         return self._queue(q, "API QR code", lambda w: [(imaging.qr_image(text.strip(), w), True)])
+
+    def post_barcode(self, q):
+        text, _ = self._text_arg()
+        try:
+            imaging.code128(text.strip())
+        except ValueError as e:
+            raise ApiError(400, str(e))
+        return self._queue(q, "API barcode", lambda w: [(imaging.barcode_image(text.strip(), w), True)])
 
     def post_feed(self, q):
         jid = self.api.worker.feed(int(q.get("lines", 100)))

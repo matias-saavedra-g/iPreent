@@ -20,7 +20,8 @@ No login, no internet, no vendor server. Protocol notes: [PROTOCOL.md](PROTOCOL.
   The app has to be running (it lives in the tray; closing the window doesn't quit it).
 
 ### API: print from your own code
-While the app is open it listens on **http://127.0.0.1:8787** (port and on/off in *API settings…*).
+The API is off by default. Turn it on from the tray menu (*HTTP API*) or *API settings…*; it then listens on
+**http://127.0.0.1:8787** while the app is open.
 Tick *Allow other devices on my network* to reach it from other machines at `http://<this PC's IP>:8787`;
 then every request needs the token shown there (`Authorization: Bearer <token>` or `?token=`).
 Windows Firewall may ask once to allow it.
@@ -32,6 +33,7 @@ curl -X POST "localhost:8787/print?pages=1&dither=threshold" --data-binary @tick
 curl -X POST localhost:8787/checklist -H "Content-Type: application/json" -d '{"title":"Today","items":["a","b"]}'
 curl -X POST localhost:8787/qr -d "https://example.com"
 curl -X POST localhost:8787/banner -d "HAPPY BIRTHDAY"
+curl -X POST localhost:8787/barcode -d "ORDER-12345"                     # Code 128
 curl -X POST "localhost:8787/feed?lines=100"
 curl localhost:8787/status        # printer + queue
 curl localhost:8787/jobs/3        # queued | printing | done | failed

@@ -30,13 +30,13 @@ APP = "iPreent"
 HERE = Path(__file__).parent
 DARKNESS = list(ENERGY_PRESETS.values())          # slider 1..5
 DARKNESS_NAMES = ["Lightest", "Lighter", "Normal", "Darker", "Darkest"]
-MODES = ["Image or PDF", "Text", "Checklist", "Banner", "QR code"]
+MODES = ["Image or PDF", "Text", "Checklist", "Banner", "QR code", "Barcode"]
 RUN_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
 
 # Fluent look: Qt's "windows11" style draws the controls; this adds Mica-friendly panels and
 # uses the system accent colour, so light/dark and accent follow Windows settings live.
 STYLE = """
-QMainWindow, QMainWindow > QWidget { background: transparent; }
+QMainWindow, QWidget#central { background: transparent; }
 QWidget#side, QWidget#settings { background: transparent; }
 QFrame#card { background: palette(base); border: 1px solid palette(midlight); border-radius: 8px; }
 QLabel#section { font-weight: 600; color: palette(placeholder-text); padding-top: 8px; }
@@ -206,7 +206,7 @@ class MainWindow(QMainWindow):
         self.resize(1180, 760)
         self.debounce = QTimer(self, singleShot=True, interval=150, timeout=self.render)
 
-        root = QWidget()
+        root = QWidget(objectName="central")
         lay = QHBoxLayout(root)
         lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(0)
@@ -257,7 +257,7 @@ class MainWindow(QMainWindow):
         lay.addWidget(self._section("Create"))
         self.nav = QListWidget(objectName="nav")
         self.nav.addItems(MODES)
-        self.nav.setFixedHeight(5 * 38 + 6)
+        self.nav.setFixedHeight(len(MODES) * 38 + 6)
         self.nav.currentRowChanged.connect(self.mode_changed)
         lay.addWidget(self.nav)
 
@@ -314,6 +314,15 @@ class MainWindow(QMainWindow):
         self.qr = QLineEdit(placeholderText="Link or text for the QR code")
         self.editors.addWidget(self._editor(self.banner))
         self.editors.addWidget(self._editor(self.qr))
+
+        # Barcode
+        self.barcode = QLineEdit(placeholderText="Product code, order number… (Code 128)")
+        self.barcode_error = QLabel()
+        self.barcode_error.setStyleSheet("color: palette(placeholder-text)")
+        bw = self._editor(self.barcode)
+        bw.layout().insertWidget(1, self.barcode_error)
+        self.editors.addWidget(bw)
+        self.barcode.textChanged.connect(self.schedule)
         for e in (self.text, self.list_items):
             e.textChanged.connect(self.schedule)
         for e in (self.list_title, self.banner, self.qr):
@@ -494,8 +503,18 @@ class MainWindow(QMainWindow):
         if mode == 3:
             t = self.banner.text().strip()
             return [(imaging.banner_image(t, width), True)] if t else []
-        t = self.qr.text().strip()
-        return [(imaging.qr_image(t, width), True)] if t else []
+        if mode == 4:
+            t = self.qr.text().strip()
+            return [(imaging.qr_image(t, width), True)] if t else []
+        t = self.barcode.text().strip()
+        self.barcode_error.setText("")
+        if not t:
+            return []
+        try:
+            return [(imaging.barcode_image(t, width), True)]
+        except ValueError as e:
+            self.barcode_error.setText(f"Can't make this barcode: {e}")
+            return []
 
     def snapshot(self, method=None):
         """Current image settings. Taken on the UI thread; jobs build rows on the worker thread."""
@@ -550,7 +569,7 @@ class MainWindow(QMainWindow):
             self.add_sources(paths)
 
     def paste(self):
-        if self.focusWidget() in (self.text, self.list_items, self.list_title, self.banner, self.qr, self.pages):
+        if self.focusWidget() in (self.text, self.list_items, self.list_title, self.banner, self.qr, self.barcode, self.pages):
             self.focusWidget().paste()
             return
         md = QApplication.clipboard().mimeData()
@@ -634,6 +653,8 @@ class MainWindow(QMainWindow):
         self.restyle()
 
     def restyle(self, *_):
+        # Re-apply so palette(...) colours in the stylesheet follow a light/dark switch.
+        QApplication.instance().setStyleSheet(STYLE)
         fluent_window(self)
         self.print_btn.setStyleSheet(f"QPushButton#print:enabled {{ color: {accent_text()}; }}")
 
@@ -722,6 +743,9 @@ class App(QApplication):
         self.autostart_action.toggled.connect(lambda on: autostart(on))
         menu.addAction(self.autostart_action)
         menu.addSeparator()
+        self.api_action = QAction("HTTP API", menu, checkable=True)
+        self.api_action.toggled.connect(self.toggle_api)
+        menu.addAction(self.api_action)
         menu.addAction("API settings…", self.api_dialog)
         menu.addAction(f"Open {APP}", self.show_window)
         menu.addAction("Quit", self.quit)
@@ -755,6 +779,9 @@ class App(QApplication):
         self.win.activateWindow()
 
     def refresh_menu(self):
+        self.api_action.blockSignals(True)
+        self.api_action.setChecked(self.api_settings()[0])
+        self.api_action.blockSignals(False)
         if self._printer_installed is None:
             self._printer_installed = spool.installed()
         self.dialog_action.setText("Remove “iPreent” from print dialogs" if self._printer_installed
@@ -860,8 +887,14 @@ class App(QApplication):
 
     def api_settings(self):
         s = self.settings
-        return (s.value("api_enabled", "true") == "true", int(s.value("api_port", 8787)),
+        return (s.value("api_enabled", "false") == "true", int(s.value("api_port", 8787)),
                 s.value("api_lan", "false") == "true", s.value("api_token"))
+
+    def toggle_api(self, on):
+        self.settings.setValue("api_enabled", "true" if on else "false")
+        self.start_api()
+        if on and not self.server.running:
+            self.tray.showMessage(APP, f"The API couldn't start: {self.server.error}", QSystemTrayIcon.Warning, 5000)
 
     def start_api(self):
         on, port, lan, token = self.api_settings()
