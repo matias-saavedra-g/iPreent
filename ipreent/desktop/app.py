@@ -653,8 +653,21 @@ class MainWindow(QMainWindow):
         self.restyle()
 
     def restyle(self, *_):
-        # Re-apply so palette(...) colours in the stylesheet follow a light/dark switch.
-        QApplication.instance().setStyleSheet(STYLE)
+        # Windows sends the scheme change before Qt has the new palette; let it settle first.
+        QTimer.singleShot(150, self._restyle)
+
+    def _restyle(self):
+        # palette(...) in stylesheets is resolved once, when the sheet is set, so on a light/dark
+        # switch rebuild the style (fresh system palette) and re-set every sheet that uses it.
+        app = QApplication.instance()
+        app.setStyleSheet("")
+        app.setStyle("windows11")
+        app.setStyleSheet(STYLE)
+        for w in app.allWidgets():
+            ss = w.styleSheet()
+            if ss:
+                w.setStyleSheet("")
+                w.setStyleSheet(ss)
         fluent_window(self)
         self.print_btn.setStyleSheet(f"QPushButton#print:enabled {{ color: {accent_text()}; }}")
 
