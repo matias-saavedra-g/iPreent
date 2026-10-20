@@ -6,3 +6,4 @@ __pycache__/
 preview.png
 build/
 *.backup
+dist/

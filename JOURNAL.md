@@ -150,3 +150,29 @@ density/`--energy` tuning, `status`. Next: phase 2 (Android), starting with the 
   Fixed by copying the job to a temp file first. **Not retested yet.**
 - App now uses Material You (wallpaper colours on Android 12+) and follows the system light/dark theme.
 - Brand colour changed from teal to **baby blue `#89CFF0`** (deeper blue `#4A90B8` for slot/wordmark), in the app and `assets/brand/`.
+
+### Phase 3: Windows app started (2026-10-20)
+- `ipreent/desktop/`: PySide6 app reusing the Python package. Layout follows the mockup (printer card, Create modes,
+  queue | preview | print settings). Modes: image/PDF (drop, paste, open), text, checklist, banner, QR (segno).
+  Dithering Atkinson / Floyd–Steinberg / threshold, darkness presets, brightness, contrast, pages, copies.
+- Bluetooth runs on its own asyncio thread (bleak's WinRT backend and Qt's main thread don't mix); jobs queue one at a time.
+- Tray: print clipboard (global hotkey Ctrl+Alt+P via RegisterHotKey), print file, quick note, feed, start with Windows
+  (HKCU Run key). Single instance: a second launch (e.g. "Open with") hands its files to the running one.
+- **Print dialog**: no custom driver. A printer "iPreent" on the built-in *Microsoft Print To PDF* driver with a local
+  port that is a file (`C:\ProgramData\iPreent\spool\job.pdf`); the app polls it, renames it once the spooler lets go,
+  renders pages at 5x, trims white margins, skips blank pages, prints sharp (threshold) by default. Install/uninstall via
+  one UAC prompt from the tray menu. **Not tested yet** (needs admin + a real job).
+- Portable exe: `python tools/build_windows.py` → `dist/iPreent.exe` (~65 MB, PyInstaller one-file). Starts and opens
+  its window; **not hardware-tested yet**. `--debug` builds a console version that shows tracebacks.
+- Open: A4 pages printed through the dialog may come out tiny when they're mostly text across the full width
+  (trimming only helps when content is narrow). A custom narrow paper size would need a real driver.
+
+### Windows app tested + Fluent + API (2026-10-20, later)
+- User tested the exe: everything works, including the print-dialog printer. Asked for Fluent Design and an API.
+- Fluent: Qt's `windows11` style, Segoe UI Variable, Mica backdrop (DWM attribute 38 + frame extended into the client
+  area, Windows 11 22H2+; without the frame extension the window rendered black), dark title bar, system accent for
+  selection and the Print button (text black/white from the accent's brightness). Follows light/dark live.
+- HTTP API (`ipreent/desktop/server.py`, stdlib `ThreadingHTTPServer`): default 127.0.0.1:8787, optional LAN mode
+  (0.0.0.0) that requires a bearer token. Endpoints in the README. `/print` detects PDF/image/text from the bytes
+  (in memory, no temp files: Windows file locks broke the first version). Tested: unit tests + a real print via
+  `curl /text?wait=1` → done.

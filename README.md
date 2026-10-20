@@ -6,7 +6,45 @@ Offline, account-free driver for the cheap BLE thermal "mini printers" (cat-face
 GB01/GB02/GB03, X6, MX…) that normally need the **iPrint** / **Tiny Print** app.
 No login, no internet, no vendor server. Protocol notes: [PROTOCOL.md](PROTOCOL.md).
 
-## Windows 11 (also Linux / macOS)
+## Windows app (portable)
+`dist/iPreent.exe` is one file, no install and no Python needed. Build it with
+`pip install -e .[desktop] pyinstaller` then `python tools/build_windows.py`
+(or run it from source with `ipreent-desktop`).
+- Fluent look (Windows 11 style, Mica, system accent); follows the light/dark setting live.
+- Drop or paste images, PDFs and text; also text, checklist, banner and QR modes, with an exact preview.
+- Dithering (Atkinson, Floyd–Steinberg, sharp), darkness, brightness, contrast, pages, copies, margin trim.
+- Tray menu: print clipboard (**Ctrl+Alt+P** anywhere), print file, quick note, feed paper, start with Windows.
+- **Print from any app**: tray menu › *Add “iPreent” to print dialogs* (one admin prompt). This adds a printer
+  named iPreent that uses Windows' built-in *Microsoft Print To PDF* driver writing to
+  `C:\ProgramData\iPreent\spool\job.pdf`; the app picks each job up, trims white margins and prints it.
+  The app has to be running (it lives in the tray; closing the window doesn't quit it).
+
+### API: print from your own code
+While the app is open it listens on **http://127.0.0.1:8787** (port and on/off in *API settings…*).
+Tick *Allow other devices on my network* to reach it from other machines at `http://<this PC's IP>:8787`;
+then every request needs the token shown there (`Authorization: Bearer <token>` or `?token=`).
+Windows Firewall may ask once to allow it.
+
+```
+curl -X POST localhost:8787/text -d "Build passed"
+curl -X POST localhost:8787/print --data-binary @photo.jpg            # image, PDF or text, detected
+curl -X POST "localhost:8787/print?pages=1&dither=threshold" --data-binary @ticket.pdf
+curl -X POST localhost:8787/checklist -H "Content-Type: application/json" -d '{"title":"Today","items":["a","b"]}'
+curl -X POST localhost:8787/qr -d "https://example.com"
+curl -X POST localhost:8787/banner -d "HAPPY BIRTHDAY"
+curl -X POST "localhost:8787/feed?lines=100"
+curl localhost:8787/status        # printer + queue
+curl localhost:8787/jobs/3        # queued | printing | done | failed
+```
+```python
+import requests
+requests.post("http://127.0.0.1:8787/text", data="Hello from Python")
+```
+Options on any print: `dither=atkinson|floyd|threshold`, `darkness=1..5`, `copies`, `pages=1-2,5`, `trim=0|1`,
+`rotate=0|1`, `brightness=-50..50`, `contrast=50..200`, `wait=1` (reply only once it's printed).
+Missing options use the app's current settings. Replies are JSON; errors come with a 4xx code and `{"error": ...}`.
+
+## Command line: Windows 11 (also Linux / macOS)
 1. Install Python 3.10+ from python.org (tick "Add to PATH").
 2. In this folder: `pip install .`
 3. Turn the printer on (hold power 3 s) and close the phone app (one connection at a time).
@@ -58,4 +96,6 @@ If the name isn't recognized, it uses safe defaults (384 dots, uncompressed line
 - `ipreent/ble.py` / `spp.py` – Bluetooth LE and Bluetooth serial transports
 - `ipreent/api.py` – discovery, remembered printer, job building; `cli.py` on top
 - `ipreent/convert.py` – file type detection, PDF rendering (pypdfium2)
+- `ipreent/desktop/` – Windows app (PySide6): `app.py` window + tray, `worker.py` Bluetooth thread, `spool.py` print-dialog printer, `server.py` HTTP API
+- `tools/build_windows.py` – builds `dist/iPreent.exe` (PyInstaller)
 - `tools/extract_models.py` – regenerate `models.json` from a jadx decompile
