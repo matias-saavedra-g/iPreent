@@ -1,5 +1,6 @@
 # Builds the Android APK, the portable Windows exe and the command-line zip, and publishes them as a
-# GitHub Release. Runs when a version tag is pushed:  git tag v0.4.0 && git push origin v0.4.0
+# GitHub Release. Runs when a version tag is pushed (git tag v0.4.0 && git push origin v0.4.0), or by hand
+# from the Actions tab with a version: then the release step creates the tag on the commit it built.
 #
 # Optional, for APKs that update each other in place: add these repository secrets
 #   ANDROID_KEYSTORE_BASE64  (base64 of a .jks file), ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS,
@@ -12,9 +13,16 @@ on:
   push:
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Version tag to create, e.g. v0.4.0 (needs a matching section in CHANGELOG.md)"
+        required: true
 
 permissions:
   contents: write
+
+env:
+  VERSION: ${{ inputs.version || github.ref_name }}
 
 jobs:
   android:
@@ -41,7 +49,7 @@ jobs:
           chmod +x gradlew
           ./gradlew --no-daemon testDebugUnitTest assembleRelease
           mkdir -p ../out
-          cp app/build/outputs/apk/release/app-release.apk "../out/iPreent-${GITHUB_REF_NAME}.apk"
+          cp app/build/outputs/apk/release/app-release.apk "../out/iPreent-${VERSION}.apk"
       - uses: actions/upload-artifact@v4
         with: { name: android, path: out/ }
 
@@ -57,7 +65,7 @@ jobs:
           pip install -e ".[desktop]" pyinstaller
           python tools/build_windows.py
           mkdir -p out
-          cp dist/iPreent.exe "out/iPreent-${GITHUB_REF_NAME}-portable.exe"
+          cp dist/iPreent.exe "out/iPreent-${VERSION}-portable.exe"
       - uses: actions/upload-artifact@v4
         with: { name: windows, path: out/ }
 
@@ -75,7 +83,7 @@ jobs:
                     --deselect tests/test_imaging.py::test_emoji_text_uses_emoji_font
       - name: Zip the command-line version
         run: |
-          name="ipreent-cli-${GITHUB_REF_NAME}"
+          name="ipreent-cli-${VERSION}"
           mkdir -p "stage/$name" out
           cp -r ipreent pyproject.toml README.md PROTOCOL.md "stage/$name/"
           cp tools/cli-install.txt "stage/$name/INSTALL.txt"
@@ -92,11 +100,13 @@ jobs:
         with: { path: out, merge-multiple: true }
       - name: Notes from CHANGELOG.md
         run: |
-          awk -v v="## ${GITHUB_REF_NAME}" '$0 ~ "^## " { on = index($0, v) == 1; next } on' CHANGELOG.md > notes.md
+          awk -v v="## ${VERSION}" '$0 ~ "^## " { on = index($0, v) == 1; next } on' CHANGELOG.md > notes.md
           [ -s notes.md ] || echo "Built from ${GITHUB_SHA}." > notes.md
       - uses: softprops/action-gh-release@v2
         with:
-          name: iPreent ${{ github.ref_name }}
+          tag_name: ${{ env.VERSION }}
+          target_commitish: ${{ github.sha }}
+          name: iPreent ${{ env.VERSION }}
           body_path: notes.md
           files: out/*
           fail_on_unmatched_files: true
