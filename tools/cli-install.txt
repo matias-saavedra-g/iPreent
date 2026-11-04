@@ -1,0 +1,15 @@
+iPreent command line
+====================
+
+1. Install Python 3.10 or newer from python.org (on Windows, tick "Add python.exe to PATH").
+2. Open a terminal in this folder and run:
+
+       pip install .
+
+3. Turn the printer on, close the phone app, then:
+
+       ipreent scan
+       ipreent text "Hello"
+       ipreent receipt -b "My shop" -i "Coffee" 1800 2 -i "Bread" 1.200
+
+Everything else (PDFs, photos, receipts, options) is in README.md, or run: ipreent --help

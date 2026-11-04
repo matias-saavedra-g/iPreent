@@ -1,6 +1,6 @@
 [project]
 name = "ipreent"
-version = "0.3.0"
+version = "0.4.0"
 description = "Offline, account-free driver for iPrint / cat-style BLE thermal mini printers"
 requires-python = ">=3.9"
 dependencies = ["bleak>=0.22", "Pillow>=10", "pyserial>=3.5", "pypdfium2>=4"]

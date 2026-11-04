@@ -6,6 +6,11 @@ Offline, account-free driver for the cheap BLE thermal "mini printers" (cat-face
 GB01/GB02/GB03, X6, MX…) that normally need the **iPrint** / **Tiny Print** app.
 No login, no internet, no vendor server. Protocol notes: [PROTOCOL.md](PROTOCOL.md).
 
+## Downloads
+Ready-made builds are on the [Releases page](https://github.com/matias-saavedra-g/iPreent/releases/latest):
+the Android APK, the portable Windows exe and a zip of the command-line version. Pushing a `v*` tag builds and
+publishes them (`.github/workflows/release.yml`; notes come from `CHANGELOG.md`).
+
 ## Windows app (portable)
 `dist/iPreent.exe` is one file, no install and no Python needed. Build it with
 `pip install -e .[desktop] pyinstaller` then `python tools/build_windows.py`

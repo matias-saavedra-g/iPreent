@@ -11,14 +11,25 @@ android {
         applicationId = "com.ipreent"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 2
+        versionName = "0.4.0"
+    }
+    // A real key comes from the environment (the release workflow sets it from repository secrets);
+    // without one, release builds are signed with the local debug key, as before.
+    val keystore = System.getenv("IPREENT_KEYSTORE")?.let { file(it) }?.takeIf { it.exists() }
+    signingConfigs {
+        if (keystore != null) create("release") {
+            storeFile = keystore
+            storePassword = System.getenv("IPREENT_KEYSTORE_PASSWORD")
+            keyAlias = System.getenv("IPREENT_KEY_ALIAS")
+            keyPassword = System.getenv("IPREENT_KEY_PASSWORD")
+        }
     }
     buildTypes {
         release {
             isMinifyEnabled = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
-            signingConfig = signingConfigs.getByName("debug")   // free sideload build, no store key yet
+            signingConfig = signingConfigs.getByName(if (keystore != null) "release" else "debug")
         }
     }
     compileOptions {
