@@ -226,3 +226,16 @@ density/`--energy` tuning, `status`. Next: phase 2 (Android), starting with the 
 - Version 0.4.0 everywhere (Android versionCode 2). The APK is signed with the CI runner's throwaway debug key unless
   the `ANDROID_KEYSTORE_*` secrets are set. Until then, every release needs an uninstall before installing.
 - [ ] Add a release keystore as repository secrets so later APKs update in place.
+
+### Signed APKs: v0.4.1 (2026-11-04, later)
+- The build-only run #2 (23:13 UTC) warned "No ANDROID_KEYSTORE_BASE64 secret": the secrets weren't visible to the
+  workflow at that moment. They were added after that run.
+- Workflow hardened: a publishing run now **fails** without the keystore secret (a build-only run still just warns),
+  and a new step runs `apksigner verify --print-certs` and checks the SHA-256 against the release certificate
+  (`RELEASE_CERT_SHA256` in `release.yml`).
+- v0.4.1 (versionCode 3) is cut instead of re-uploading v0.4.0, so the debug-signed v0.4.0 APK isn't silently swapped
+  for a different file under the same name. Phones with v0.4.0 must uninstall once; later versions update in place.
+- Gradle notice "8.11.1 is out of date": left as is for now. The current line is Gradle 9, which needs a newer AGP
+  (we're on 8.7.3) and likely a Kotlin bump too; that's a build-toolchain upgrade to do on its own and test, not
+  inside a signing release. It's an info notice, the build is unaffected.
+- [ ] Upgrade Gradle 9 + AGP + Kotlin in a separate change (check the AGP/Gradle compatibility table first).

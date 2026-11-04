@@ -2,6 +2,18 @@
 
 Each `## vX.Y.Z` section becomes the notes of that GitHub Release.
 
+## v0.4.1
+The Android app is now signed with the permanent iPreent release key, so from this version on each new APK
+installs over the previous one and keeps your settings, queue and history.
+
+**Downloads**
+- `iPreent-v0.4.1.apk`: Android app (Android 8 or newer). **One last time**, uninstall any iPreent already on
+  the phone (including v0.4.0, which was signed with a temporary key) before installing this one.
+- `iPreent-v0.4.1-portable.exe`: Windows app. One file, no install, no Python.
+- `ipreent-cli-v0.4.1.zip`: command line for Windows, Linux and macOS. Needs Python 3.10+; see `INSTALL.txt` inside.
+
+No other changes from v0.4.0.
+
 ## v0.4.0
 First published release.
 
