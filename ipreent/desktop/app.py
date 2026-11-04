@@ -2,6 +2,7 @@
 import ctypes
 import ctypes.wintypes
 import io
+import json
 import secrets
 import socket
 import sys
@@ -13,13 +14,14 @@ from PIL import Image
 from PySide6.QtCore import (QAbstractNativeEventFilter, QBuffer, QIODevice, QSettings, Qt, QTimer)
 from PySide6.QtGui import QAction, QFont, QGuiApplication, QIcon, QImage, QKeySequence, QPixmap, QShortcut
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
-from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDialog, QDialogButtonBox,
-                               QFileDialog, QFormLayout, QFrame, QHBoxLayout, QInputDialog, QLabel,
-                               QLineEdit, QListWidget, QListWidgetItem, QMainWindow, QMenu,
-                               QMessageBox, QPlainTextEdit, QPushButton, QScrollArea, QSlider,
-                               QSpinBox, QStackedWidget, QSystemTrayIcon, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QComboBox, QDialog,
+                               QDialogButtonBox, QFileDialog, QFormLayout, QFrame, QHBoxLayout,
+                               QHeaderView, QInputDialog, QLabel, QLineEdit, QListWidget,
+                               QListWidgetItem, QMainWindow, QMenu, QMessageBox, QPlainTextEdit,
+                               QPushButton, QScrollArea, QSlider, QSpinBox, QStackedWidget,
+                               QSystemTrayIcon, QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget)
 
-from .. import config, convert, imaging, protocol
+from .. import config, convert, imaging, protocol, receipt
 from ..cli import ENERGY_PRESETS
 from ..models import lookup
 from . import spool
@@ -30,7 +32,8 @@ APP = "iPreent"
 HERE = Path(__file__).parent
 DARKNESS = list(ENERGY_PRESETS.values())          # slider 1..5
 DARKNESS_NAMES = ["Lightest", "Lighter", "Normal", "Darker", "Darkest"]
-MODES = ["Image or PDF", "Text", "Checklist", "Banner", "QR code", "Barcode"]
+MODES = ["Image or PDF", "Text", "Checklist", "Banner", "QR code", "Barcode", "Receipt"]
+RECEIPT = MODES.index("Receipt")
 RUN_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
 
 # Fluent look: Qt's "windows11" style draws the controls; this adds Mica-friendly panels and
@@ -323,6 +326,7 @@ class MainWindow(QMainWindow):
         bw.layout().insertWidget(1, self.barcode_error)
         self.editors.addWidget(bw)
         self.barcode.textChanged.connect(self.schedule)
+        self.editors.addWidget(self._receipt_editor())
         for e in (self.text, self.list_items):
             e.textChanged.connect(self.schedule)
         for e in (self.list_title, self.banner, self.qr):
@@ -345,6 +349,122 @@ class MainWindow(QMainWindow):
         self.caption.setStyleSheet("font-family: Consolas, monospace; font-size: 11px")
         lay.addWidget(self.caption)
         return w
+
+    def _receipt_editor(self):
+        """Business details on the left, products table on the right. All remembered."""
+        s = self.settings
+        w = QWidget()
+        lay = QHBoxLayout(w)
+        lay.setContentsMargins(0, 0, 0, 0)
+        form = QFormLayout()
+        self.r_business = QLineEdit(s.value("receipt_business", ""), placeholderText="Business name")
+        self.r_address = QLineEdit(s.value("receipt_address", ""), placeholderText="Street, city")
+        self.r_url = QLineEdit(s.value("receipt_url", ""), placeholderText="example.cl")
+        self.r_footer = QLineEdit(s.value("receipt_footer", receipt.DEFAULT_FOOTER),
+                                  placeholderText="Message at the bottom")
+        form.addRow("Business", self.r_business)
+        form.addRow("Address", self.r_address)
+        form.addRow("Website", self.r_url)
+        form.addRow("Footer", self.r_footer)
+        self.r_total = QLabel()
+        self.r_total.setStyleSheet("font-weight: 700; font-size: 18px")
+        self.r_error = QLabel(wordWrap=True)
+        self.r_error.setStyleSheet("color: palette(placeholder-text)")
+        form.addRow(self.r_total)
+        form.addRow(self.r_error)
+        lay.addLayout(form, 2)
+
+        side = QVBoxLayout()
+        self.r_items = QTableWidget(0, 3)
+        self.r_items.setHorizontalHeaderLabels(["Product", "Qty", "Price (CLP)"])
+        head = self.r_items.horizontalHeader()
+        head.setSectionResizeMode(0, QHeaderView.Stretch)
+        for col, width in ((1, 56), (2, 100)):
+            head.setSectionResizeMode(col, QHeaderView.Fixed)
+            self.r_items.setColumnWidth(col, width)
+        self.r_items.verticalHeader().setDefaultSectionSize(28)
+        self.r_items.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.r_items.setEditTriggers(QAbstractItemView.AllEditTriggers)
+        try:
+            rows = json.loads(s.value("receipt_items", "[]"))
+        except ValueError:
+            rows = []
+        for name, qty, price in rows or [("", "1", "")]:
+            self.add_receipt_row(name, qty, price, focus=False)
+        self.r_items.itemChanged.connect(self.schedule)
+        buttons = QHBoxLayout()
+        add = QPushButton("Add product")
+        add.clicked.connect(lambda: self.add_receipt_row())
+        remove = QPushButton("Remove")
+        remove.clicked.connect(self.remove_receipt_rows)
+        buttons.addWidget(add)
+        buttons.addWidget(remove)
+        buttons.addStretch(1)
+        side.addWidget(self.r_items, 1)
+        side.addLayout(buttons)
+        lay.addLayout(side, 3)
+        for e in (self.r_business, self.r_address, self.r_url, self.r_footer):
+            e.textChanged.connect(self.schedule)
+        return w
+
+    def add_receipt_row(self, name="", qty="1", price="", focus=True):
+        t = self.r_items
+        r = t.rowCount()
+        t.blockSignals(True)
+        t.insertRow(r)
+        for col, value in enumerate((name, qty, price)):
+            item = QTableWidgetItem(str(value))
+            if col:
+                item.setTextAlignment(Qt.AlignRight | Qt.AlignVCenter)
+            t.setItem(r, col, item)
+        t.blockSignals(False)
+        if focus:
+            t.setCurrentCell(r, 0)
+            t.editItem(t.item(r, 0))
+            self.schedule()
+
+    def remove_receipt_rows(self):
+        t = self.r_items
+        rows = sorted({i.row() for i in t.selectedIndexes()} or {t.currentRow()}, reverse=True)
+        for r in rows:
+            if r >= 0:
+                t.removeRow(r)
+        if not t.rowCount():
+            self.add_receipt_row(focus=False)
+        self.schedule()
+
+    def receipt_rows(self):
+        """[(name, qty, price)] as typed, empty rows left out."""
+        t = self.r_items
+        out = []
+        for r in range(t.rowCount()):
+            cells = [(t.item(r, c).text().strip() if t.item(r, c) else "") for c in range(3)]
+            if cells[0] or cells[2]:
+                out.append(tuple(cells))
+        return out
+
+    def receipt(self):
+        """Receipt from the editor, or None (with the reason shown) when it can't be made yet."""
+        self.r_error.setText("")
+        self.r_total.setText("")
+        items = []
+        for n, (name, qty, price) in enumerate(self.receipt_rows(), 1):
+            try:
+                if not name:
+                    raise ValueError("no product name")
+                if not price:
+                    raise ValueError("no price")
+                items.append(receipt.Item(name, price, qty or 1))
+            except ValueError as e:
+                self.r_error.setText(f"Row {n}: {e}")
+                return None
+        r = receipt.Receipt(self.r_business.text(), self.r_address.text(), self.r_url.text(), items,
+                            self.r_footer.text())
+        self.r_total.setText(f"Total {receipt.clp(r.total)}" if items else "")
+        if not items:
+            self.r_error.setText("Add products with their quantity and price.")
+            return None
+        return r
 
     def _editor(self, widget, *extra):
         w = QWidget()
@@ -447,9 +567,16 @@ class MainWindow(QMainWindow):
         s.setValue("trim", "true" if self.trim.isChecked() else "false")
         s.setValue("dialog_quality", self.dialog_quality.currentData())
         s.setValue("mode", self.nav.currentRow())
+        if hasattr(self, "r_items"):
+            s.setValue("receipt_business", self.r_business.text())
+            s.setValue("receipt_address", self.r_address.text())
+            s.setValue("receipt_url", self.r_url.text())
+            s.setValue("receipt_footer", self.r_footer.text())
+            s.setValue("receipt_items", json.dumps(self.receipt_rows(), ensure_ascii=False))
 
     def mode_changed(self, row):
         self.editors.setCurrentIndex(row)
+        self.editors.setMaximumHeight(280 if row == RECEIPT else 200)
         self.schedule()
 
     def schedule(self, *_):
@@ -506,6 +633,9 @@ class MainWindow(QMainWindow):
         if mode == 4:
             t = self.qr.text().strip()
             return [(imaging.qr_image(t, width), True)] if t else []
+        if mode == RECEIPT:
+            r = self.receipt()
+            return [(r.image(width), True)] if r else []
         t = self.barcode.text().strip()
         self.barcode_error.setText("")
         if not t:
@@ -569,7 +699,7 @@ class MainWindow(QMainWindow):
             self.add_sources(paths)
 
     def paste(self):
-        if self.focusWidget() in (self.text, self.list_items, self.list_title, self.banner, self.qr, self.barcode, self.pages):
+        if isinstance(self.focusWidget(), (QLineEdit, QPlainTextEdit)):   # also the receipt table's cells
             self.focusWidget().paste()
             return
         md = QApplication.clipboard().mimeData()
@@ -602,6 +732,8 @@ class MainWindow(QMainWindow):
         label = MODES[self.nav.currentRow()]
         if self.nav.currentRow() == 0 and self.sources:
             label = self.sources[0][0] + (f" +{len(self.sources) - 1}" if len(self.sources) > 1 else "")
+        if self.nav.currentRow() == RECEIPT:
+            label = self.r_total.text().replace("Total", "Receipt")
 
         def build(width):
             return self.build(items, width, **snapshot)

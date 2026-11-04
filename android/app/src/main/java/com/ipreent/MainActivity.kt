@@ -1,6 +1,7 @@
 package com.ipreent
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -31,11 +33,13 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.google.zxing.BarcodeFormat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
 import java.text.DateFormat
 import java.util.Date
 
@@ -83,7 +87,8 @@ else arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
 
 private enum class Tab(val label: String, val icon: androidx.compose.ui.graphics.vector.ImageVector) {
     PHOTO("Photo", Icons.Default.Image), TEXT("Text", Icons.Default.TextFields), LIST("List", Icons.Default.Checklist),
-    BANNER("Banner", Icons.Default.ViewDay), CODE("QR", Icons.Default.QrCode2), HISTORY("History", Icons.Default.History),
+    BANNER("Banner", Icons.Default.ViewDay), CODE("QR", Icons.Default.QrCode2), RECEIPT("Receipt", Icons.Default.Receipt),
+    HISTORY("History", Icons.Default.History),
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -137,6 +142,7 @@ private fun App(shared: MutableState<Sources.Loaded?>) {
                     Tab.LIST -> ListTab(print)
                     Tab.BANNER -> BannerTab(print)
                     Tab.CODE -> CodeTab(print)
+                    Tab.RECEIPT -> ReceiptTab(print)
                     Tab.HISTORY -> HistoryTab(snack)
                 }
             }
@@ -339,6 +345,95 @@ private fun CodeTab(print: (Job) -> Unit) {
             Preview(rows?.let { Imaging.preview(it, Printers.width) })
         }
         PrintBar(rows != null) { n -> rows?.let { print(Job("code", it, Printers.width, copies = n)) } }
+    }
+}
+
+/** One product row in the receipt editor, as typed. */
+private data class ItemRow(val name: String = "", val qty: String = "1", val price: String = "")
+
+@Composable
+private fun ReceiptTab(print: (Job) -> Unit) {
+    val ctx = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val prefs = remember { ctx.getSharedPreferences("receipt", Context.MODE_PRIVATE) }
+    var business by remember { mutableStateOf(prefs.getString("business", "").orEmpty()) }
+    var address by remember { mutableStateOf(prefs.getString("address", "").orEmpty()) }
+    var url by remember { mutableStateOf(prefs.getString("url", "").orEmpty()) }
+    var footer by remember { mutableStateOf(prefs.getString("footer", DEFAULT_FOOTER) ?: DEFAULT_FOOTER) }
+    var showBusiness by remember { mutableStateOf(business.isBlank()) }
+    val items = remember {
+        mutableStateListOf<ItemRow>().apply {
+            runCatching {
+                val a = JSONArray(prefs.getString("items", "[]"))
+                for (i in 0 until a.length()) a.getJSONArray(i).let { add(ItemRow(it.getString(0), it.getString(1), it.getString(2))) }
+            }
+            if (isEmpty()) add(ItemRow())
+        }
+    }
+    val list = items.toList()
+    fun build() = Receipt.fromRows(business, address, url, footer, list.map { Triple(it.name, it.qty, it.price) })
+    val built = remember(business, address, url, footer, list) { runCatching { build() } }
+
+    LaunchedEffect(business, address, url, footer, list) {
+        val a = JSONArray()
+        list.forEach { a.put(JSONArray(listOf(it.name, it.qty, it.price))) }
+        prefs.edit().putString("business", business).putString("address", address).putString("url", url)
+            .putString("footer", footer).putString("items", a.toString()).apply()
+    }
+    val rows = rememberRows(built) { w -> built.getOrNull()?.let { textRows(ReceiptArt.bitmap(it, w), w) } }
+
+    Column(Modifier.fillMaxSize()) {
+        Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+            TextButton({ showBusiness = !showBusiness }, Modifier.padding(horizontal = 8.dp)) {
+                Text(if (business.isBlank()) "Business details" else business, Modifier.weight(1f, fill = false))
+                Icon(if (showBusiness) Icons.Default.ExpandLess else Icons.Default.ExpandMore, null)
+            }
+            if (showBusiness) {
+                OutlinedTextField(business, { business = it }, Modifier.fillMaxWidth().padding(16.dp, 2.dp), label = { Text("Business name") }, singleLine = true)
+                OutlinedTextField(address, { address = it }, Modifier.fillMaxWidth().padding(16.dp, 2.dp), label = { Text("Address") }, singleLine = true)
+                OutlinedTextField(url, { url = it }, Modifier.fillMaxWidth().padding(16.dp, 2.dp), label = { Text("Website") }, singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri))
+                OutlinedTextField(footer, { footer = it }, Modifier.fillMaxWidth().padding(16.dp, 2.dp), label = { Text("Message at the bottom") }, singleLine = true)
+            }
+            Text("Products", Modifier.padding(16.dp, 8.dp, 16.dp, 0.dp), style = MaterialTheme.typography.labelLarge)
+            items.forEachIndexed { i, it ->
+                Column(Modifier.padding(16.dp, 4.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        OutlinedTextField(it.name, { v -> items[i] = it.copy(name = v) }, Modifier.weight(1f),
+                            label = { Text("Product ${i + 1}") }, singleLine = true)
+                        IconButton({ items.removeAt(i); if (items.isEmpty()) items.add(ItemRow()) }) { Icon(Icons.Default.Close, "remove") }
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(end = 48.dp)) {
+                        OutlinedTextField(it.qty, { v -> items[i] = it.copy(qty = v) }, Modifier.weight(1f), label = { Text("Qty") },
+                            singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal))
+                        OutlinedTextField(it.price, { v -> items[i] = it.copy(price = v) }, Modifier.weight(2f), label = { Text("Price (CLP)") },
+                            prefix = { Text("$") }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
+                    }
+                }
+            }
+            Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                TextButton({ items.add(ItemRow()) }) { Icon(Icons.Default.Add, null); Spacer(Modifier.width(4.dp)); Text("Add product") }
+                Spacer(Modifier.weight(1f))
+                built.getOrNull()?.let {
+                    Text("Total ${Clp.format(it.total)}", Modifier.padding(end = 8.dp), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                }
+            }
+            built.exceptionOrNull()?.let {
+                Text(it.message ?: "Can't make this receipt", Modifier.padding(16.dp, 0.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+            }
+            Preview(rows?.let { Imaging.preview(it, Printers.width) })
+        }
+        PrintBar(rows != null) { n ->
+            // Rebuilt at print time so the date, time and receipt number are the moment it prints.
+            scope.launch {
+                val job = withContext(Dispatchers.Default) {
+                    runCatching { build() }.getOrNull()?.let {
+                        Job("Receipt ${Clp.format(it.total)}", textRows(ReceiptArt.bitmap(it, Printers.width), Printers.width), Printers.width, Protocol.MODE_TEXT, n)
+                    }
+                }
+                job?.let(print)
+            }
+        }
     }
 }
 

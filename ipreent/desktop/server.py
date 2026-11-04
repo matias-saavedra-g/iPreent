@@ -13,6 +13,8 @@ Endpoints (all answer JSON):
     POST /banner              body = plain text, or JSON {"text"}
     POST /qr                  body = plain text, or JSON {"text"}
     POST /barcode             body = plain text, or JSON {"text"} (Code 128)
+    POST /receipt             JSON {"business", "address", "url", "footer", "number",
+                              "items": [{"name", "price", "qty"}]} (total in CLP, barcode)
     POST /feed                ?lines=100
 Query options for every print: dither=atkinson|floyd|threshold, darkness=1..5, copies=N,
 pages=1-2,5, trim=0|1, rotate=0|1, brightness=-50..50, contrast=50..200, wait=1 (answer when printed).
@@ -30,7 +32,7 @@ from urllib.parse import parse_qs, urlparse
 
 from PIL import Image
 
-from .. import __version__, config, imaging
+from .. import __version__, config, imaging, receipt
 
 MAX_BODY = 64 * 1024 * 1024
 
@@ -253,6 +255,17 @@ class _Handler(BaseHTTPRequestHandler):
         except ValueError as e:
             raise ApiError(400, str(e))
         return self._queue(q, "API barcode", lambda w: [(imaging.barcode_image(text.strip(), w), True)])
+
+    def post_receipt(self, q):
+        try:
+            data = json.loads(self._body() or b"{}")
+            if not isinstance(data, dict):
+                raise ValueError("send a JSON object")
+            r = receipt.Receipt.from_dict(data)
+        except ValueError as e:      # also bad JSON
+            raise ApiError(400, f'{e} (send {{"business": ..., "items": [{{"name", "price", "qty"}}]}})')
+        job = self._queue(q, f"API receipt {receipt.clp(r.total)}", lambda w: [(r.image(w), True)])
+        return {**job, "number": r.number, "total": r.total}
 
     def post_feed(self, q):
         jid = self.api.worker.feed(int(q.get("lines", 100)))

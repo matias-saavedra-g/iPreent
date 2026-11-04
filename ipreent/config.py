@@ -36,3 +36,21 @@ def forget():
         _path().unlink()
     except OSError:
         pass
+
+
+def _extra(name):
+    return _path().with_name(f"{name}.json")
+
+
+def load_extra(name):
+    """Other remembered settings (e.g. the receipt's business details), kept apart from the printer."""
+    try:
+        return json.loads(_extra(name).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def save_extra(name, data):
+    p = _extra(name)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(json.dumps(data, indent=1, ensure_ascii=False), encoding="utf-8")

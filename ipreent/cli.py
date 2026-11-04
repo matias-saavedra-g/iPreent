@@ -5,16 +5,18 @@ Examples:
   ipreent print photo.jpg doc.pdf    print any image / PDF / text file
   ipreent text "Hello"               print text (or: echo hi | ipreent text)
   ipreent status                     paper, battery
+  ipreent receipt -b "My shop" -i "Coffee" 1800 -i "Empanada" 2990 2
 The printer used last is remembered; `ipreent forget` clears it.
 """
 import argparse
 import asyncio
+import csv
 import json
 import sys
 
 from PIL import Image
 
-from . import api, config, convert, imaging, protocol
+from . import api, config, convert, imaging, protocol, receipt
 from .models import lookup
 
 
@@ -101,6 +103,66 @@ async def cmd_text(args):
     await _print_items(args, lambda w: [(imaging.text_image(text, w, args.size), True)])
 
 
+RECEIPT_HEADER = ("business", "address", "url", "footer")
+RECEIPT_FLAGS = {"business": "business", "address": "biz_address", "url": "url", "footer": "footer"}
+
+
+def _receipt(args):
+    """Receipt from (lowest first) the remembered business details, --json, --items-file, flags."""
+    data = dict(config.load_extra("receipt"))
+    data.setdefault("footer", receipt.DEFAULT_FOOTER)
+    data["items"] = []
+    if args.json:
+        src = sys.stdin.read() if args.json == "-" else open(args.json, encoding="utf-8").read()
+        loaded = json.loads(src)
+        data.update({k: v for k, v in loaded.items() if k != "items"})
+        data["items"] += loaded.get("items") or []
+    if args.items_file:
+        with open(args.items_file, newline="", encoding="utf-8-sig") as f:
+            for row in csv.reader(f):
+                row = [c.strip() for c in row if c.strip()]
+                if not row:
+                    continue
+                try:
+                    receipt.parse_price(row[1] if len(row) > 1 else "")
+                except ValueError:
+                    continue                     # header line ("name,price,qty") or junk
+                data["items"].append(row[:3])
+    for fields in args.item or []:
+        if not 2 <= len(fields) <= 3:
+            raise ValueError(f"--item takes NAME PRICE [QTY], got: {' '.join(fields)}")
+        data["items"].append(fields)
+    given = {k: getattr(args, a) for k, a in RECEIPT_FLAGS.items() if getattr(args, a, None) is not None}
+    data.update(given)
+    if args.number:
+        data["number"] = args.number
+    r = receipt.Receipt.from_dict(data)
+    if given or args.json:
+        config.save_extra("receipt", {k: data.get(k, "") for k in RECEIPT_HEADER})
+    return r
+
+
+def _products(r):
+    return f"{len(r.items)} product" + ("s" if len(r.items) != 1 else "")
+
+
+async def cmd_receipt(args):
+    try:
+        r = _receipt(args)
+    except (ValueError, OSError) as e:
+        sys.exit(f"Error: {e}")
+    if args.preview:
+        width = args.width or _offline_model(args).width
+        rows, _ = api.rows_for([(r.image(width), True)], width)
+        img = Image.new("1", (width, len(rows)), 1)
+        img.putdata([0 if px else 1 for row in rows for px in row])
+        img.save(args.preview)
+        print(f"Wrote {args.preview}: {_products(r)}, total {receipt.clp(r.total)}")
+        return
+    print(f"Receipt N° {r.number}: {_products(r)}, total {receipt.clp(r.total)}", file=sys.stderr)
+    await _print_items(args, lambda w: [(r.image(w), True)])
+
+
 async def cmd_status(args):
     async with api.connect(_target(args)) as p:
         st = await api.status_async(p)
@@ -183,6 +245,34 @@ def main(argv=None):
     s.add_argument("text", nargs="*")
     job_args(s)
     s.set_defaults(fn=cmd_text)
+
+    s = sub.add_parser(
+        "receipt", help="print a receipt: business, products, total in CLP, barcode",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="Print a receipt with your business details, the products, their quantity and "
+                    "price,\nthe total in Chilean pesos ($12.990) and a barcode with the receipt number "
+                    "(the print\ntime, so no counter has to be stored or synced). Business, address, website "
+                    "and footer\nare remembered for next time.",
+        epilog="examples:\n"
+               '  ipreent receipt -b "Industrias MT" --addr "Maipú, Santiago" --url industriasmt.cl \\\n'
+               '                  -i "Empanada de pino" 2990 2 -i "Café" 1.800\n'
+               "  ipreent receipt --items-file products.csv        # rows: name,price[,qty]\n"
+               "  ipreent receipt --json sale.json --preview r.png  # see it without printing\n"
+               '  JSON: {"business": "...", "items": [{"name": "Café", "price": 1800, "qty": 2}]}')
+    s.add_argument("-i", "--item", nargs="+", action="append", metavar="FIELD",
+                   help="a product: NAME PRICE [QTY] (repeat for each product)")
+    s.add_argument("-b", "--business", help="business name (remembered)")
+    s.add_argument("--business-address", "--addr", dest="biz_address", metavar="ADDRESS",
+                   help="business address (remembered)")
+    s.add_argument("--url", help="website (remembered)")
+    s.add_argument("--footer", help=f'message at the bottom (default "{receipt.DEFAULT_FOOTER}")')
+    s.add_argument("--items-file", metavar="CSV", help="products from a CSV file: name,price[,qty]")
+    s.add_argument("--json", metavar="FILE", help="whole receipt as JSON (- = stdin)")
+    s.add_argument("--number", help="receipt number for the barcode (default: date and time)")
+    s.add_argument("--preview", metavar="PNG", help="save a picture instead of printing")
+    s.add_argument("-n", "--copies", type=int, default=1)
+    s.add_argument("--feed", type=int, help="blank lines after the print (default ~96)")
+    s.set_defaults(fn=cmd_receipt)
 
     s = sub.add_parser("status", help="paper / battery")
     s.add_argument("--json", action="store_true")

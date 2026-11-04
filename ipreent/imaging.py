@@ -23,9 +23,19 @@ def image_rows(img, width, dither=True, threshold=128, auto_rotate=True):
     return [[0 if px[x, y] else 1 for x in range(width)] for y in range(bw.height)]
 
 
-@lru_cache(maxsize=32)
-def _font(size):
-    for name in ("DejaVuSans.ttf", "arial.ttf", "Arial.ttf", "Helvetica.ttc", "segoeui.ttf"):
+# Font faces by kind: Windows, Linux, macOS names. "mono" gives receipts their classic look.
+FACES = {
+    "sans": ("DejaVuSans.ttf", "arial.ttf", "Arial.ttf", "Helvetica.ttc", "segoeui.ttf"),
+    "bold": ("DejaVuSans-Bold.ttf", "arialbd.ttf", "Arial Bold.ttf", "segoeuib.ttf", "DejaVuSans.ttf"),
+    "mono": ("DejaVuSansMono.ttf", "consola.ttf", "Menlo.ttc", "cour.ttf", "Courier New.ttf"),
+    "monobold": ("DejaVuSansMono-Bold.ttf", "consolab.ttf", "courbd.ttf", "Courier New Bold.ttf",
+                 "DejaVuSansMono.ttf", "consola.ttf"),
+}
+
+
+@lru_cache(maxsize=64)
+def _font(size, kind="sans"):
+    for name in FACES[kind] + FACES["sans"]:
         try:
             return ImageFont.truetype(name, size)
         except OSError:
@@ -66,9 +76,9 @@ def _is_emoji(ch):
             or 0x2B00 <= c <= 0x2BFF or c in (0x00A9, 0x00AE, 0x2122))
 
 
-def _runs(text, size):
+def _runs(text, size, kind="sans"):
     """Split text into [piece, font] runs, each character in the first font that has it."""
-    main, extra = _font(size), _fallbacks(size)
+    main, extra = _font(size, kind), _fallbacks(size)
     runs = []
     for ch in text:
         if ch in JOINERS and runs:
@@ -92,13 +102,13 @@ def _runs(text, size):
     return runs
 
 
-def text_length(text, size):
-    return sum(f.getlength(t) for t, f in _runs(text, size))
+def text_length(text, size, kind="sans"):
+    return sum(f.getlength(t) for t, f in _runs(text, size, kind))
 
 
-def draw_text(draw, xy, text, size):
+def draw_text(draw, xy, text, size, kind="sans"):
     x, y = xy
-    for t, f in _runs(text, size):
+    for t, f in _runs(text, size, kind):
         draw.text((x, y), t, font=f, fill=0)
         x += f.getlength(t)
 

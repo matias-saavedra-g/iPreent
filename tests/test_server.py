@@ -72,3 +72,15 @@ def test_print_detects_image(server):
     Image.new("L", (50, 50), 0).save(buf, "PNG")
     code, _ = call(s.httpd.server_address[1], "/print", buf.getvalue(), {"Content-Type": "image/png"})
     assert code == 200 and queued[0][1][0][1] is False
+
+
+def test_receipt_endpoint(server):
+    s, queued = server
+    s.start("127.0.0.1", 0, "")
+    port = s.httpd.server_address[1]
+    body = json.dumps({"business": "MT", "items": [{"name": "Café", "price": 1800, "qty": 2}]}).encode()
+    code, job = call(port, "/receipt", body, {"Content-Type": "application/json"})
+    assert code == 200 and job["total"] == 3600 and len(job["number"]) == 12
+    assert queued[0][0] == "API receipt $3.600" and queued[0][1][0][0].width == 384
+    assert call(port, "/receipt", b'{"items": []}')[0] == 400
+    assert call(port, "/receipt", b"not json")[0] == 400

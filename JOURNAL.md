@@ -176,3 +176,36 @@ density/`--energy` tuning, `status`. Next: phase 2 (Android), starting with the 
   (0.0.0.0) that requires a bearer token. Endpoints in the README. `/print` detects PDF/image/text from the bytes
   (in memory, no temp files: Windows file locks broke the first version). Tested: unit tests + a real print via
   `curl /text?wait=1` → done.
+
+## 2026-11-04
+
+### Receipt mode (all versions)
+- User asked for a receipt mode in the CLI, the Windows app and the Android app: business name, address, website,
+  products with quantity and price, total in CLP shown with `$`, and a barcode. The barcode doesn't have to look
+  anything up: no server and no storage synced between devices.
+- Shared logic in `ipreent/receipt.py`, ported to `android/.../Receipt.kt` (the same layout and the same test cases in
+  `tests/test_receipt.py` / `ReceiptTest.kt`).
+- **Receipt number = print time `YYMMDDhhmmss`** (12 digits, so Code 128 set C fits at 3 dots per module on 384-dot
+  paper). Each device can make it alone with no counter, which is what the user wanted. `--number` / API `"number"` replace it.
+- Money: whole pesos, `12.990` / `12,990` / `$12.990` all read as 12990. A separator followed by only 1–2 digits at the end
+  counts as decimals and gets rounded. Negative price = discount line. Decimal quantities (`0,35` kg) are allowed;
+  line amounts are rounded half up. Format `$12.990`, `-$1.000`.
+- Look: bold sans business name, monospace body (the classic receipt look), dashed separators, date/time + `N°`,
+  name left / amount right with `2 x $2.990` underneath, "Items" count, big bold TOTAL between a solid rule and a double
+  rule, a footer message (default "Thank you for your purchase!"), and the barcode with its digits underneath.
+  No large black areas (no inverted total bar) so weak batteries aren't strained.
+- CLI: `ipreent receipt -b … --addr … --url … -i NAME PRICE [QTY] …`, `--items-file CSV`, `--json FILE|-`, `--preview PNG`.
+  `--address` was already taken (BLE address), hence `--business-address` / `--addr`. Header details are remembered in
+  `receipt.json` next to `config.json` (separate file because connecting rewrites `config.json`).
+- Windows: "Receipt" mode with a business form plus a products table (Product / Qty / Price), all kept in QSettings.
+  HTTP API `POST /receipt`. Android: "Receipt" tab (business details fold away once filled), kept in SharedPreferences.
+  Both rebuild the receipt when Print is pressed, so the time and number are when it prints, not when it was typed.
+- Checked: Python tests; desktop window driven offscreen on Linux (winreg/DWM stubbed); Android `assembleDebug` +
+  unit tests; Android bitmap rendered once through a temporary Robolectric test (removed). **Not tested on real
+  hardware or Windows/phone yet.**
+- Pre-existing on Linux only: `test_emoji_text_uses_emoji_font` (no emoji font) and `test_print_detects_image`
+  (`server.py` imports `desktop/app.py`, which imports `winreg`) fail here, as they did before this change.
+
+### Open
+- [ ] Print a receipt on the SC03h (check that the monospace body and 3-dot barcode come out crisp and the barcode scans).
+- [ ] Spanish labels (`BOLETA`/`TOTAL`/`Artículos`)? Labels are English now; only the footer is editable.

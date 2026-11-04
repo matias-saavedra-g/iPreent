@@ -11,7 +11,7 @@ No login, no internet, no vendor server. Protocol notes: [PROTOCOL.md](PROTOCOL.
 `pip install -e .[desktop] pyinstaller` then `python tools/build_windows.py`
 (or run it from source with `ipreent-desktop`).
 - Fluent look (Windows 11 style, Mica, system accent); follows the light/dark setting live.
-- Drop or paste images, PDFs and text; also text, checklist, banner and QR modes, with an exact preview.
+- Drop or paste images, PDFs and text; also text, checklist, banner, QR, barcode and **receipt** modes, with an exact preview.
 - Dithering (Atkinson, Floyd–Steinberg, sharp), darkness, brightness, contrast, pages, copies, margin trim.
 - Tray menu: print clipboard (**Ctrl+Alt+P** anywhere), print file, quick note, feed paper, start with Windows.
 - **Print from any app**: tray menu › *Add “iPreent” to print dialogs* (one admin prompt). This adds a printer
@@ -34,6 +34,8 @@ curl -X POST localhost:8787/checklist -H "Content-Type: application/json" -d '{"
 curl -X POST localhost:8787/qr -d "https://example.com"
 curl -X POST localhost:8787/banner -d "HAPPY BIRTHDAY"
 curl -X POST localhost:8787/barcode -d "ORDER-12345"                     # Code 128
+curl -X POST localhost:8787/receipt -H "Content-Type: application/json" \
+     -d '{"business":"My shop","items":[{"name":"Coffee","price":1800,"qty":2}]}'   # see Receipts
 curl -X POST "localhost:8787/feed?lines=100"
 curl localhost:8787/status        # printer + queue
 curl localhost:8787/jobs/3        # queued | printing | done | failed
@@ -75,6 +77,7 @@ ipreent status --json               # state + battery, machine-readable
 ipreent feed 100                    # feed blank paper
 ipreent preview doc.pdf             # PNG of exactly what would print (no printer needed)
 ipreent forget                      # forget the remembered printer
+ipreent receipt -b "My shop" -i "Coffee" 1800 2 -i "Bread" 1.200   # see Receipts below
 ```
 Options can go before or after the command (`ipreent text hi --ble`).
 Common options: `-n 3` copies, `--size 40` bigger text, `--energy` darker/lighter, `--speed`.
@@ -91,10 +94,36 @@ Too light or too dark? Try `--energy 5000` (light) up to `--energy 17500` (dark)
 `--speed`. If you see garbage instead of an image, try `--no-rle`.
 If the name isn't recognized, it uses safe defaults (384 dots, uncompressed lines). Force a model with `-m GB03`.
 
+## Receipts
+<img src="assets/receipt-sample.png" width="230" align="right" alt="Sample receipt">
+
+Every version (command line, Windows app, Android app, HTTP API) has a receipt mode: business name, address
+and website at the top, then each product with its quantity and price, the number of items, a big **TOTAL**
+in Chilean pesos (`$12.990`: dot for thousands, no decimals) and a Code 128 barcode at the bottom.
+- Prices accept `12990`, `12.990` or `$12.990`; a minus sign makes a discount line (`-1.000`).
+  Quantities can be decimals for things sold by weight (`0,35` or `0.35`); amounts are rounded to the peso.
+- The receipt number is the date and time it prints (`261104153012` = 2026-11-04 15:30:12), and the barcode
+  holds that number. Nothing is stored, so there is no counter to keep in sync between the phone and the PC
+  and no server. `--number` (CLI) or `"number"` (API) prints your own order number instead.
+- Business, address, website and footer message are remembered on each device. The Windows and Android apps
+  also keep the product list until you change it.
+
+```
+ipreent receipt -b "Industrias MT" --addr "Av. Pajaritos 1234, Maipú" --url industriasmt.cl \
+                -i "Empanada de pino" 2990 2 -i "Café cortado" 1.800
+ipreent receipt -i "Coffee" 1800            # business details remembered from last time
+ipreent receipt --items-file sale.csv       # rows: name,price[,qty]; a header row is skipped
+ipreent receipt --json sale.json --preview receipt.png    # check it without a printer
+```
+API: `POST /receipt` with `{"business", "address", "url", "footer", "number", "items": [{"name", "price", "qty"}]}`;
+the reply adds `"number"` and `"total"`. Receipts always print sharp (no dithering).
+<br clear="right">
+
 ## Layout
 - `ipreent/protocol.py` – frames, CRC, line encoding (pure, tested against vendor bytes)
 - `ipreent/models.py` + `models.json` – 187 model profiles taken from the vendor app
 - `ipreent/imaging.py` – image/text → 1-bit rows
+- `ipreent/receipt.py` – receipts: CLP prices, totals, layout (`android/.../Receipt.kt` draws the same)
 - `ipreent/ble.py` / `spp.py` – Bluetooth LE and Bluetooth serial transports
 - `ipreent/api.py` – discovery, remembered printer, job building; `cli.py` on top
 - `ipreent/convert.py` – file type detection, PDF rendering (pypdfium2)
