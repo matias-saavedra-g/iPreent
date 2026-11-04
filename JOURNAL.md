@@ -215,3 +215,14 @@ density/`--energy` tuning, `status`. Next: phase 2 (Android), starting with the 
   real one (68 mm printer, plain white paper with no signature or watermark, no SII stamp).
 - `RECEIPT` → `BOLETA`, `Items` → `Artículos`, `TOTAL` unchanged, default footer → `¡Gracias por su compra!`.
   A footer someone already saved (CLI `receipt.json`, Windows QSettings, Android prefs) keeps its old text until edited.
+
+### First GitHub Release: v0.4.0 (2026-11-04, later)
+- `.github/workflows/release.yml`: APK (Ubuntu, tests run first), portable exe (`windows-latest` + PyInstaller, since it
+  can't be built from Linux), and a CLI zip (source + `INSTALL.txt`, for `pip install .`). Notes come from the
+  matching `CHANGELOG.md` section. Triggered by a `v*` tag push, or by hand with a `version` input, in which case
+  the release step creates the tag itself.
+- The cloud session's git proxy refuses tag pushes (HTTP 403), so v0.4.0 was made with the manual run.
+  https://github.com/matias-saavedra-g/iPreent/releases/tag/v0.4.0
+- Version 0.4.0 everywhere (Android versionCode 2). The APK is signed with the CI runner's throwaway debug key unless
+  the `ANDROID_KEYSTORE_*` secrets are set. Until then, every release needs an uninstall before installing.
+- [ ] Add a release keystore as repository secrets so later APKs update in place.
