@@ -208,4 +208,10 @@ density/`--energy` tuning, `status`. Next: phase 2 (Android), starting with the 
 
 ### Open
 - [ ] Print a receipt on the SC03h (check that the monospace body and 3-dot barcode come out crisp and the barcode scans).
-- [ ] Spanish labels (`BOLETA`/`TOTAL`/`Artículos`)? Labels are English now; only the footer is editable.
+- [x] Spanish labels: done (see below).
+
+### Receipt labels in Spanish (2026-11-04, later)
+- User's call: use `BOLETA` even though it's a tax-document name in Chile, because these prints can't be mistaken for a
+  real one (68 mm printer, plain white paper with no signature or watermark, no SII stamp).
+- `RECEIPT` → `BOLETA`, `Items` → `Artículos`, `TOTAL` unchanged, default footer → `¡Gracias por su compra!`.
+  A footer someone already saved (CLI `receipt.json`, Windows QSettings, Android prefs) keeps its old text until edited.

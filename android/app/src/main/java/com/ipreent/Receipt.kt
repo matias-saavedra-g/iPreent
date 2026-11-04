@@ -12,7 +12,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
-const val DEFAULT_FOOTER = "Thank you for your purchase!"
+const val DEFAULT_FOOTER = "¡Gracias por su compra!"
 
 /** Money and quantities for receipts, in Chilean pesos. Port of ipreent/receipt.py (pure, unit-tested). */
 object Clp {
@@ -173,7 +173,7 @@ object ReceiptArt {
 
         dashed(before = 12f)
         row(SimpleDateFormat("dd-MM-yyyy", Locale.US).format(r.time), SimpleDateFormat("HH:mm", Locale.US).format(r.time), small)
-        row("RECEIPT", "N° ${r.number}", small)
+        row("BOLETA", "N° ${r.number}", small)
         dashed()
 
         // Products: name (wrapped) on the left, amount on the right, "2 x $2.990" underneath.
@@ -189,7 +189,7 @@ object ReceiptArt {
         }
 
         dashed(before = 4f)
-        row("Items", r.count, small)
+        row("Artículos", r.count, small)
         solid(before = 6f)
 
         // Total: as big as fits.

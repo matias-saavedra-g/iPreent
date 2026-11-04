@@ -19,7 +19,7 @@ from PIL import Image, ImageDraw
 
 from . import imaging
 
-DEFAULT_FOOTER = "Thank you for your purchase!"
+DEFAULT_FOOTER = "¡Gracias por su compra!"
 
 
 # ---- money -----------------------------------------------------------------------------------
@@ -241,7 +241,7 @@ def render(r, width):
 
     dashed(gap_before=12)
     row(r.when.strftime("%d-%m-%Y"), r.when.strftime("%H:%M"), small)
-    row("RECEIPT", f"N° {r.number}", small)
+    row("BOLETA", f"N° {r.number}", small)
     dashed()
 
     # Products: name on the left (wrapped), amount on the right, "2 x $2.990" underneath.
@@ -261,7 +261,7 @@ def render(r, width):
         s.y += px(4)
 
     dashed(gap_before=4)
-    row("Items", str(r.count), small)
+    row("Artículos", str(r.count), small)
     solid(gap_before=6)
 
     # Total: as big as fits.

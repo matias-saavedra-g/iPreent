@@ -105,6 +105,8 @@ in Chilean pesos (`$12.990`: dot for thousands, no decimals) and a Code 128 barc
 - The receipt number is the date and time it prints (`261104153012` = 2026-11-04 15:30:12), and the barcode
   holds that number. Nothing is stored, so there is no counter to keep in sync between the phone and the PC
   and no server. `--number` (CLI) or `"number"` (API) prints your own order number instead.
+- Labels are in Spanish (`BOLETA`, `Artículos`, `TOTAL`, footer `¡Gracias por su compra!`). It is only a printout
+  on plain thermal paper, not a valid SII tax document.
 - Business, address, website and footer message are remembered on each device. The Windows and Android apps
   also keep the product list until you change it.
 
