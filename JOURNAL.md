@@ -229,7 +229,8 @@ density/`--energy` tuning, `status`. Next: phase 2 (Android), starting with the 
 
 ### Signed APKs: v0.4.1 (2026-11-04, later)
 - The build-only run #2 (23:13 UTC) warned "No ANDROID_KEYSTORE_BASE64 secret": the secrets weren't visible to the
-  workflow at that moment. They were added after that run.
+  workflow at that moment. Build-only run #3 (23:22 UTC) confirmed them: APK signed by `CN=iPreent, O=MT, C=CL`,
+  SHA-256 matching the release certificate.
 - Workflow hardened: a publishing run now **fails** without the keystore secret (a build-only run still just warns),
   and a new step runs `apksigner verify --print-certs` and checks the SHA-256 against the release certificate
   (`RELEASE_CERT_SHA256` in `release.yml`).
