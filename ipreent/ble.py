@@ -86,12 +86,18 @@ class Printer:
         except asyncio.TimeoutError:
             return None
 
-    async def wait_done(self, timeout=60.0):
-        """Poll state until the printer stops reporting 'printing'."""
+    async def wait_done(self, timeout=60.0, interval=0.5):
+        """Poll state until the printer stops reporting 'printing'.
+
+        busy_seen says whether it ever did: if not, the data was all sent but the paper may
+        still be moving, so a timing that ends here is too short.
+        """
         loop = asyncio.get_running_loop()
         end = loop.time() + timeout
+        self.busy_seen = False
         while loop.time() < end:
             st = await self.request(protocol.CMD_GET_STATE)
             if st is None or not (st[0] & 0x80):
                 return st
-            await asyncio.sleep(0.5)
+            self.busy_seen = True
+            await asyncio.sleep(interval)

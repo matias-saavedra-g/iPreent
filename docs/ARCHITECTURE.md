@@ -21,7 +21,7 @@ notification. Everything prints by turning content into a list of rows (0/1 per 
 ## Python package `ipreent/`
 | Module | Job | Kotlin twin |
 |---|---|---|
-| `protocol.py` | Frames, CRC8, row encodings, `print_job` byte stream, notification parsing, **print-time estimate** (`estimate_seconds`, `learn_speed`, `format_eta`; starts at 40 mm/s from the listing's "40 ppm") | `Protocol.kt` |
+| `protocol.py` | Frames, CRC8, row encodings, `print_job` byte stream, notification parsing, **print-time estimate** (`speed_for` per energy, `estimate_seconds`, `learn_speeds`, `format_eta`; starts at 15 mm/s at energy 5000, slower in proportion to the energy, until each level is timed) | `Protocol.kt` |
 | `models.py` + `models.json` | 187 printer profiles (width, dpi, speeds, MTU, RLE, serial-only flag) looked up by the longest model number that prefixes the Bluetooth name | `Model.kt` (+ `assets/models.json`) |
 | `imaging.py` | Images → gray → 1-bit rows (Floyd–Steinberg, Atkinson, threshold), text with emoji fallback, checklist, banner, QR (segno), Code 128 | `Imaging.kt` |
 | `receipt.py` | Receipts (BOLETA): CLP parsing/formatting, totals, layout, receipt number = print time | `Receipt.kt` |
@@ -38,7 +38,8 @@ Shared test cases: `tests/test_protocol.py` ↔ `ProtocolTest.kt`, `test_receipt
 
 ## Command line (`ipreent/cli.py`)
 - Subcommands, listed in `--help` by `features.CLI` weight: `print`, `text`, `receipt`, `status`, `preview`,
-  `queue`, `scan`, `feed`, `settings`, `forget`. Plain `ipreent` shows an overview (printer, settings, queue,
+  `queue`, `scan`, `feed`, `settings`, `forget`, `bench` (one short strip per darkness level, timed, to learn the
+  real speed and show how much darkness slows the printer). Plain `ipreent` shows an overview (printer, settings, queue,
   three most used commands by weight + usage).
 - Connection options (`-a/-p/--rfcomm/--ble/-m`) and tuning (`--width/--energy/--speed/--rle`) work before or
   after the subcommand.
@@ -80,12 +81,12 @@ Shared test cases: `tests/test_protocol.py` ↔ `ProtocolTest.kt`, `test_receipt
 | App | Where | What |
 |---|---|---|
 | CLI + Windows (shared) | config dir: `config.json` | remembered printer (name, address/port, transport, model) |
-| | `timing.json` | learnt paper speed (mm/s) and number of timed prints |
+| | `timing.json` | learnt paper speed per energy (`speeds`, mm/s), number of timed prints, `log` of the last 100 timed prints (energy, lines, seconds, black share, whether the printer said "printing") |
 | | `print.lock`, `busy.json` | cross-program lock and the job holding it |
 | CLI | `receipt.json`, `settings.json`, `usage.json` | receipt header; default darkness; command usage |
 | Windows | registry `HKCU\Software\iPreent\iPreent` (QSettings) | print settings, mode, receipt form, API settings + token, usage |
 | | `HKCU\...\CurrentVersion\Run` | "Start with Windows" |
-| Android | SharedPreferences `printer`, `receipt`, `usage`; `filesDir/history/*.png` | printer, darkness, learnt speed; receipt form; tool usage; print history |
+| Android | SharedPreferences `printer`, `receipt`, `usage`; `filesDir/history/*.png` | printer, darkness, learnt speed per energy (`speeds` = `5000=14.2;8000=9.1`); receipt form; tool usage; print history |
 
 ## Checking changes without hardware
 - `pytest -q` (two known Linux failures: no emoji font; `winreg`). Tests never touch the real config dir

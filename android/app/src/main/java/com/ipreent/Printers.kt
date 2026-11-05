@@ -95,15 +95,27 @@ object Printers {
 
     // ---- print time: starts at the listing's speed, learns from each timed print --------------
 
-    val speed: Double get() = prefs.getFloat("mm_per_s", Protocol.SPEC_MM_PER_S.toFloat()).toDouble()
+    // Kept per energy, since darker prints slower: "speeds" = "5000=14.2;8000=9.1". (The old single
+    // "mm_per_s" mixed every darkness level and is ignored.)
+    val learntSpeeds: Map<Int, Double> get() = prefs.getString("speeds", "").orEmpty().split(";").mapNotNull {
+        val (e, v) = it.split("=").takeIf { p -> p.size == 2 } ?: return@mapNotNull null
+        val energy = e.toIntOrNull() ?: return@mapNotNull null
+        val speed = v.toDoubleOrNull() ?: return@mapNotNull null
+        energy to speed
+    }.toMap()
     val timedPrints: Int get() = prefs.getInt("timed_prints", 0)
 
-    fun estimate(lines: Int, copies: Int = 1, connect: Boolean = true) =
-        Protocol.estimateSeconds(lines, model().dpi, copies, speed, connect = connect)
+    /** mm/s at the chosen darkness (or [energy]). */
+    fun speed(energy: Int = darkness.value.energy) = Protocol.speedFor(energy, learntSpeeds)
+    fun isLearnt(energy: Int = darkness.value.energy) = energy in learntSpeeds
 
-    private fun learn(lines: Int, dpi: Int, copies: Int, seconds: Double) {
-        val v = Protocol.learnSpeed(speed, lines, dpi, copies, seconds)
-        prefs.edit().putFloat("mm_per_s", v.toFloat()).putInt("timed_prints", timedPrints + 1).apply()
+    fun estimate(lines: Int, copies: Int = 1, connect: Boolean = true, energy: Int = darkness.value.energy) =
+        Protocol.estimateSeconds(lines, model().dpi, copies, speed(energy), connect = connect)
+
+    private fun learn(lines: Int, dpi: Int, copies: Int, seconds: Double, energy: Int) {
+        val v = Protocol.learnSpeeds(learntSpeeds, energy, lines, dpi, copies, seconds)
+        prefs.edit().putString("speeds", v.toSortedMap().entries.joinToString(";") { "${it.key}=${"%.2f".format(java.util.Locale.ROOT, it.value)}" })
+            .remove("mm_per_s").putInt("timed_prints", timedPrints + 1).apply()
     }
 
     val busy get() = queue.value.any { it.active }
@@ -151,8 +163,9 @@ object Printers {
                 lock.withLock {
                     update(id) { it.copy(state = JobState.CONNECTING, startedAt = System.currentTimeMillis()) }
                     withPrinter { p ->
-                        val bytes = Protocol.printJob(job.rows, p.model, darkness.value.energy, job.mode)
-                        val secs = Protocol.estimateSeconds(job.rows.size, p.model.dpi, job.copies, speed, connect = false)
+                        val energy = darkness.value.energy
+                        val bytes = Protocol.printJob(job.rows, p.model, energy, job.mode)
+                        val secs = Protocol.estimateSeconds(job.rows.size, p.model.dpi, job.copies, speed(energy), connect = false)
                         val t0 = System.currentTimeMillis()
                         update(id) { it.copy(state = JobState.PRINTING, seconds = secs, startedAt = t0) }
                         repeat(job.copies) { n ->
@@ -165,7 +178,7 @@ object Printers {
                             }
                             p.waitDone()
                         }
-                        learn(job.rows.size, p.model.dpi, job.copies, (System.currentTimeMillis() - t0) / 1000.0)
+                        learn(job.rows.size, p.model.dpi, job.copies, (System.currentTimeMillis() - t0) / 1000.0, energy)
                     }
                     status.value = "Done"
                 }

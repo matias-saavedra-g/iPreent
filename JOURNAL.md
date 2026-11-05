@@ -300,8 +300,8 @@ Robolectric test (home, busy home, tool screen, printer sheet, busy dialog, queu
 **Not tested on hardware, on Windows itself or on a phone yet**, so the speed estimate is unverified.
 
 ### Open
-- [ ] Time a few real prints on the SC03h and check the learnt speed settles (and whether darkness changes it a lot;
-      if so, learn one speed per darkness level).
+- [x] Time a few real prints on the SC03h and check the learnt speed settles (and whether darkness changes it a lot;
+      if so, learn one speed per darkness level). → per-level learning built 2026-11-05 (see below); numbers pending.
 - [ ] Check the Segoe glyph code points render as intended on Windows 10 and 11 (banner = Flag E7C1, barcode = Tag E8EC).
 
 ### Obtainium, pre-public audit, docs for future sessions (2026-11-05, later)
@@ -325,3 +325,25 @@ Robolectric test (home, busy home, tool screen, printer sheet, busy dialog, queu
 
 ### v0.5.0 (2026-11-05, later)
 - MIT license added (LICENSE, pyproject, README; the CLI zip now includes it). Version 0.5.0, versionCode 4. Release started with a manual workflow run.
+
+### Print speed: slower start, one speed per darkness (2026-11-05, later)
+- User: real prints are much slower than the 40 mm/s estimate, and suspects darkness (energy) slows printing in
+  proportion. Little paper left, so asked for online data first, else a cheap benchmark.
+- Research: no published measurements of cat-printer speed vs energy. Spec sheets for 57 mm pocket printers give
+  10-15 mm/s (Phomemo M02/M02 Pro, generic "mini cat" listings); 30-70 mm/s figures are outliers. NaitLee's
+  Cat-Printer (`printer_lib/commander.py`): BD speed is "the lower, the quicker" (our `--speed` help said the
+  opposite; fixed), energy AF max 0xFFFF. Physically, more energy = longer burn per line, so a heat-limited head
+  slows with energy; the 2026-10-20 hardware note already said darkness changed print time.
+- Built (Python + Kotlin, shared cases): `speed_for(energy, learnt)` = learnt figure, else interpolate seconds/mm
+  between learnt neighbours, else scale from the nearest learnt level (or 15 mm/s at 5000) as time ∝ energy.
+  `learn_speeds`: first timed print at a level replaces the guess, then 30 % blending. Old single `mm_per_s`
+  dropped (mixed levels). Estimates everywhere use the job's energy. `timing.json` keeps a `log` of the last 100
+  timed prints (energy, lines, seconds, black share, `busy_seen`) so the model can be checked from everyday prints.
+  `ipreent bench`: one strip per level (label + 30 mm of 50 % pattern), no feed between strips, 0.1 s polling.
+- Doubt to check on hardware: `wait_done` stops at the first state reply without the "printing" bit. If the SC03h
+  never sets it, timings end when the data is sent, not when the paper stops (too fast). `busy_seen` in the log
+  and the bench output show this; compare one print against a stopwatch.
+
+### Open
+- [ ] User to run `ipreent bench` (or print normally at different darkness levels) and send `timing.json`; then set
+      the starting guess and the energy scaling from real numbers.

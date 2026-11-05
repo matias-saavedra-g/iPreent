@@ -408,11 +408,16 @@ private fun PrinterSheet(granted: Boolean, snack: SnackbarHostState, onClose: ()
                 valueRange = 0f..(Darkness.entries.size - 1).toFloat(), steps = Darkness.entries.size - 2)
             Row {
                 Text("Lighter", style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(1f))
-                Text("Darker (prints a little slower)", style = MaterialTheme.typography.labelSmall)
+                Text("Darker (prints slower)", style = MaterialTheme.typography.labelSmall)
             }
             Spacer(Modifier.height(8.dp))
-            Text("Print speed: about ${Printers.speed.roundToInt()} mm/s" +
-                    if (Printers.timedPrints > 0) ", learnt from your prints" else " (the listing's figure until a print is timed)",
+            val learnt = Printers.learntSpeeds
+            Text("Print speed at ${darkness.label.lowercase()}: about ${"%.1f".format(Printers.speed(darkness.energy))} mm/s, " +
+                    when {
+                        darkness.energy in learnt -> "learnt from your prints"
+                        learnt.isNotEmpty() -> "estimated from the levels you've printed at"
+                        else -> "a starting guess until a print is timed"
+                    },
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             HorizontalDivider(Modifier.padding(vertical = 12.dp))
             ListItem(headlineContent = { Text("Check status and battery") },
@@ -613,11 +618,12 @@ private fun rememberRows(vararg keys: Any?, source: suspend (Int) -> List<ByteAr
 private fun PrintBar(lines: Int?, onPrint: (copies: Int) -> Unit) {
     val fly = LocalFly.current
     var copies by remember { mutableIntStateOf(1) }
+    val darkness by Printers.darkness.collectAsState()   // darker prints slower: re-estimate when it changes
     Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
         IconButton({ if (copies > 1) copies-- }) { Icon(Icons.Default.Remove, "fewer") }
         Text("×$copies")
         IconButton({ copies++ }) { Icon(Icons.Default.Add, "more") }
-        if (lines != null) Text("about ${eta(Printers.estimate(lines, copies))}", style = MaterialTheme.typography.bodySmall,
+        if (lines != null) Text("about ${eta(Printers.estimate(lines, copies, energy = darkness.energy))}", style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.weight(1f))
         Button({ onPrint(copies) }, enabled = lines != null,

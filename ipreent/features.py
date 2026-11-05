@@ -18,8 +18,8 @@ DESKTOP = {"photo": 0.24, "document": 0.20, "text": 0.18, "receipt": 0.14, "list
            "qr": 0.05, "banner": 0.06, "barcode": 0.03}
 
 # Command-line subcommands, for the home screen and the order in `ipreent --help`.
-CLI = {"print": 0.30, "text": 0.25, "receipt": 0.15, "status": 0.08, "preview": 0.07,
-       "queue": 0.05, "scan": 0.04, "feed": 0.03, "settings": 0.02, "forget": 0.01}
+CLI = {"print": 0.29, "text": 0.25, "receipt": 0.15, "status": 0.08, "preview": 0.07,
+       "queue": 0.05, "scan": 0.04, "feed": 0.03, "settings": 0.02, "forget": 0.01, "bench": 0.01}
 
 
 def record_use(usage, key, decay=DECAY):

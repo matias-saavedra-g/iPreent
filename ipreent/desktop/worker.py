@@ -108,7 +108,7 @@ class Worker(QObject):
             if on_done:
                 on_done()
         model = api.lookup(config.load().get("model") or config.load().get("name", ""))
-        return self.submit(label, run, api.estimate(lines, model, copies) if lines else None)
+        return self.submit(label, run, api.estimate(lines, model, copies, energy=energy) if lines else None)
 
     def feed(self, lines=100):
         async def run(jid):

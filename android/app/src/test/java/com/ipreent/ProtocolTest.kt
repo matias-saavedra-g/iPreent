@@ -42,17 +42,43 @@ class ProtocolTest {
 
     // Same cases as tests/test_protocol.py
     @Test fun printTimeEstimate() {
-        assertEquals(5.575, Protocol.estimateSeconds(400, 200), 1e-3)
-        assertEquals(5.150, Protocol.estimateSeconds(400, 200, copies = 2, connect = false), 1e-3)
+        assertEquals(8.199, Protocol.estimateSeconds(400, 200), 1e-3)
+        assertEquals(10.399, Protocol.estimateSeconds(400, 200, copies = 2, connect = false), 1e-3)
         assertEquals(4.610, Protocol.estimateSeconds(0, 200, mmPerS = 20.0), 1e-3)
         assertEquals(Protocol.estimateSeconds(400, 200), Protocol.estimateSeconds(400, 200, copies = 0), 1e-9)
     }
 
+    @Test fun speedForEnergy() {
+        assertEquals(15.0, Protocol.speedFor(5000), 1e-9)
+        assertEquals(15.0, Protocol.speedFor(0), 1e-9)
+        assertEquals(9.375, Protocol.speedFor(8000), 1e-3)
+        assertEquals(4.412, Protocol.speedFor(17000), 1e-3)
+        assertEquals(Protocol.MIN_MM_PER_S, Protocol.speedFor(500000), 1e-9)
+        val learnt = mapOf(8000 to 12.0, 12000 to 10.0)
+        assertEquals(12.0, Protocol.speedFor(8000, learnt), 1e-9)
+        assertEquals(19.2, Protocol.speedFor(5000, learnt), 1e-3)
+        assertEquals(7.059, Protocol.speedFor(17000, learnt), 1e-3)
+        assertEquals(10.909, Protocol.speedFor(10000, learnt), 1e-3)
+        assertEquals(11.2, Protocol.speedFor(9000, mapOf(5000 to 14.0, 17000 to 8.0)), 1e-3)
+    }
+
     @Test fun learnSpeed() {
+        assertEquals(21.539, Protocol.measuredSpeed(1600, 200, 1, 11.0)!!, 1e-3)
         assertEquals(34.462, Protocol.learnSpeed(40.0, 1600, 200, 1, 11.0), 1e-3)
         assertEquals(40.0, Protocol.learnSpeed(40.0, 10, 200, 1, 9.0), 1e-9)
         assertEquals(40.0, Protocol.learnSpeed(40.0, 1600, 200, 1, 0.5), 1e-9)
-        assertEquals(40.0 + 0.3 * (5.0 - 40.0), Protocol.learnSpeed(40.0, 1600, 200, 1, 1000.0), 1e-9)
+        assertEquals(40.0 + 0.3 * (2.0 - 40.0), Protocol.learnSpeed(40.0, 1600, 200, 1, 1000.0), 1e-9)
+    }
+
+    @Test fun learnSpeedsPerEnergy() {
+        val one = Protocol.learnSpeeds(emptyMap(), 8000, 1600, 200, 1, 11.0)
+        assertEquals(setOf(8000), one.keys)
+        assertEquals(21.539, one.getValue(8000), 1e-3)
+        val two = Protocol.learnSpeeds(one, 8000, 1600, 200, 1, 21.0)
+        assertEquals(21.539 + 0.3 * (10.770 - 21.539), two.getValue(8000), 1e-3)
+        assertEquals(one, Protocol.learnSpeeds(one, 8000, 10, 200, 1, 9.0))
+        assertEquals(setOf(8000, 17000), Protocol.learnSpeeds(one, 17000, 1600, 200, 1, 31.0).keys)
+        assertEquals(setOf(Protocol.REF_ENERGY), Protocol.learnSpeeds(emptyMap(), 0, 1600, 200, 1, 11.0).keys)
     }
 
     @Test fun formatEta() {

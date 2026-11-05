@@ -24,7 +24,7 @@ class FakePrinter:
         if progress:
             progress(len(data), len(data))
 
-    async def wait_done(self):
+    async def wait_done(self, interval=0.5):
         await asyncio.sleep(0.01)
 
     async def request(self, cmd):
@@ -91,4 +91,24 @@ def test_settings_darkness_is_the_default(printer, capsys):
     with pytest.raises(SystemExit):
         cli.main(["settings", "paper-speed", "900"])
     cli.main(["settings", "paper-speed", "25"])
-    assert api.known_speed() == 25
+    assert api.known_speed(12000) == 25                     # at the default darkness (darker)
+    assert round(api.known_speed(17000), 2) == round(25 * 12000 / 17000, 2)   # others scale from it
+    cli.main(["settings", "paper-speed", "reset"])
+    assert api.learnt_speeds() == {} and api.known_speed(5000) == 15
+
+
+def test_prints_learn_speed_for_their_darkness(printer):
+    cli.main(["text", "hello", "--energy", "darkest"])
+    t = config.load_extra("timing")
+    entry = t["log"][-1]
+    assert entry["energy"] == 17000 and entry["lines"] > 0 and 0 <= entry["black"] <= 1
+    assert "mm_per_s" not in t
+
+
+def test_bench_times_each_darkness(printer, capsys):
+    cli.main(["bench", "--darkness", "lightest,darkest", "--mm", "20"])
+    err = capsys.readouterr().err
+    assert len(printer.sent) == 3 and "lightest" in err and "darkest" in err   # 2 strips + feed
+    log = config.load_extra("timing")["log"]
+    assert [e["energy"] for e in log] == [5000, 17000]
+    assert [e["feed"] for e in log] == [0, 0]               # the tear-off feed is sent untimed

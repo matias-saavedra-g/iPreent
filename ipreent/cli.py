@@ -55,11 +55,15 @@ def _default_energy():
         return DEFAULT_ENERGY
 
 
-def _target(args):
+def _job_energy(args):
+    return getattr(args, "energy", None) or _default_energy()
+
+
+def _target(args, energy=None):
     return api.Target(
         address=args.address or "", port=args.port or "", rfcomm=args.rfcomm or "",
         model=args.model or "", ble=args.ble,
-        overrides={"width": args.width, "energy": args.energy or _default_energy(), "rle": args.rle,
+        overrides={"width": args.width, "energy": energy or _job_energy(args), "rle": args.rle,
                    "img_speed": args.speed, "text_speed": args.speed},
     )
 
@@ -138,7 +142,8 @@ async def _print_items(args, make_items, label="print"):
     rows, mode = api.rows_for(make_items(width), width, dither=dither)
     if not rows:
         sys.exit("Nothing to print.")
-    lock = await _take_turn(args, label, api.estimate(len(rows), guess, args.copies, feed=args.feed))
+    lock = await _take_turn(args, label, api.estimate(len(rows), guess, args.copies, feed=args.feed,
+                                                      energy=_job_energy(args)))
     try:
         async with api.connect(_target(args)) as p:
             if p.model.width != width:     # first print on a new printer: lay it out again
@@ -293,13 +298,21 @@ async def cmd_queue(args):
     print("\nThe printer is free.")
 
 
+def _speed_table():
+    """'lightest 15* · lighter 12 · ...' (* = learnt from a timed print at that darkness)."""
+    learnt = api.learnt_speeds()
+    return " · ".join(f"{name} {api.known_speed(e):.0f}{'*' if e in learnt else ''}"
+                      for name, e in ENERGY_PRESETS.items())
+
+
 def _settings_lines():
-    t = config.load_extra("timing")
-    n = int(t.get("prints", 0) or 0)
-    speed = api.known_speed()
-    how = f"learnt from {n} print{'s' if n != 1 else ''}" if n else "the listing's figure until a print is timed"
-    return [f"darkness     {_darkness_name(_default_energy())}   (lightest, lighter, normal, darker, darkest or a number)",
-            f"paper-speed  {speed:.0f} mm/s, {how}; used for time estimates"]
+    e = _default_energy()
+    learnt = api.learnt_speeds()
+    how = "learnt from your prints" if e in learnt else (
+        "estimated from other darkness levels" if learnt else "a starting guess until a print is timed")
+    return [f"darkness     {_darkness_name(e)}   (lightest, lighter, normal, darker, darkest or a number)",
+            f"paper-speed  {api.known_speed(e):.1f} mm/s at this darkness, {how}; used for time estimates",
+            f"             mm/s by darkness: {_speed_table()}   (* = timed; check with: ipreent bench)"]
 
 
 async def cmd_settings(args):
@@ -323,8 +336,9 @@ async def cmd_settings(args):
         print(f"Darkness is now {_darkness_name(s['energy'])} (energy {s['energy']}). --energy still overrides it.")
     else:                                  # paper-speed
         if args.value.lower() == "reset":
-            config.save_extra("timing", {})
-            print(f"Paper speed reset to {protocol.SPEC_MM_PER_S:.0f} mm/s; it will be learnt again.")
+            api.save_speeds({}, prints=0)
+            print(f"Paper speed reset to the starting guess ({protocol.SPEC_MM_PER_S:.0f} mm/s at "
+                  f"the lightest darkness, slower when darker); it will be learnt again.")
             return
         try:
             v = float(args.value)
@@ -332,8 +346,75 @@ async def cmd_settings(args):
         except (ValueError, AssertionError):
             sys.exit(f"Error: paper-speed is mm/s between {protocol.MIN_MM_PER_S:.0f} and "
                      f"{protocol.MAX_MM_PER_S:.0f}, or 'reset'")
-        config.save_extra("timing", {"mm_per_s": v, "prints": 0})
-        print(f"Paper speed set to {v:.0f} mm/s (later prints keep refining it).")
+        e = _default_energy()
+        api.save_speeds({e: v}, prints=0)
+        print(f"Paper speed set to {v:g} mm/s at darkness {_darkness_name(e)}; other levels are "
+              f"scaled from it, and later prints keep refining them.")
+
+
+# ---- bench: how fast the printer really is, per darkness, on little paper ----------------------
+BAYER4 = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]]
+
+
+def _bench_rows(width, dpi, mm, black, label):
+    """A small label, then `mm` of an even pattern with `black` (0-1) of its dots black."""
+    rows, _ = api.rows_for([(imaging.text_image(label, width, size=20), True)], width)
+    level = round(black * 16)
+    band = int(mm * dpi / 25.4)
+    return rows + [[1 if BAYER4[y % 4][x % 4] < level else 0 for x in range(width)] for y in range(band)]
+
+
+def _darkness_list(spec):
+    if spec.strip().lower() == "all":
+        return list(ENERGY_PRESETS.values())
+    try:
+        return [_energy(v.strip()) for v in spec.split(",") if v.strip()]
+    except argparse.ArgumentTypeError as e:
+        sys.exit(f"Error: {e}")
+
+
+async def cmd_bench(args):
+    energies = _darkness_list(args.darkness)
+    guess = _offline_model(args)
+    if not energies or args.mm < 20:
+        sys.exit("Error: give at least one darkness level and --mm 20 or more (shorter strips are "
+                 "mostly start/stop time)")
+    plan = [_bench_rows(guess.width, guess.dpi, args.mm, args.black / 100, "x") for _ in energies]
+    total = sum(api.estimate(len(r), guess, feed=0, connect=False, energy=e) for r, e in zip(plan, energies))
+    paper = sum(protocol.paper_mm(len(r), guess.dpi) for r in plan) + protocol.paper_mm(
+        protocol.default_feed(guess.dpi), guess.dpi)
+    print(f"Bench: {len(energies)} strips of {args.mm:g} mm at {args.black:g}% black, "
+          f"about {paper / 10:.0f} cm of paper.", file=sys.stderr)
+    lock = await _take_turn(args, "speed bench", protocol.CONNECT_S + total)
+    results = []
+    try:
+        async with api.connect(_target(args, energies[0])) as p:
+            m = p.model
+            for e in energies:                     # no blank feed between strips: it isn't printing
+                rows = _bench_rows(m.width, m.dpi, args.mm, args.black / 100,
+                                   f"iPreent bench · {_darkness_name(e)} ({e}) · {args.black:g}% black")
+                t0 = time.monotonic()
+                await api.print_rows(p, rows, protocol.MODE_IMAGE, energy=e, feed=0, poll=0.1)
+                secs = time.monotonic() - t0
+                mm = protocol.paper_mm(len(rows), m.dpi)
+                v = protocol.measured_speed(len(rows), m.dpi, 1, secs, 0)
+                results.append((e, mm, secs, v, getattr(p, "busy_seen", None)))
+                print(f"  {_darkness_name(e):>8} ({e:>5})  {mm:5.1f} mm  {secs:5.1f} s  "
+                      f"{f'{v:5.1f} mm/s' if v else '  too short'}"
+                      + ("" if getattr(p, "busy_seen", True) else
+                         "   (the printer never said 'printing': this time may end before the paper stops)"),
+                      file=sys.stderr)
+            # Tear-off feed once at the end, untimed.
+            await p.send(protocol.frame(protocol.CMD_FEED, protocol.u16(protocol.default_feed(m.dpi)),
+                                        m.new_format))
+    finally:
+        lock.release()
+    timed = [(e, mm / v) for e, mm, _, v, _ in results if v]
+    if len(timed) >= 2:
+        (e0, s0), (e1, s1) = min(timed), max(timed)
+        print(f"\nSeconds per mm at {_darkness_name(e1)} vs {_darkness_name(e0)}: x{s1 / s0:.2f} "
+              f"(x{e1 / e0:.2f} if print time grew in proportion to the heat, x1.00 if heat didn't matter).")
+    print(f"Learnt; estimates now use: {_speed_table()} mm/s (* = timed).")
 
 
 HOME = {
@@ -346,6 +427,7 @@ HOME = {
     "scan": ("ipreent scan", "find printers"),
     "feed": ("ipreent feed", "feed blank paper"),
     "settings": ("ipreent settings", "darkness and other defaults"),
+    "bench": ("ipreent bench", "time a few short strips to learn the speed"),
     "forget": ("ipreent forget", "forget the remembered printer"),
 }
 
@@ -362,7 +444,7 @@ def home():
         printer = "none yet; found on the first print (or: ipreent scan)"
     print(f"  Printer   {printer}")
     print(f"  Settings  darkness {_darkness_name(_default_energy())}, "
-          f"{api.known_speed():.0f} mm/s   (change: ipreent settings)")
+          f"{api.known_speed(_default_energy()):.0f} mm/s   (change: ipreent settings)")
     print(f"  Queue     {busy.describe(info) if info else 'nothing printing'}\n")
     order = features.ranked(features.CLI, config.load_extra("usage"))
     print("Most used")
@@ -414,7 +496,8 @@ def main(argv=None):
         g.add_argument("--energy", type=_energy,
                        help="heat: lightest (5000), lighter (6000), normal (8000), "
                             "darker (12000), darkest (17000), or a number; default: ipreent settings")
-        g.add_argument("--speed", type=int, help="lower = slower and darker")
+        g.add_argument("--speed", type=int,
+                       help="the printer's speed setting (model default, SC03h: 10); higher = slower")
         g.add_argument("--rle", action=argparse.BooleanOptionalAction, default=rle_default,
                        help="compressed lines on/off")
 
@@ -503,6 +586,17 @@ def main(argv=None):
     s.add_argument("key", nargs="?", choices=["darkness", "paper-speed"])
     s.add_argument("value", nargs="?")
     s.set_defaults(fn=cmd_settings)
+
+    s = sub.add_parser("bench", help="time short strips at a few darkness levels to learn the real speed",
+                       description="Prints one short strip per darkness level (about 3-4 cm each, "
+                                   "blank feed only after the last), times each, learns the speed "
+                                   "for that level and shows how much darkness slows the printer.")
+    s.add_argument("--darkness", default="lightest,normal,darkest",
+                   help="comma-separated levels or energies, or 'all' (default: lightest,normal,darkest)")
+    s.add_argument("--mm", type=float, default=30, help="length of each strip's pattern, at least 20 (default 30)")
+    s.add_argument("--black", type=float, default=50, help="%% of dots black in the pattern (default 50)")
+    queue_args(s)
+    s.set_defaults(fn=cmd_bench)
 
     s = sub.add_parser("preview", help="save a PNG of exactly what would print (no printer needed)")
     s.add_argument("file", nargs="?")

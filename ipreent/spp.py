@@ -145,10 +145,13 @@ class SppPrinter:
     async def request(self, cmd, timeout=2.0):
         return await asyncio.to_thread(self._request_blocking, cmd, timeout)
 
-    async def wait_done(self, timeout=60.0):
+    async def wait_done(self, timeout=60.0, interval=0.5):
+        """Poll state until the printer stops reporting 'printing' (busy_seen: it ever did)."""
         end = time.monotonic() + timeout
+        self.busy_seen = False
         while time.monotonic() < end:
             st = await self.request(protocol.CMD_GET_STATE)
             if st is None or not (st[0] & 0x80):
                 return st
-            await asyncio.sleep(0.5)
+            self.busy_seen = True
+            await asyncio.sleep(interval)

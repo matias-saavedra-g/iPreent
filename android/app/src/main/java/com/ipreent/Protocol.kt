@@ -86,14 +86,33 @@ object Protocol {
     fun defaultFeed(dpi: Int) = (if (dpi == 300) 72 else 48) * 2
 
     // ---- how long a print takes (port of the same block in protocol.py) ----
-    /** The listing says "40 ppm"; a roll has no pages, so read as 40 mm/s. Learnt from real prints after that. */
-    const val SPEC_MM_PER_S = 40.0
+    /** Starting guess: 15 mm/s at the lightest heat (spec sheets of these printers say 10-15 mm/s; the
+     *  listing's "40 ppm" was far too fast). Darker levels start slower, in proportion to the energy. */
+    const val SPEC_MM_PER_S = 15.0
+    const val REF_ENERGY = 5000
     const val CONNECT_S = 3.0
     const val COPY_OVERHEAD_S = 1.0
-    const val MIN_MM_PER_S = 5.0
+    const val MIN_MM_PER_S = 2.0
     const val MAX_MM_PER_S = 100.0
 
     fun paperMm(lines: Int, dpi: Int) = lines * 25.4 / dpi
+
+    /** Paper speed at [energy] (0 = the printer's default, taken as [REF_ENERGY]). A learnt energy uses its
+     *  figure; one between two learnt energies interpolates their seconds per mm; any other is scaled from
+     *  the closest learnt energy (ties: the lower one), or from the starting guess. */
+    fun speedFor(energy: Int, learnt: Map<Int, Double> = emptyMap()): Double {
+        val e = if (energy == 0) REF_ENERGY else energy
+        learnt[e]?.let { return it }
+        val lo = learnt.keys.filter { it < e }.maxOrNull()
+        val hi = learnt.keys.filter { it > e }.minOrNull()
+        if (lo != null && hi != null) {
+            val f = (e - lo).toDouble() / (hi - lo)
+            return (1 / ((1 - f) / learnt.getValue(lo) + f / learnt.getValue(hi))).coerceIn(MIN_MM_PER_S, MAX_MM_PER_S)
+        }
+        val e0 = learnt.keys.minWithOrNull(compareBy<Int>({ kotlin.math.abs(it - e) }, { it })) ?: REF_ENERGY
+        val v0 = learnt[e0] ?: SPEC_MM_PER_S
+        return (v0 * e0 / e).coerceIn(MIN_MM_PER_S, MAX_MM_PER_S)
+    }
 
     /** Seconds from pressing Print to the paper coming out, for [lines] rows of dots. */
     fun estimateSeconds(lines: Int, dpi: Int = 200, copies: Int = 1, mmPerS: Double = SPEC_MM_PER_S,
@@ -102,13 +121,27 @@ object Protocol {
         return (if (connect) CONNECT_S else 0.0) + maxOf(1, copies) * perCopy
     }
 
-    /** Blend one timed print (connection excluded) into the known speed; prints under 20 mm are ignored. */
-    fun learnSpeed(old: Double, lines: Int, dpi: Int, copies: Int, seconds: Double, feed: Int? = null, alpha: Double = 0.3): Double {
+    /** mm/s shown by one timed print (connection excluded), or null if under 20 mm or nonsense. */
+    fun measuredSpeed(lines: Int, dpi: Int, copies: Int, seconds: Double, feed: Int? = null): Double? {
         val mm = maxOf(1, copies) * paperMm(lines + (feed ?: defaultFeed(dpi)), dpi)
         val moving = seconds - maxOf(1, copies) * COPY_OVERHEAD_S
-        if (mm < 20 || moving <= 0) return old
-        val measured = (mm / moving).coerceIn(MIN_MM_PER_S, MAX_MM_PER_S)
+        if (mm < 20 || moving <= 0) return null
+        return (mm / moving).coerceIn(MIN_MM_PER_S, MAX_MM_PER_S)
+    }
+
+    /** Blend one timed print (connection excluded) into the known speed. */
+    fun learnSpeed(old: Double, lines: Int, dpi: Int, copies: Int, seconds: Double, feed: Int? = null, alpha: Double = 0.3): Double {
+        val measured = measuredSpeed(lines, dpi, copies, seconds, feed) ?: return old
         return old + alpha * (measured - old)
+    }
+
+    /** Speeds per energy after one timed print at [energy]: the first replaces the guess, later ones blend 30 %. */
+    fun learnSpeeds(learnt: Map<Int, Double>, energy: Int, lines: Int, dpi: Int, copies: Int, seconds: Double,
+                    feed: Int? = null): Map<Int, Double> {
+        val e = if (energy == 0) REF_ENERGY else energy
+        val measured = measuredSpeed(lines, dpi, copies, seconds, feed) ?: return learnt
+        val old = learnt[e]
+        return learnt + (e to if (old == null) measured else old + 0.3 * (measured - old))
     }
 
     /** 0:07, 1:30, 12:05; rounded up so a countdown never shows 0:00 before it's done. */

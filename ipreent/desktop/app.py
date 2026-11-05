@@ -750,6 +750,17 @@ class MainWindow(QMainWindow):
         n = self.copies.value()
         self.print_btn.setText("Print" if n == 1 else f"Print {n} copies")
         self.print_btn.setEnabled(bool(self.rows))
+        self.update_length()
+
+    def update_length(self):
+        """Paper and time under the preview; follows copies and darkness (darker prints slower)."""
+        m = getattr(self, "_preview_model", None)
+        if not self.rows or m is None:
+            return
+        n = self.copies.value()
+        mm = len(self.rows) * 25.4 / m.dpi * n
+        secs = api.estimate(len(self.rows), m, n, energy=self.energy())
+        self.length.setText(f"About {mm:.0f} mm of paper, {protocol.format_eta(secs)} to print")
 
     # -- content --
 
@@ -845,9 +856,8 @@ class MainWindow(QMainWindow):
             self.paper.setPixmap(QPixmap.fromImage(qimage_from_rows(self.rows, m.width)))
             mm = len(self.rows) * 25.4 / m.dpi
             self.caption.setText(f"{m.width} × {len(self.rows)} dots · {m.width * 25.4 / m.dpi:.0f} × {mm:.0f} mm")
-            secs = api.estimate(len(self.rows), m, self.copies.value())
-            self.length.setText(f"About {mm * self.copies.value():.0f} mm of paper, "
-                                f"{protocol.format_eta(secs)} to print")
+            self._preview_model = m
+            self.update_length()
         else:
             self.paper.setPixmap(QPixmap())
             self.paper.setText("Preview appears here")

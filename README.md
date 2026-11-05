@@ -36,9 +36,11 @@ These printers don't show that they're working unless you look at the paper slot
 - Pressing **Print** sends a little paper slip flying into the queue, and the queue shows a countdown.
 - Pressing Print again while something is still printing asks first: *The printer is busy: “Photo” is printing,
   about 0:12 left. Add “Note” to the queue? It should start in about 0:12.*
-- Times come from the paper length. The starting speed is the listing's "40 ppm", read as 40 mm/s (a roll has no
-  pages); each finished print is timed and the speed is adjusted towards what your printer really does.
-  The command line and the Windows app share what they've learnt on the same PC.
+- Times come from the paper length and the darkness: darker prints take longer, because the head heats each line
+  for longer. The starting guess is 15 mm/s at the lightest darkness, slower in proportion to the heat (the
+  listing's "40 ppm" turned out far too fast). Each finished print is timed and learnt for the darkness it used.
+  The command line and the Windows app share what they've learnt on the same PC; `ipreent settings` shows the
+  speed at each darkness, and `ipreent bench` measures it on about 11 cm of paper.
 - The command line and the Windows app also wait for each other instead of fighting over the Bluetooth
   connection (`ipreent queue` shows what the other one is printing).
 
@@ -122,6 +124,7 @@ ipreent forget                      # forget the remembered printer
 ipreent                             # overview: printer, settings, queue, most used commands
 ipreent queue --watch               # what is printing (here or in the Windows app) and the time left
 ipreent settings darkness darker    # default darkness; `ipreent settings` lists all settings
+ipreent bench                       # time short strips at 3 darkness levels to learn the real speed
 ipreent receipt -b "My shop" -i "Coffee" 1800 2 -i "Bread" 1.200   # see Receipts below
 ```
 Options can go before or after the command (`ipreent text hi --ble`).

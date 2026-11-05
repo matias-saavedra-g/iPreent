@@ -92,17 +92,50 @@ def default_feed(dpi):
 
 
 # ---- how long a print takes ------------------------------------------------------------------
-# The listing says "40 ppm". A roll has no page size, so this is read as 40 mm of paper per
-# second (57 mm printers are sold at 30-90 mm/s). It is only the starting guess: each finished
-# print is timed and learn_speed() moves the figure towards what the printer really does.
-SPEC_MM_PER_S = 40.0
+# The listing says "40 ppm", read at first as 40 mm/s, but real prints were far slower. Spec sheets
+# for these 57 mm pocket printers say 10-15 mm/s, so the starting guess is 15 mm/s at the lightest
+# heat (energy 5000, the vendor app's own setting for the SC03h). More heat means the head has to
+# burn each line for longer, so until a darkness level has been timed its speed is scaled from the
+# nearest timed level (or the guess) as if print time grew in proportion to the energy.
+# Each finished print is timed and learnt for the energy it used (learn_speeds).
+SPEC_MM_PER_S = 15.0
+REF_ENERGY = 5000
 CONNECT_S = 3.0          # Bluetooth connect + service discovery, once per job
 COPY_OVERHEAD_S = 1.0    # waiting for the printer to report it has finished, per copy
-MIN_MM_PER_S, MAX_MM_PER_S = 5.0, 100.0
+MIN_MM_PER_S, MAX_MM_PER_S = 2.0, 100.0
 
 
 def paper_mm(lines, dpi):
     return lines * 25.4 / dpi
+
+
+def _clamp_speed(v):
+    return min(MAX_MM_PER_S, max(MIN_MM_PER_S, v))
+
+
+def speed_for(energy, learnt=None):
+    """Paper speed in mm/s at `energy` (0/None = the printer's own default, taken as REF_ENERGY).
+
+    learnt: {energy: mm/s} from timed prints. An energy with its own figure uses it; one between
+    two learnt energies interpolates their seconds per mm; any other is scaled from the closest
+    learnt energy (ties: the lower one), or from the starting guess.
+    """
+    energy = energy or REF_ENERGY
+    learnt = learnt or {}
+    if energy in learnt:
+        return learnt[energy]
+    below = [e for e in learnt if e < energy]
+    above = [e for e in learnt if e > energy]
+    if below and above:
+        lo, hi = max(below), min(above)
+        f = (energy - lo) / (hi - lo)
+        return _clamp_speed(1 / ((1 - f) / learnt[lo] + f / learnt[hi]))
+    if learnt:
+        e0 = min(learnt, key=lambda e: (abs(e - energy), e))
+        v0 = learnt[e0]
+    else:
+        e0, v0 = REF_ENERGY, SPEC_MM_PER_S
+    return _clamp_speed(v0 * e0 / energy)
 
 
 def estimate_seconds(lines, dpi=200, copies=1, mm_per_s=SPEC_MM_PER_S, feed=None, connect=True):
@@ -112,8 +145,8 @@ def estimate_seconds(lines, dpi=200, copies=1, mm_per_s=SPEC_MM_PER_S, feed=None
     return (CONNECT_S if connect else 0.0) + max(1, copies) * per_copy
 
 
-def learn_speed(old, lines, dpi, copies, seconds, feed=None, alpha=0.3):
-    """Blend one timed print (connection excluded) into the known speed in mm/s.
+def measured_speed(lines, dpi, copies, seconds, feed=None):
+    """mm/s shown by one timed print (connection excluded), or None if it can't tell.
 
     Short prints are mostly fixed overhead, so anything under 20 mm of paper is ignored.
     """
@@ -121,9 +154,28 @@ def learn_speed(old, lines, dpi, copies, seconds, feed=None, alpha=0.3):
     mm = max(1, copies) * paper_mm(lines + feed, dpi)
     moving = seconds - max(1, copies) * COPY_OVERHEAD_S
     if mm < 20 or moving <= 0:
-        return old
-    measured = min(MAX_MM_PER_S, max(MIN_MM_PER_S, mm / moving))
-    return old + alpha * (measured - old)
+        return None
+    return _clamp_speed(mm / moving)
+
+
+def learn_speed(old, lines, dpi, copies, seconds, feed=None, alpha=0.3):
+    """Blend one timed print (connection excluded) into the known speed in mm/s."""
+    measured = measured_speed(lines, dpi, copies, seconds, feed)
+    return old if measured is None else old + alpha * (measured - old)
+
+
+def learn_speeds(learnt, energy, lines, dpi, copies, seconds, feed=None):
+    """New {energy: mm/s} after one timed print at `energy`.
+
+    The first timed print at an energy replaces the guess; later ones are blended in (30 %).
+    """
+    energy = energy or REF_ENERGY
+    learnt = dict(learnt or {})
+    measured = measured_speed(lines, dpi, copies, seconds, feed)
+    if measured is not None:
+        old = learnt.get(energy)
+        learnt[energy] = measured if old is None else old + 0.3 * (measured - old)
+    return learnt
 
 
 def format_eta(seconds):

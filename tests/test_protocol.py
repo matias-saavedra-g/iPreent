@@ -31,19 +31,48 @@ def test_notification_parse():
 
 
 def test_print_time_estimate():
-    # 400 lines + 96 feed at 200 dpi = 62.99 mm; at 40 mm/s = 1.575 s, +1 s per copy, +3 s connect.
-    assert round(p.estimate_seconds(400, 200), 3) == 5.575
-    assert round(p.estimate_seconds(400, 200, copies=2, connect=False), 3) == 5.150
+    # 400 lines + 96 feed at 200 dpi = 62.99 mm; at 15 mm/s = 4.199 s, +1 s per copy, +3 s connect.
+    assert round(p.estimate_seconds(400, 200), 3) == 8.199
+    assert round(p.estimate_seconds(400, 200, copies=2, connect=False), 3) == 10.399
     assert round(p.estimate_seconds(0, 200, mm_per_s=20), 3) == 4.610
     assert p.estimate_seconds(400, 200, copies=0) == p.estimate_seconds(400, 200)
 
 
+def test_speed_for_energy():
+    # Nothing learnt: 15 mm/s at energy 5000, slower in proportion to the heat.
+    assert p.speed_for(5000) == 15.0
+    assert p.speed_for(None) == p.speed_for(0) == 15.0
+    assert round(p.speed_for(8000), 3) == 9.375
+    assert round(p.speed_for(17000), 3) == 4.412
+    assert p.speed_for(500000) == p.MIN_MM_PER_S                      # clamped
+    # Learnt levels are used as they are, levels between two are interpolated (seconds per mm),
+    # others scale from the closest one.
+    learnt = {8000: 12.0, 12000: 10.0}
+    assert p.speed_for(8000, learnt) == 12.0
+    assert round(p.speed_for(5000, learnt), 3) == 19.2                # 12 * 8000 / 5000
+    assert round(p.speed_for(17000, learnt), 3) == 7.059              # 10 * 12000 / 17000
+    assert round(p.speed_for(10000, learnt), 3) == 10.909             # 1 / mean(1/12, 1/10)
+    assert round(p.speed_for(9000, {5000: 14.0, 17000: 8.0}), 3) == 11.2
+
+
 def test_learn_speed():
     # 1600 + 96 lines = 215.39 mm took 11 s (10 s moving): measured 21.54 mm/s, blended 30% into 40.
+    assert round(p.measured_speed(1600, 200, 1, 11.0), 3) == 21.539
     assert round(p.learn_speed(40.0, 1600, 200, 1, 11.0), 3) == 34.462
     assert p.learn_speed(40.0, 10, 200, 1, 9.0) == 40.0          # too short to tell
     assert p.learn_speed(40.0, 1600, 200, 1, 0.5) == 40.0        # nonsense timing
-    assert p.learn_speed(40.0, 1600, 200, 1, 1000.0) == 40.0 + 0.3 * (5.0 - 40.0)   # clamped
+    assert p.learn_speed(40.0, 1600, 200, 1, 1000.0) == 40.0 + 0.3 * (2.0 - 40.0)   # clamped
+
+
+def test_learn_speeds_per_energy():
+    # The first timed print at a level replaces the guess; the next ones blend in 30%.
+    one = p.learn_speeds({}, 8000, 1600, 200, 1, 11.0)
+    assert list(one) == [8000] and round(one[8000], 3) == 21.539
+    two = p.learn_speeds(one, 8000, 1600, 200, 1, 21.0)              # 20 s moving: 10.77 mm/s
+    assert round(two[8000], 3) == round(21.539 + 0.3 * (10.770 - 21.539), 3)
+    assert p.learn_speeds(one, 8000, 10, 200, 1, 9.0) == one          # too short: unchanged
+    assert set(p.learn_speeds(one, 17000, 1600, 200, 1, 31.0)) == {8000, 17000}
+    assert list(p.learn_speeds({}, 0, 1600, 200, 1, 11.0)) == [p.REF_ENERGY]
 
 
 def test_format_eta():
