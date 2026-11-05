@@ -107,7 +107,7 @@ jobs:
         run: |
           name="ipreent-cli-${VERSION}"
           mkdir -p "stage/$name" out
-          cp -r ipreent pyproject.toml README.md PROTOCOL.md "stage/$name/"
+          cp -r ipreent pyproject.toml README.md PROTOCOL.md LICENSE "stage/$name/"
           cp tools/cli-install.txt "stage/$name/INSTALL.txt"
           (cd stage && zip -qr "../out/$name.zip" "$name" -x "*/__pycache__/*")
       - uses: actions/upload-artifact@v7

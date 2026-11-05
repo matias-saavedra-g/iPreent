@@ -322,3 +322,6 @@ Robolectric test (home, busy home, tool screen, printer sheet, busy dialog, queu
   `MANUAL_DEBUGGING.md` logs.
 - New docs: `docs/ARCHITECTURE.md` (module map, twins, state locations), `docs/RELEASES.md` (the three downloads),
   `SECURITY.md`. CLAUDE.md now points to them; its release section was shortened to the pitfalls.
+
+### v0.5.0 (2026-11-05, later)
+- MIT license added (LICENSE, pyproject, README; the CLI zip now includes it). Version 0.5.0, versionCode 4. Release started with a manual workflow run.

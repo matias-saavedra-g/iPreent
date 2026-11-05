@@ -2,7 +2,14 @@
 
 Each `## vX.Y.Z` section becomes the notes of that GitHub Release.
 
-## Unreleased
+## v0.5.0
+**Downloads**
+- `iPreent-v0.5.0.apk`: Android app (Android 8+). Installs over v0.4.1. Also available through Obtainium (see README).
+- `iPreent-v0.5.0-portable.exe`: Windows app. One file, no install, no Python.
+- `ipreent-cli-v0.5.0.zip`: command line for Windows, Linux and macOS. Needs Python 3.10+; see `INSTALL.txt`.
+
+iPreent is now open source under the MIT license.
+
 **See that it's printing, and don't print twice by accident** (all versions): pressing Print sends a paper slip
 flying into the queue, the queue counts down the time left, and pressing Print again while something is printing
 asks before adding it to the queue. Print times start from the printer's 40 mm/s and learn your printer's real
@@ -16,6 +23,8 @@ overview with the most used commands.
 
 **Printer settings are easier to find**: the printer button has a gear and opens a settings sheet (Android) or
 menu (Windows card) with darkness, status and battery, find/change and forget. CLI: `ipreent settings`.
+
+**Security**: the Windows HTTP API (local mode) now refuses requests from web pages, so a website can't print on your printer.
 
 ## v0.4.1
 The Android app is now signed with the permanent iPreent release key, so from this version on each new APK

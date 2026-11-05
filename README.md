@@ -182,3 +182,6 @@ Full map, shared logic between the apps and where each app keeps its settings: [
 - `ipreent/desktop/` – Windows app (PySide6): `app.py` window + tray, `worker.py` Bluetooth thread, `spool.py` print-dialog printer, `server.py` HTTP API
 - `tools/build_windows.py` – builds `dist/iPreent.exe` (PyInstaller)
 - `tools/extract_models.py` – regenerate `models.json` from a jadx decompile
+
+## License
+[MIT](LICENSE). `models.json` holds printer parameters read from the vendor app for interoperability.
