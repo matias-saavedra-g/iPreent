@@ -20,7 +20,8 @@ Query options for every print: dither=atkinson|floyd|threshold, darkness=1..5, c
 pages=1-2,5, trim=0|1, rotate=0|1, brightness=-50..50, contrast=50..200, wait=1 (answer when printed).
 
 Off the local machine (bind 0.0.0.0) every request needs the token: "Authorization: Bearer <token>"
-or ?token=<token>.
+or ?token=<token>. Local-only mode needs no token but refuses requests from web pages (an Origin header) and
+any Host other than localhost (DNS rebinding), so a website can't make the printer print.
 """
 import hmac
 import io
@@ -119,6 +120,14 @@ class _Handler(BaseHTTPRequestHandler):
 
     def _auth(self, q):
         if self.api.local_only:
+            # No token on this machine, so make sure the caller really is a program here, not a web page:
+            # browsers add Origin to cross-site requests (a page could otherwise POST /text and print), and
+            # a Host that isn't localhost means DNS rebinding. curl, Python and scripts send neither.
+            host = (self.headers.get("Host") or "localhost").rsplit(":", 1)[0].strip("[]").lower()
+            if host not in ("127.0.0.1", "localhost", "::1"):
+                raise ApiError(403, f"refused: Host {host!r} is not this computer")
+            if self.headers.get("Origin") or self.headers.get("Sec-Fetch-Site") in ("cross-site", "same-site"):
+                raise ApiError(403, "refused: requests from web pages need LAN mode and the token")
             return
         given = self.headers.get("Authorization", "").removeprefix("Bearer ").strip() or q.get("token", "")
         if not hmac.compare_digest(given.encode(), self.api.token.encode()):

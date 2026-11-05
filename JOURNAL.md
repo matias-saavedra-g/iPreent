@@ -303,3 +303,22 @@ Robolectric test (home, busy home, tool screen, printer sheet, busy dialog, queu
 - [ ] Time a few real prints on the SC03h and check the learnt speed settles (and whether darkness changes it a lot;
       if so, learn one speed per darkness level).
 - [ ] Check the Segoe glyph code points render as intended on Windows 10 and 11 (banner = Flag E7C1, barcode = Tag E8EC).
+
+### Obtainium, pre-public audit, docs for future sessions (2026-11-05, later)
+- User asked for an Obtainium link in the README, an audit to decide whether the repo can go public, and docs that
+  explain each release so later sessions don't have to analyse the code; then merge everything into `main`.
+- Obtainium: same pattern as the user's `claude-usage-widget` README, the redirect badge
+  `https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/matias-saavedra-g/iPreent`
+  (format from wiki.obtainium.imranr.dev/deep_links). Works without a token only once the repo is **public**.
+- Audit (details in SECURITY.md): no secrets in any commit or file ever committed (keys, keystores, passwords,
+  tokens, `.env`, `local.properties`); the removed Kotlin error log only had proxy settings; the release workflow
+  can't be triggered by forks and doesn't splice `${{ }}` into scripts. GitHub's secret-scanning tool isn't
+  available while the repo is private (no Advanced Security), so the scan was done with git grep over all commits.
+- **Fixed**: the local HTTP API (no token on 127.0.0.1) accepted requests from any web page, so a site could POST
+  `/text` and print, or read `/status` through DNS rebinding. Local mode now refuses an `Origin` header,
+  `Sec-Fetch-Site: cross-site/same-site`, and any `Host` other than localhost. Test added.
+- Left for the owner to decide: no LICENSE file (public without one = all rights reserved); `models.json` comes
+  from the decompiled vendor app (parameters only, for interoperability); Windows username and printer MAC in
+  `MANUAL_DEBUGGING.md` logs.
+- New docs: `docs/ARCHITECTURE.md` (module map, twins, state locations), `docs/RELEASES.md` (the three downloads),
+  `SECURITY.md`. CLAUDE.md now points to them; its release section was shortened to the pitfalls.

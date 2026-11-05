@@ -8,8 +8,17 @@ No login, no internet, no vendor server. Protocol notes: [PROTOCOL.md](PROTOCOL.
 
 ## Downloads
 Ready-made builds are on the [Releases page](https://github.com/matias-saavedra-g/iPreent/releases/latest):
-the Android APK, the portable Windows exe and a zip of the command-line version. Pushing a `v*` tag builds and
-publishes them (`.github/workflows/release.yml`; notes come from `CHANGELOG.md`).
+the Android APK, the portable Windows exe and a zip of the command-line version. How each one is built, signed
+and updated: [docs/RELEASES.md](docs/RELEASES.md).
+
+### Android: install and update with Obtainium
+[Obtainium](https://github.com/ImranR98/Obtainium) installs the APK straight from GitHub Releases and tells you
+when there's a new version. With Obtainium installed, tap:
+
+[<img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="54">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/matias-saavedra-g/iPreent)
+
+Or open Obtainium, tap **Add app** and paste `https://github.com/matias-saavedra-g/iPreent` as the source URL.
+Each release also has a Windows exe and a zip; Obtainium only takes the `.apk`.
 
 ## Android app
 `iPreent-vX.Y.Z.apk` from the Releases page (Android 8+). Material You colours, light/dark from the system.
@@ -53,7 +62,8 @@ These printers don't show that they're working unless you look at the paper slot
 
 ### API: print from your own code
 The API is off by default. Turn it on from the tray menu (*HTTP API*) or *API settings…*; it then listens on
-**http://127.0.0.1:8787** while the app is open.
+**http://127.0.0.1:8787** while the app is open. Programs on this PC need no token, but requests from web pages
+(browsers add an `Origin` header) are refused, so a website can't print on your printer. See [SECURITY.md](SECURITY.md).
 Tick *Allow other devices on my network* to reach it from other machines at `http://<this PC's IP>:8787`;
 then every request needs the token shown there (`Authorization: Bearer <token>` or `?token=`).
 Windows Firewall may ask once to allow it.
@@ -159,6 +169,7 @@ the reply adds `"number"` and `"total"`. Receipts always print sharp (no ditheri
 <br clear="right">
 
 ## Layout
+Full map, shared logic between the apps and where each app keeps its settings: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 - `ipreent/protocol.py` – frames, CRC, line encoding (pure, tested against vendor bytes)
 - `ipreent/models.py` + `models.json` – 187 model profiles taken from the vendor app
 - `ipreent/imaging.py` – image/text → 1-bit rows

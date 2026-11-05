@@ -84,3 +84,15 @@ def test_receipt_endpoint(server):
     assert queued[0][0] == "API receipt $3.600" and queued[0][1][0][0].width == 384
     assert call(port, "/receipt", b'{"items": []}')[0] == 400
     assert call(port, "/receipt", b"not json")[0] == 400
+
+
+def test_local_mode_refuses_web_pages_and_rebinding(server):
+    s, queued = server
+    assert s.start("127.0.0.1", 0, "tok")
+    port = s.httpd.server_address[1]
+    code, err = call(port, "/text", b"drive-by", {"Origin": "https://evil.example"})
+    assert code == 403 and "web pages" in err["error"]
+    code, _ = call(port, "/status", None, {"Host": "evil.example:8787"})
+    assert code == 403
+    code, _ = call(port, "/text", b"script", {"Host": f"localhost:{port}"})
+    assert code == 200 and len(queued) == 1
