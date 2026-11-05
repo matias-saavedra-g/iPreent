@@ -40,7 +40,7 @@ object Sources {
         val type = ctx.contentResolver.getType(uri).orEmpty()
         return when {
             type == "application/pdf" || uri.path.orEmpty().endsWith(".pdf", true) ->
-                Loaded.Pages(ctx.contentResolver.openFileDescriptor(uri, "r")!!.use { pdfPages(it, width) })
+                Loaded.Pages(ctx.contentResolver.openFileDescriptor(uri, "r")!!.use { pdfPages(it, width) }, document = true)
             type.startsWith("text/") ->
                 Loaded.Text(ctx.contentResolver.openInputStream(uri)!!.bufferedReader().readText())
             else -> Loaded.Pages(listOf(image(ctx, uri)))
@@ -48,7 +48,8 @@ object Sources {
     }
 
     sealed interface Loaded {
-        data class Pages(val bitmaps: List<Bitmap>) : Loaded
+        /** [document]: PDF pages (print sharp by default) rather than a picture. */
+        data class Pages(val bitmaps: List<Bitmap>, val document: Boolean = false) : Loaded
         data class Text(val text: String) : Loaded
     }
 }

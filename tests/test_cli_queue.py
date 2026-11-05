@@ -1,0 +1,94 @@
+"""CLI and the print lock: --no-wait gives up, --yes queues behind the other program, ETA shown."""
+import asyncio
+import threading
+
+import pytest
+
+from ipreent import api, busy, cli, config
+
+
+class FakePrinter:
+    sent = []
+
+    def __init__(self, model):
+        self.model = model
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *exc):
+        pass
+
+    async def send(self, data, progress=None):
+        FakePrinter.sent.append(len(data))
+        if progress:
+            progress(len(data), len(data))
+
+    async def wait_done(self):
+        await asyncio.sleep(0.01)
+
+    async def request(self, cmd):
+        return b"\x00"
+
+
+@pytest.fixture
+def printer(monkeypatch):
+    FakePrinter.sent = []
+    config.save(name="SC03h-5363", address="AA:BB", transport="ble")
+    monkeypatch.setattr(api, "_transport", lambda t, m, log: (FakePrinter(m), {"address": t.address}))
+    return FakePrinter
+
+
+def test_prints_with_estimate(printer, capsys):
+    cli.main(["text", "hello"])
+    err = capsys.readouterr().err
+    assert printer.sent and "about 0:0" in err and "left" in err
+    assert busy.current() is None                       # lock released afterwards
+    assert config.load_extra("usage")["text"] == 1.0
+
+
+def test_no_wait_gives_up_when_busy(printer):
+    other = busy.Lock()
+    other.acquire()
+    other.publish("photo.jpg", 30, "Windows app")
+    with pytest.raises(SystemExit) as e:
+        cli.main(["text", "hello", "--no-wait"])
+    assert 'Windows app is printing "photo.jpg"' in str(e.value)
+    assert not printer.sent
+    other.release()
+
+
+def test_yes_queues_behind_the_other_program(printer, capsys):
+    other = busy.Lock()
+    other.acquire()
+    other.publish("photo.jpg", 1, "Windows app")
+    threading.Timer(0.4, other.release).start()
+    cli.main(["text", "hello", "-y"])
+    err = capsys.readouterr().err
+    assert "Queued" in err and printer.sent
+
+
+def test_status_and_queue_do_not_connect_while_busy(printer, capsys):
+    other = busy.Lock()
+    other.acquire()
+    other.publish("ticket.pdf", 20, "Windows app", after=40, waiting=1)
+    cli.main(["status"])
+    cli.main(["queue"])
+    out = capsys.readouterr().out
+    assert out.count('printing "ticket.pdf"') == 2 and "1 more waiting" in out
+    assert "should be done in about 1:0" in out
+    assert not printer.sent
+    other.release()
+    cli.main(["queue"])
+    assert "Nothing is printing" in capsys.readouterr().out
+
+
+def test_settings_darkness_is_the_default(printer, capsys):
+    cli.main(["settings", "darkness", "darker"])
+    assert cli._default_energy() == 12000
+    cli.main(["settings"])
+    assert "darkness     darker" in capsys.readouterr().out
+    with pytest.raises(SystemExit):
+        cli.main(["settings", "paper-speed", "900"])
+    cli.main(["settings", "paper-speed", "25"])
+    assert api.known_speed() == 25

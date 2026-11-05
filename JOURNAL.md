@@ -240,3 +240,66 @@ density/`--energy` tuning, `status`. Next: phase 2 (Android), starting with the 
   (we're on 8.7.3) and likely a Kotlin bump too; that's a build-toolchain upgrade to do on its own and test, not
   inside a signing release. It's an info notice, the build is unaffected.
 - [ ] Upgrade Gradle 9 + AGP + Kotlin in a separate change (check the AGP/Gradle compatibility table first).
+
+## 2026-11-05
+
+### Busy printer, home screen, printer settings (all versions)
+User asked for three things in the CLI, the Windows app and the Android app:
+1. A confirmation when Print is pressed while the printer is already printing (you can't see it working unless
+   you look at the paper slot), an animation from Print to the queue, and a time estimate from the printer speed.
+2. A better layout than seven squeezed bottom tabs: research the best practice (scrolling tabs vs home screen),
+   give each feature a weight and order by likely use.
+3. Make the printer button read as settings (gear), again following best practice.
+
+**Research and decisions**
+- Material 3 / Android docs: a navigation bar is for **3–5 destinations of equal importance**
+  (developer.android.com/develop/ui/compose/components/navigation-bar); the old Material bottom-nav page says the
+  same and that scrollable bottom navigation isn't a pattern. Scrollable *tabs* are for content inside one screen,
+  not for app-level destinations. So: nav bar with **Create · Queue · History**, and Create is a home screen with
+  every tool on it. Queue is always one tap away (with a badge), which is what the user wanted.
+- Tool order: prior weights (photo .24, document .20, text .18, receipt .14, checklist .10, codes .08,
+  banner .06; Windows splits codes into QR .05 / barcode .03) plus decayed usage counts (×0.9 per use; prior ×10, so
+  counts can outweigh the guess after a habit forms). Adaptive-menu research (split menus: Sears & Shneiderman 1994;
+  Findlater & McGrenere 2004; Gajos et al. 2008) says moving items hurts unless predictions are good, and holding
+  updates back keeps things predictable. So the order is computed **once per app start**, the top two get big tiles,
+  and the rest stay in a stable grid. Photo and Document are now separate tools (user's suggestion): documents print
+  sharp (threshold) by default and aren't auto-rotated.
+- Printer settings: Android chip = printer icon + name + **gear** (M3 assist chip with trailing icon), opening a
+  modal bottom sheet (touch-friendly, room for a darkness slider and actions) instead of the old dropdown with radio
+  buttons. When no printer is set it says "Set up printer" on a tinted chip. Windows: the printer card has a gear
+  and the whole card is clickable (menu: darkness, status/battery, change, feed, forget). CLI: `ipreent settings`.
+  WinUI guidance favours a left NavigationView for top-level pages, which the Windows app already had; it now has
+  icons (Segoe Fluent/MDL2 glyphs) and the weighted order.
+- **"40 ppm"**: a roll has no page size, so it's read as 40 mm/s. Shops list 57 mm printers at 10–90 mm/s, so
+  this is only a starting point: every finished print (≥ 20 mm) is timed and blended in (30% per print,
+  clamped 5–100 mm/s). Estimate = 3 s connect + per copy (paper + 96-line feed) / speed + 1 s. CLI and Windows share
+  the learnt speed (`timing.json`); Android keeps its own. Shared test cases in `test_protocol.py` / `ProtocolTest.kt`.
+
+**What was built**
+- `ipreent/busy.py`: an OS lock on `print.lock` (fcntl / msvcrt, released by the OS if the program dies) plus
+  `busy.json` with label, start, estimate and what's queued behind. The CLI asks "Add this print to the queue?
+  [Y/n]" and waits with a countdown; `-y`, `--no-wait`; non-interactive runs just queue. The Windows worker holds
+  the lock while its queue has jobs, so the CLI waits for the whole Windows queue. `ipreent status` and
+  `ipreent queue [--watch|--json]` report the other program's job instead of trying to connect.
+- CLI: plain `ipreent` shows printer, settings, queue and the three most used commands (`features.CLI` + usage);
+  `--help` lists commands by weight. `ipreent settings darkness …` becomes the default `--energy`.
+- Windows: busy dialog (also when the CLI holds the lock), paper slip animated along an arc from Print to the queue
+  with the new row flashing, queue rows with "starts in" / "left" countdowns and a summary, paper length + time
+  under the preview, settings rows shown only for the modes they apply to. Saved mode moved from a row number to
+  a key (`mode_key`); old row numbers are mapped. Tray quick prints and HTTP API jobs queue without asking
+  (no window to ask in; scripts shouldn't block); `/jobs` replies include `"seconds"`.
+- Android: `Printers.queue` (waiting/connecting/printing/done/failed/cancelled, thumbnail, estimate, progress,
+  cancel waiting jobs), a "now printing" strip above the tools, the Queue screen, a busy dialog (it says "the printer
+  is free now" if the queue empties while it's open), a paper slip flying from Print to the Queue icon with a bounce,
+  and the estimate next to the copies counter. History reprints go through the same check and animation.
+
+**Checked**: pytest (40 pass; only the two known Linux failures); CLI prompt in a real pty; the Windows window
+driven offscreen (routing, busy dialog incl. a foreign lock holder, animation mid-flight, queue texts, gear menu,
+next-launch order); Android unit tests (15) + `assembleRelease`; Compose screens rendered with a temporary
+Robolectric test (home, busy home, tool screen, printer sheet, busy dialog, queue), removed afterwards.
+**Not tested on hardware, on Windows itself or on a phone yet**, so the speed estimate is unverified.
+
+### Open
+- [ ] Time a few real prints on the SC03h and check the learnt speed settles (and whether darkness changes it a lot;
+      if so, learn one speed per darkness level).
+- [ ] Check the Segoe glyph code points render as intended on Windows 10 and 11 (banner = Flag E7C1, barcode = Tag E8EC).

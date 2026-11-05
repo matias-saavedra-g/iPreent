@@ -2,6 +2,21 @@
 
 Each `## vX.Y.Z` section becomes the notes of that GitHub Release.
 
+## Unreleased
+**See that it's printing, and don't print twice by accident** (all versions): pressing Print sends a paper slip
+flying into the queue, the queue counts down the time left, and pressing Print again while something is printing
+asks before adding it to the queue. Print times start from the printer's 40 mm/s and learn your printer's real
+speed from each print. The command line asks `[Y/n]` (`-y` / `--no-wait` for scripts), has `ipreent queue`, and
+waits for the Windows app instead of failing to connect.
+
+**New home screen on Android**: three tabs (Create, Queue, History) instead of seven squeezed ones. Create shows
+every tool at once, the most used ones biggest; Photo and Document are now separate tools (documents print sharp).
+The Windows app gets the same Photo/Document split and orders its modes the same way. Plain `ipreent` now shows an
+overview with the most used commands.
+
+**Printer settings are easier to find**: the printer button has a gear and opens a settings sheet (Android) or
+menu (Windows card) with darkness, status and battery, find/change and forget. CLI: `ipreent settings`.
+
 ## v0.4.1
 The Android app is now signed with the permanent iPreent release key, so from this version on each new APK
 installs over the previous one and keeps your settings, queue and history.

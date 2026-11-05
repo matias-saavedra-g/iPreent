@@ -82,12 +82,47 @@ object Protocol {
         return frame(CMD_LINE_RAW, raw, newFormat)
     }
 
+    /** Blank lines fed after each print, as the vendor app does (two of its 'paper' feeds). */
+    fun defaultFeed(dpi: Int) = (if (dpi == 300) 72 else 48) * 2
+
+    // ---- how long a print takes (port of the same block in protocol.py) ----
+    /** The listing says "40 ppm"; a roll has no pages, so read as 40 mm/s. Learnt from real prints after that. */
+    const val SPEC_MM_PER_S = 40.0
+    const val CONNECT_S = 3.0
+    const val COPY_OVERHEAD_S = 1.0
+    const val MIN_MM_PER_S = 5.0
+    const val MAX_MM_PER_S = 100.0
+
+    fun paperMm(lines: Int, dpi: Int) = lines * 25.4 / dpi
+
+    /** Seconds from pressing Print to the paper coming out, for [lines] rows of dots. */
+    fun estimateSeconds(lines: Int, dpi: Int = 200, copies: Int = 1, mmPerS: Double = SPEC_MM_PER_S,
+                        feed: Int? = null, connect: Boolean = true): Double {
+        val perCopy = paperMm(lines + (feed ?: defaultFeed(dpi)), dpi) / mmPerS + COPY_OVERHEAD_S
+        return (if (connect) CONNECT_S else 0.0) + maxOf(1, copies) * perCopy
+    }
+
+    /** Blend one timed print (connection excluded) into the known speed; prints under 20 mm are ignored. */
+    fun learnSpeed(old: Double, lines: Int, dpi: Int, copies: Int, seconds: Double, feed: Int? = null, alpha: Double = 0.3): Double {
+        val mm = maxOf(1, copies) * paperMm(lines + (feed ?: defaultFeed(dpi)), dpi)
+        val moving = seconds - maxOf(1, copies) * COPY_OVERHEAD_S
+        if (mm < 20 || moving <= 0) return old
+        val measured = (mm / moving).coerceIn(MIN_MM_PER_S, MAX_MM_PER_S)
+        return old + alpha * (measured - old)
+    }
+
+    /** 0:07, 1:30, 12:05; rounded up so a countdown never shows 0:00 before it's done. */
+    fun formatEta(seconds: Double): String {
+        val s = maxOf(0, kotlin.math.ceil(seconds).toInt())
+        return "%d:%02d".format(s / 60, s % 60)
+    }
+
     fun printJob(rows: List<ByteArray>, model: Model, energy: Int? = null, mode: Int = MODE_IMAGE,
                  quality: Int = 0x33, feedAfter: Int? = null): ByteArray {
         val nf = model.newFormat
         val speed = if (mode == MODE_TEXT) model.textSpeed else model.imgSpeed
         val e = energy ?: model.energy
-        val feed = feedAfter ?: ((if (model.dpi == 300) 72 else 48) * 2)
+        val feed = feedAfter ?: defaultFeed(model.dpi)
         val out = ByteArrayOutputStream()
         out.write(frame(CMD_QUALITY, bytes(quality), nf))
         if (e != 0) out.write(frame(CMD_ENERGY, u16(e), nf))

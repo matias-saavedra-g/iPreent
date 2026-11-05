@@ -8,6 +8,7 @@
 import asyncio
 import contextlib
 import sys
+import time
 from dataclasses import dataclass, field
 
 from PIL import Image
@@ -136,12 +137,40 @@ def rows_for(items, width, dither=True):
 
 
 async def print_rows(p, rows, mode=protocol.MODE_IMAGE, copies=1, progress=None, energy=None,
-                     speed=None, feed=None):
+                     speed=None, feed=None, learn=True):
     job = protocol.print_job(rows, p.model, energy=energy, speed=speed, mode=mode, feed_after=feed)
+    t0 = time.monotonic()
     for _ in range(copies):
         await p.send(job, progress)
         await p.wait_done()
+    if learn:
+        learn_speed(len(rows), p.model, copies, time.monotonic() - t0, feed)
     return job
+
+
+# ---- print time ------------------------------------------------------------------------------
+
+def known_speed():
+    """Paper speed in mm/s: the listing's figure until real prints have been timed."""
+    try:
+        return float(config.load_extra("timing").get("mm_per_s", protocol.SPEC_MM_PER_S))
+    except (TypeError, ValueError):
+        return protocol.SPEC_MM_PER_S
+
+
+def estimate(lines, model, copies=1, connect=True, feed=None):
+    """Seconds this print should take, with the speed learnt so far."""
+    return protocol.estimate_seconds(lines, model.dpi, copies, known_speed(), feed, connect)
+
+
+def learn_speed(lines, model, copies, seconds, feed=None):
+    t = config.load_extra("timing")
+    new = protocol.learn_speed(known_speed(), lines, model.dpi, copies, seconds, feed)
+    try:
+        config.save_extra("timing", {"mm_per_s": round(new, 2), "prints": int(t.get("prints", 0)) + 1})
+    except OSError:
+        pass
+    return new
 
 
 async def status_async(p):

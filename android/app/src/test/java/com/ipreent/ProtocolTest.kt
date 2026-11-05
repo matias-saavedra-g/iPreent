@@ -39,4 +39,24 @@ class ProtocolTest {
         val m = Model.lookup(table, "SC03h-5363")
         assertEquals(listOf("SC03h", "384", "true", "180"), listOf(m.name, "${m.width}", "${m.rle}", "${m.mtu}"))
     }
+
+    // Same cases as tests/test_protocol.py
+    @Test fun printTimeEstimate() {
+        assertEquals(5.575, Protocol.estimateSeconds(400, 200), 1e-3)
+        assertEquals(5.150, Protocol.estimateSeconds(400, 200, copies = 2, connect = false), 1e-3)
+        assertEquals(4.610, Protocol.estimateSeconds(0, 200, mmPerS = 20.0), 1e-3)
+        assertEquals(Protocol.estimateSeconds(400, 200), Protocol.estimateSeconds(400, 200, copies = 0), 1e-9)
+    }
+
+    @Test fun learnSpeed() {
+        assertEquals(34.462, Protocol.learnSpeed(40.0, 1600, 200, 1, 11.0), 1e-3)
+        assertEquals(40.0, Protocol.learnSpeed(40.0, 10, 200, 1, 9.0), 1e-9)
+        assertEquals(40.0, Protocol.learnSpeed(40.0, 1600, 200, 1, 0.5), 1e-9)
+        assertEquals(40.0 + 0.3 * (5.0 - 40.0), Protocol.learnSpeed(40.0, 1600, 200, 1, 1000.0), 1e-9)
+    }
+
+    @Test fun formatEta() {
+        assertEquals(listOf("0:00", "0:01", "0:07", "1:00", "1:30", "12:05"),
+            listOf(0.0, 0.2, 7.0, 59.5, 90.0, 725.0).map { Protocol.formatEta(it) })
+    }
 }

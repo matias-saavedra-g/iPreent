@@ -28,3 +28,23 @@ def test_notification_parse():
     data = p.frame(0xA3, b"\x01") + p.frame(0xAE, b"\x10")
     assert p.parse_notification(data) == [(0xA3, b"\x01"), (0xAE, b"\x10")]
     assert p.describe_state(b"\x01") == "out of paper"
+
+
+def test_print_time_estimate():
+    # 400 lines + 96 feed at 200 dpi = 62.99 mm; at 40 mm/s = 1.575 s, +1 s per copy, +3 s connect.
+    assert round(p.estimate_seconds(400, 200), 3) == 5.575
+    assert round(p.estimate_seconds(400, 200, copies=2, connect=False), 3) == 5.150
+    assert round(p.estimate_seconds(0, 200, mm_per_s=20), 3) == 4.610
+    assert p.estimate_seconds(400, 200, copies=0) == p.estimate_seconds(400, 200)
+
+
+def test_learn_speed():
+    # 1600 + 96 lines = 215.39 mm took 11 s (10 s moving): measured 21.54 mm/s, blended 30% into 40.
+    assert round(p.learn_speed(40.0, 1600, 200, 1, 11.0), 3) == 34.462
+    assert p.learn_speed(40.0, 10, 200, 1, 9.0) == 40.0          # too short to tell
+    assert p.learn_speed(40.0, 1600, 200, 1, 0.5) == 40.0        # nonsense timing
+    assert p.learn_speed(40.0, 1600, 200, 1, 1000.0) == 40.0 + 0.3 * (5.0 - 40.0)   # clamped
+
+
+def test_format_eta():
+    assert [p.format_eta(s) for s in (0, 0.2, 7, 59.5, 90, 725)] == ["0:00", "0:01", "0:07", "1:00", "1:30", "12:05"]

@@ -11,12 +11,39 @@ Ready-made builds are on the [Releases page](https://github.com/matias-saavedra-
 the Android APK, the portable Windows exe and a zip of the command-line version. Pushing a `v*` tag builds and
 publishes them (`.github/workflows/release.yml`; notes come from `CHANGELOG.md`).
 
+## Android app
+`iPreent-vX.Y.Z.apk` from the Releases page (Android 8+). Material You colours, light/dark from the system.
+- **Create** (home): every tool on one screen. The two you're most likely to want get big tiles (Photo and
+  Document at first), the rest a compact grid. The order starts from fixed weights and slowly follows what you
+  actually print; it's only recalculated when the app starts, so tiles never move while you're looking.
+- **Queue**: what is printing and what's waiting, each with the time left, a progress bar and a button to remove a
+  waiting job. A badge shows how many jobs are open. **History**: everything printed, to reprint.
+- The **printer button** at the top right (name + gear) opens the printer settings: darkness, status and battery,
+  find printers, forget the printer.
+- Share a photo, PDF or text to iPreent from any app, or print from Chrome/Files with the iPreent print service.
+
+## Printing while the printer is busy
+These printers don't show that they're working unless you look at the paper slot, so every version tells you:
+- Pressing **Print** sends a little paper slip flying into the queue, and the queue shows a countdown.
+- Pressing Print again while something is still printing asks first: *The printer is busy: “Photo” is printing,
+  about 0:12 left. Add “Note” to the queue? It should start in about 0:12.*
+- Times come from the paper length. The starting speed is the listing's "40 ppm", read as 40 mm/s (a roll has no
+  pages); each finished print is timed and the speed is adjusted towards what your printer really does.
+  The command line and the Windows app share what they've learnt on the same PC.
+- The command line and the Windows app also wait for each other instead of fighting over the Bluetooth
+  connection (`ipreent queue` shows what the other one is printing).
+
 ## Windows app (portable)
 `dist/iPreent.exe` is one file, no install and no Python needed. Build it with
 `pip install -e .[desktop] pyinstaller` then `python tools/build_windows.py`
 (or run it from source with `ipreent-desktop`).
 - Fluent look (Windows 11 style, Mica, system accent); follows the light/dark setting live.
-- Drop or paste images, PDFs and text; also text, checklist, banner, QR, barcode and **receipt** modes, with an exact preview.
+- **Photo** and **Document** modes (pictures dithered; PDFs and text sharp by default), plus text, checklist,
+  banner, QR, barcode and **receipt** modes, with an exact preview, paper length and print time. The mode list is
+  ordered by how likely you are to use it (same weights as the phone).
+- The printer card at the top left (or its gear) opens the printer settings: darkness, status and battery,
+  change printer, feed paper, forget.
+- The queue shows each job's countdown; pressing Print while something prints asks before queueing.
 - Dithering (Atkinson, Floyd–Steinberg, sharp), darkness, brightness, contrast, pages, copies, margin trim.
 - Tray menu: print clipboard (**Ctrl+Alt+P** anywhere), print file, quick note, feed paper, start with Windows.
 - **Print from any app**: tray menu › *Add “iPreent” to print dialogs* (one admin prompt). This adds a printer
@@ -43,7 +70,7 @@ curl -X POST localhost:8787/receipt -H "Content-Type: application/json" \
      -d '{"business":"My shop","items":[{"name":"Coffee","price":1800,"qty":2}]}'   # see Receipts
 curl -X POST "localhost:8787/feed?lines=100"
 curl localhost:8787/status        # printer + queue
-curl localhost:8787/jobs/3        # queued | printing | done | failed
+curl localhost:8787/jobs/3        # queued | printing | done | failed, "seconds": time estimate
 ```
 ```python
 import requests
@@ -82,9 +109,14 @@ ipreent status --json               # state + battery, machine-readable
 ipreent feed 100                    # feed blank paper
 ipreent preview doc.pdf             # PNG of exactly what would print (no printer needed)
 ipreent forget                      # forget the remembered printer
+ipreent                             # overview: printer, settings, queue, most used commands
+ipreent queue --watch               # what is printing (here or in the Windows app) and the time left
+ipreent settings darkness darker    # default darkness; `ipreent settings` lists all settings
 ipreent receipt -b "My shop" -i "Coffee" 1800 2 -i "Bread" 1.200   # see Receipts below
 ```
 Options can go before or after the command (`ipreent text hi --ble`).
+If the printer is busy, it asks *Add this print to the queue? [Y/n]* and waits its turn with a countdown;
+`-y` queues without asking (scripts and pipes never get asked), `--no-wait` gives up instead.
 Common options: `-n 3` copies, `--size 40` bigger text, `--energy` darker/lighter, `--speed`.
 
 ### From Python
@@ -132,7 +164,9 @@ the reply adds `"number"` and `"total"`. Receipts always print sharp (no ditheri
 - `ipreent/imaging.py` – image/text → 1-bit rows
 - `ipreent/receipt.py` – receipts: CLP prices, totals, layout (`android/.../Receipt.kt` draws the same)
 - `ipreent/ble.py` / `spp.py` – Bluetooth LE and Bluetooth serial transports
-- `ipreent/api.py` – discovery, remembered printer, job building; `cli.py` on top
+- `ipreent/api.py` – discovery, remembered printer, job building, print-time estimate; `cli.py` on top
+- `ipreent/busy.py` – one print at a time across programs (OS file lock + `busy.json` describing the job)
+- `ipreent/features.py` – tool weights and usage counts that order the home screens (`android/.../Features.kt`)
 - `ipreent/convert.py` – file type detection, PDF rendering (pypdfium2)
 - `ipreent/desktop/` – Windows app (PySide6): `app.py` window + tray, `worker.py` Bluetooth thread, `spool.py` print-dialog printer, `server.py` HTTP API
 - `tools/build_windows.py` – builds `dist/iPreent.exe` (PyInstaller)

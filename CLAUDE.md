@@ -7,12 +7,18 @@ Android app (`android/`, Kotlin + Compose). README.md has usage and layout; PROT
 - **JOURNAL.md** is the project log: add findings, decisions and open questions under today's date (newest at the
   bottom). Old entries say `freeprint`; that's history.
 - The Android app is a port of the Python code: `protocol.py` ↔ `Protocol.kt`, `imaging.py` ↔ `Imaging.kt`,
-  `receipt.py` ↔ `Receipt.kt`. Change both and keep the shared test cases in step (`tests/` ↔ `android/app/src/test`).
+  `receipt.py` ↔ `Receipt.kt`, `features.py` ↔ `Features.kt`. Change both and keep the shared test cases in step
+  (`tests/` ↔ `android/app/src/test`). Print-time estimates live in `protocol.py` / `Protocol.kt` too.
+- Python tests never touch the real config dir (`tests/conftest.py` points it at a temp dir); keep it that way, since
+  printing now writes `timing.json`, `usage.json` and the `print.lock` / `busy.json` pair there.
 - Tests: `pytest -q`. On Linux, `test_emoji_text_uses_emoji_font` (no emoji font) and `test_print_detects_image`
   (needs `winreg`) fail; that's expected. Android: `cd android && sh ./gradlew testDebugUnitTest assembleRelease`.
 - Cloud sessions have no Android SDK: install cmdline-tools into the scratchpad and point `android/local.properties`
   (git-ignored) at it. If Maven Central answers 429, pass a Gradle init script (`-I`) that adds
   `https://maven-central.storage-download.googleapis.com/maven2/` in `beforeSettings`. Don't commit that.
+- To look at Compose screens without a phone: a temporary Robolectric 4.14.1 test with `@GraphicsMode(NATIVE)`
+  that draws the root views to PNGs (make the composables `internal` for the run). Revert it all afterwards; never
+  commit the test or the dependency. Screens with indeterminate spinners render slowly (minutes).
 
 ## Releases
 `.github/workflows/release.yml` builds three files and publishes them as a GitHub Release:

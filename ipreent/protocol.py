@@ -86,12 +86,58 @@ def line_frame(row, allow_rle, new_format=False):
     return frame(CMD_LINE_RAW, raw, new_format)
 
 
+def default_feed(dpi):
+    """Blank lines fed after each print, as the vendor app does (two of its 'paper' feeds)."""
+    return (72 if dpi == 300 else 48) * 2
+
+
+# ---- how long a print takes ------------------------------------------------------------------
+# The listing says "40 ppm". A roll has no page size, so this is read as 40 mm of paper per
+# second (57 mm printers are sold at 30-90 mm/s). It is only the starting guess: each finished
+# print is timed and learn_speed() moves the figure towards what the printer really does.
+SPEC_MM_PER_S = 40.0
+CONNECT_S = 3.0          # Bluetooth connect + service discovery, once per job
+COPY_OVERHEAD_S = 1.0    # waiting for the printer to report it has finished, per copy
+MIN_MM_PER_S, MAX_MM_PER_S = 5.0, 100.0
+
+
+def paper_mm(lines, dpi):
+    return lines * 25.4 / dpi
+
+
+def estimate_seconds(lines, dpi=200, copies=1, mm_per_s=SPEC_MM_PER_S, feed=None, connect=True):
+    """Seconds from pressing Print to the paper coming out, for `lines` rows of dots."""
+    feed = default_feed(dpi) if feed is None else feed
+    per_copy = paper_mm(lines + feed, dpi) / mm_per_s + COPY_OVERHEAD_S
+    return (CONNECT_S if connect else 0.0) + max(1, copies) * per_copy
+
+
+def learn_speed(old, lines, dpi, copies, seconds, feed=None, alpha=0.3):
+    """Blend one timed print (connection excluded) into the known speed in mm/s.
+
+    Short prints are mostly fixed overhead, so anything under 20 mm of paper is ignored.
+    """
+    feed = default_feed(dpi) if feed is None else feed
+    mm = max(1, copies) * paper_mm(lines + feed, dpi)
+    moving = seconds - max(1, copies) * COPY_OVERHEAD_S
+    if mm < 20 or moving <= 0:
+        return old
+    measured = min(MAX_MM_PER_S, max(MIN_MM_PER_S, mm / moving))
+    return old + alpha * (measured - old)
+
+
+def format_eta(seconds):
+    """0:07, 1:30, 12:05: rounded up, so a countdown never shows 0:00 before it's done."""
+    s = max(0, int(-(-seconds // 1)))
+    return f"{s // 60}:{s % 60:02d}"
+
+
 def print_job(rows, model, energy=None, speed=None, mode=MODE_IMAGE, quality=0x33, feed_after=None):
     """Build the full byte stream for one print. rows: list of 0/1 rows of model.width pixels."""
     nf = model.new_format
     speed = speed or (model.text_speed if mode == MODE_TEXT else model.img_speed)
     energy = model.energy if energy is None else energy
-    feed_after = (72 if model.dpi == 300 else 48) * 2 if feed_after is None else feed_after
+    feed_after = default_feed(model.dpi) if feed_after is None else feed_after
 
     out = bytearray(frame(CMD_QUALITY, [quality], nf))
     if energy:

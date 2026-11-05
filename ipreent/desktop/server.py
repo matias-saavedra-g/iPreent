@@ -6,7 +6,7 @@
 
 Endpoints (all answer JSON):
     GET  /status              app version, printer, queue
-    GET  /jobs/<id>           {"id", "label", "state": queued|printing|done|failed, "error"}
+    GET  /jobs/<id>           {"id", "label", "state": queued|printing|done|failed, "error", "seconds"}
     POST /print               body = image, PDF or UTF-8 text (detected from the content)
     POST /text                body = plain text, or JSON {"text", "size"}
     POST /checklist           JSON {"title", "items": [...]}
