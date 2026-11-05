@@ -39,18 +39,19 @@ def test_print_time_estimate():
 
 
 def test_speed_for_energy():
-    # Nothing learnt: 15 mm/s at energy 5000, slower in proportion to the heat.
+    # Nothing learnt: 15 mm/s at energy 5000 to 10 mm/s at 17000, seconds per mm linear in between.
     assert p.speed_for(5000) == 15.0
-    assert p.speed_for(None) == p.speed_for(0) == 15.0
-    assert round(p.speed_for(8000), 3) == 9.375
-    assert round(p.speed_for(17000), 3) == 4.412
+    assert p.speed_for(None) == p.speed_for(0) == p.speed_for(1000) == 15.0
+    assert round(p.speed_for(8000), 3) == 13.333
+    assert round(p.speed_for(12000), 3) == 11.613
+    assert round(p.speed_for(17000), 3) == 10.0
     assert p.speed_for(500000) == p.MIN_MM_PER_S                      # clamped
     # Learnt levels are used as they are, levels between two are interpolated (seconds per mm),
-    # others scale from the closest one.
+    # others follow the nominal curve from the closest one.
     learnt = {8000: 12.0, 12000: 10.0}
     assert p.speed_for(8000, learnt) == 12.0
-    assert round(p.speed_for(5000, learnt), 3) == 19.2                # 12 * 8000 / 5000
-    assert round(p.speed_for(17000, learnt), 3) == 7.059              # 10 * 12000 / 17000
+    assert round(p.speed_for(5000, learnt), 3) == 13.5                # 12 * 15 / 13.333
+    assert round(p.speed_for(17000, learnt), 3) == 8.611              # 10 * 10 / 11.613
     assert round(p.speed_for(10000, learnt), 3) == 10.909             # 1 / mean(1/12, 1/10)
     assert round(p.speed_for(9000, {5000: 14.0, 17000: 8.0}), 3) == 11.2
 
@@ -77,3 +78,19 @@ def test_learn_speeds_per_energy():
 
 def test_format_eta():
     assert [p.format_eta(s) for s in (0, 0.2, 7, 59.5, 90, 725)] == ["0:00", "0:01", "0:07", "1:00", "1:30", "12:05"]
+
+
+SC03H_DETAILS = [("Paper", "57 mm thermal roll (sold as 57 or 58 mm)"),
+                 ("Paper types", "plain thermal, sticker rolls, die-cut labels"),
+                 ("Print width", "48.8 mm (384 dots)"),
+                 ("Resolution", "200 dpi (8 dots per mm)"),
+                 ("Ink", "none: the paper darkens with heat, so prints fade in sun and warmth")]
+
+
+def test_printer_details():
+    # Same case in ProtocolTest.sc03hProfile.
+    from ipreent.models import details, lookup
+    assert details(lookup("SC03h-5363")) == SC03H_DETAILS
+    assert details(lookup("A41II"))[0] == ("Paper", "A4 thermal paper")
+    assert details(lookup("GB01"))[1] == ("Paper types", "plain thermal, sticker rolls")
+

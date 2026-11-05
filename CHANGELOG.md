@@ -4,12 +4,15 @@ Each `## vX.Y.Z` section becomes the notes of that GitHub Release.
 
 ## Unreleased
 **Print times that match the printer.** Estimates started at 40 mm/s (the listing's "40 ppm"), which was far too
-fast. They now start at 15 mm/s at the lightest darkness and get slower as darkness goes up, since a darker print
-heats each line for longer. Every app learns a separate speed for each darkness level from your own prints, and
+fast. They now start from the nominal 15 mm/s at the lightest darkness down to 10 mm/s at the darkest, since a
+darker print heats each line for longer. Every app learns a separate speed for each darkness level from your own prints, and
 levels you haven't printed at are worked out from the ones you have. Speeds learnt by earlier versions mixed all
 darkness levels, so they're dropped and learnt again.
 - Android: the printer sheet shows the speed at the chosen darkness; the time under Print follows the darkness slider.
 - Windows: the time under the preview follows the darkness and copies.
+**Printer details in the settings** (all versions): which paper to buy (57 mm thermal roll for the SC03h), the
+paper types it takes, print width, resolution and speed. Android: printer sheet; Windows: printer menu › Printer
+details…; command line: `ipreent settings`.
 - Command line: `ipreent bench` prints one short strip per darkness (lightest, normal, darkest by default; about
   11 cm of paper), times each and shows how much darkness slows the printer. `ipreent settings` lists the speed at
   every darkness. The help for `--speed` said the wrong direction: a higher value prints slower.

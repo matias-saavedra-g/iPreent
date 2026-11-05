@@ -92,7 +92,7 @@ def test_settings_darkness_is_the_default(printer, capsys):
         cli.main(["settings", "paper-speed", "900"])
     cli.main(["settings", "paper-speed", "25"])
     assert api.known_speed(12000) == 25                     # at the default darkness (darker)
-    assert round(api.known_speed(17000), 2) == round(25 * 12000 / 17000, 2)   # others scale from it
+    assert round(api.known_speed(17000), 3) == round(25 * 10 / 11.6129, 3)  # others follow the nominal curve
     cli.main(["settings", "paper-speed", "reset"])
     assert api.learnt_speeds() == {} and api.known_speed(5000) == 15
 

@@ -15,8 +15,27 @@ data class Model(
     val mtu: Int = 123,
     val intervalMs: Int = 6,
     val useSpp: Boolean = false,
+    val paper: Int = 2,          // vendor "size": paper class (see PAPER)
+    val labels: Boolean = false, // vendor "canPrintLabel": has a mode for die-cut labels
 ) {
+    /** What a person needs to know about the printer (port of models.details: same lines, same omissions). */
+    fun details(): List<Pair<String, String>> {
+        val mm = width * 25.4 / dpi
+        val paperName = PAPER[paper] ?: "thermal paper wider than the print width"
+        return listOf(
+            "Paper" to paperName,
+            "Paper types" to "plain thermal, sticker rolls" + if (labels) ", die-cut labels" else "",
+            "Print width" to "${"%.1f".format(java.util.Locale.ROOT, mm)} mm ($width dots)",
+            "Resolution" to "$dpi dpi (${"%.0f".format(java.util.Locale.ROOT, dpi / 25.4)} dots per mm)",
+            "Ink" to "none: the paper darkens with heat, so prints fade in sun and warmth",
+        )
+    }
+
     companion object {
+        /** Vendor "size" codes, named from the print widths each has in models.json (see models.py). */
+        val PAPER = mapOf(1 to "narrow label tape (about 15 mm)", 2 to "57 mm thermal roll (sold as 57 or 58 mm)",
+            3 to "80 mm thermal roll", 4 to "4-inch thermal labels or roll (about 110 mm)", 8 to "A4 thermal paper")
+
         /** Longest modelNo that prefixes the advertised name, like the vendor app. */
         fun lookup(table: JSONArray, bleName: String?): Model {
             if (bleName.isNullOrEmpty()) return Model()
@@ -40,6 +59,8 @@ data class Model(
                 mtu = b.optInt("mtu").takeIf { it > 0 } ?: 123,
                 intervalMs = b.optInt("interval").takeIf { it > 0 } ?: 6,
                 useSpp = b.optBoolean("useSPP"),
+                paper = b.optInt("size", 2),
+                labels = b.optBoolean("canPrintLabel"),
             )
         }
     }

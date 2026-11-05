@@ -390,6 +390,8 @@ class MainWindow(QMainWindow):
             a.triggered.connect(lambda _=False, i=i: self.dark.setValue(i))
             group.addAction(a)
         m.addAction("Check status and battery", self.worker.refresh)
+        details = m.addAction("Printer details…", self.show_details)
+        details.setEnabled(bool(config.load().get("name")))
         m.addAction("Change printer…", self.choose_printer)
         m.addAction("Feed paper", self.worker.feed)
         m.addSeparator()
@@ -397,6 +399,15 @@ class MainWindow(QMainWindow):
         forget.setEnabled(bool(config.load().get("name")))
         m.popup(self.gear.mapToGlobal(QPoint(0, self.gear.height())))
         return m
+
+    def show_details(self):
+        """Paper to buy, print width, resolution and speed of the remembered printer."""
+        cfg = config.load()
+        m = self.model()
+        rows = "".join(f"<tr><td style='padding-right:12px'><b>{label}</b></td><td>{value}</td></tr>"
+                       for label, value in api.printer_details(m))
+        QMessageBox.information(self, "Printer details",
+                                f"<p>{cfg.get('name', m.name)} ({m.name} profile)</p><table>{rows}</table>")
 
     def forget_printer(self):
         config.forget()

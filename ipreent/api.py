@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from PIL import Image
 
 from . import ble, config, convert, imaging, protocol, spp
-from .models import Model, lookup
+from .models import Model, details, lookup
 
 
 # Serial (useSPP) models confirmed on hardware to also print over BLE. BLE needs no pairing,
@@ -180,6 +180,14 @@ def estimate(lines, model, copies=1, connect=True, feed=None, energy=None):
     """Seconds this print should take at `energy` (None = the model's own), with what's been learnt."""
     energy = model.energy if energy is None else energy
     return protocol.estimate_seconds(lines, model.dpi, copies, known_speed(energy), feed, connect)
+
+
+def printer_details(model):
+    """models.details plus the paper speed (nominal, or what this PC has learnt)."""
+    learnt = learnt_speeds()
+    lo, hi = known_speed(protocol.REF_ENERGY), known_speed(protocol.DARK_ENERGY)
+    how = "partly learnt from your prints" if learnt else "nominal"
+    return details(model) + [("Paper speed", f"about {lo:.0f} mm/s at lightest to {hi:.0f} mm/s at darkest ({how})")]
 
 
 def black_fraction(rows):

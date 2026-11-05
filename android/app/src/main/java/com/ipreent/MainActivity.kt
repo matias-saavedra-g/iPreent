@@ -387,7 +387,7 @@ private fun PrinterSheet(granted: Boolean, snack: SnackbarHostState, onClose: ()
     var found by remember { mutableStateOf<List<Found>?>(null) }
     var scanning by remember { mutableStateOf(false) }
     ModalBottomSheet(onDismissRequest = onClose) {
-        Column(Modifier.padding(horizontal = 24.dp).padding(bottom = 24.dp)) {
+        Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 24.dp).padding(bottom = 24.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(48.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
                     Icon(Icons.Default.Print, null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
@@ -416,9 +416,24 @@ private fun PrinterSheet(granted: Boolean, snack: SnackbarHostState, onClose: ()
                     when {
                         darkness.energy in learnt -> "learnt from your prints"
                         learnt.isNotEmpty() -> "estimated from the levels you've printed at"
-                        else -> "a starting guess until a print is timed"
+                        else -> "nominal until a print is timed"
                     },
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (name != null) {
+                // Which paper to buy and what the printer can do; transport tuning is left out (Model.details).
+                Spacer(Modifier.height(16.dp))
+                Text("Printer details", style = MaterialTheme.typography.titleSmall)
+                Spacer(Modifier.height(4.dp))
+                val lo = Printers.speed(Protocol.REF_ENERGY).roundToInt()
+                val hi = Printers.speed(Protocol.DARK_ENERGY).roundToInt()
+                (Printers.model().details() + ("Paper speed" to "about $lo mm/s at lightest to $hi mm/s at darkest")).forEach { (label, value) ->
+                    Row(Modifier.padding(vertical = 2.dp)) {
+                        Text(label, style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(96.dp))
+                        Text(value, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.weight(1f))
+                    }
+                }
+            }
             HorizontalDivider(Modifier.padding(vertical = 12.dp))
             ListItem(headlineContent = { Text("Check status and battery") },
                 leadingContent = { Icon(Icons.Default.BatteryStd, null) },

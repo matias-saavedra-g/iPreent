@@ -21,8 +21,8 @@ notification. Everything prints by turning content into a list of rows (0/1 per 
 ## Python package `ipreent/`
 | Module | Job | Kotlin twin |
 |---|---|---|
-| `protocol.py` | Frames, CRC8, row encodings, `print_job` byte stream, notification parsing, **print-time estimate** (`speed_for` per energy, `estimate_seconds`, `learn_speeds`, `format_eta`; starts at 15 mm/s at energy 5000, slower in proportion to the energy, until each level is timed) | `Protocol.kt` |
-| `models.py` + `models.json` | 187 printer profiles (width, dpi, speeds, MTU, RLE, serial-only flag) looked up by the longest model number that prefixes the Bluetooth name | `Model.kt` (+ `assets/models.json`) |
+| `protocol.py` | Frames, CRC8, row encodings, `print_job` byte stream, notification parsing, **print-time estimate** (`speed_for` per energy, `estimate_seconds`, `learn_speeds`, `format_eta`; nominal 15 mm/s at energy 5000 to 10 mm/s at 17000, seconds/mm linear in energy, until each level is timed) | `Protocol.kt` |
+| `models.py` + `models.json` | 187 printer profiles (width, dpi, speeds, MTU, RLE, serial-only flag, paper class, label mode) looked up by the longest model number that prefixes the Bluetooth name; `details()` = what the settings screens show (paper to buy, paper types, print width, resolution, ink) and deliberately not the transport tuning or vendor flags | `Model.kt` (+ `assets/models.json`) |
 | `imaging.py` | Images → gray → 1-bit rows (Floyd–Steinberg, Atkinson, threshold), text with emoji fallback, checklist, banner, QR (segno), Code 128 | `Imaging.kt` |
 | `receipt.py` | Receipts (BOLETA): CLP parsing/formatting, totals, layout, receipt number = print time | `Receipt.kt` |
 | `convert.py` | File type detection, PDF pages (pypdfium2), text files → images | `Sources.kt` (Android loading) |
@@ -33,7 +33,7 @@ notification. Everything prints by turning content into a list of rows (0/1 per 
 | `ble.py` / `spp.py` | Bluetooth LE (bleak) and Bluetooth serial (pyserial / RFCOMM socket) transports | `BlePrinter.kt` (BLE only) |
 | `cli.py` | Command line (see below) | |
 
-Shared test cases: `tests/test_protocol.py` ↔ `ProtocolTest.kt`, `test_receipt.py` ↔ `ReceiptTest.kt`,
+Shared test cases: `tests/test_protocol.py` ↔ `ProtocolTest.kt` (incl. the SC03h details), `test_receipt.py` ↔ `ReceiptTest.kt`,
 `test_features.py` ↔ `FeaturesTest.kt`. Change both sides together.
 
 ## Command line (`ipreent/cli.py`)

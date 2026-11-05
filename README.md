@@ -28,7 +28,7 @@ Each release also has a Windows exe and a zip; Obtainium only takes the `.apk`.
 - **Queue**: what is printing and what's waiting, each with the time left, a progress bar and a button to remove a
   waiting job. A badge shows how many jobs are open. **History**: everything printed, to reprint.
 - The **printer button** at the top right (name + gear) opens the printer settings: darkness, status and battery,
-  find printers, forget the printer.
+  printer details (which paper to buy, print width, resolution, speed), find printers, forget the printer.
 - Share a photo, PDF or text to iPreent from any app, or print from Chrome/Files with the iPreent print service.
 
 ## Printing while the printer is busy
@@ -37,7 +37,7 @@ These printers don't show that they're working unless you look at the paper slot
 - Pressing Print again while something is still printing asks first: *The printer is busy: “Photo” is printing,
   about 0:12 left. Add “Note” to the queue? It should start in about 0:12.*
 - Times come from the paper length and the darkness: darker prints take longer, because the head heats each line
-  for longer. The starting guess is 15 mm/s at the lightest darkness, slower in proportion to the heat (the
+  for longer. They start from the nominal 15 mm/s at the lightest darkness down to 10 mm/s at the darkest (the
   listing's "40 ppm" turned out far too fast). Each finished print is timed and learnt for the darkness it used.
   The command line and the Windows app share what they've learnt on the same PC; `ipreent settings` shows the
   speed at each darkness, and `ipreent bench` measures it on about 11 cm of paper.
@@ -53,7 +53,7 @@ These printers don't show that they're working unless you look at the paper slot
   banner, QR, barcode and **receipt** modes, with an exact preview, paper length and print time. The mode list is
   ordered by how likely you are to use it (same weights as the phone).
 - The printer card at the top left (or its gear) opens the printer settings: darkness, status and battery,
-  change printer, feed paper, forget.
+  printer details (paper, print width, resolution, speed), change printer, feed paper, forget.
 - The queue shows each job's countdown; pressing Print while something prints asks before queueing.
 - Dithering (Atkinson, Floyd–Steinberg, sharp), darkness, brightness, contrast, pages, copies, margin trim.
 - Tray menu: print clipboard (**Ctrl+Alt+P** anywhere), print file, quick note, feed paper, start with Windows.
@@ -123,7 +123,7 @@ ipreent preview doc.pdf             # PNG of exactly what would print (no printe
 ipreent forget                      # forget the remembered printer
 ipreent                             # overview: printer, settings, queue, most used commands
 ipreent queue --watch               # what is printing (here or in the Windows app) and the time left
-ipreent settings darkness darker    # default darkness; `ipreent settings` lists all settings
+ipreent settings darkness darker    # default darkness; `ipreent settings` lists all settings and printer details
 ipreent bench                       # time short strips at 3 darkness levels to learn the real speed
 ipreent receipt -b "My shop" -i "Coffee" 1800 2 -i "Bread" 1.200   # see Receipts below
 ```

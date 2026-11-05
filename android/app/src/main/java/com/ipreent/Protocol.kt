@@ -86,10 +86,12 @@ object Protocol {
     fun defaultFeed(dpi: Int) = (if (dpi == 300) 72 else 48) * 2
 
     // ---- how long a print takes (port of the same block in protocol.py) ----
-    /** Starting guess: 15 mm/s at the lightest heat (spec sheets of these printers say 10-15 mm/s; the
-     *  listing's "40 ppm" was far too fast). Darker levels start slower, in proportion to the energy. */
+    /** Nominal speeds: 15 mm/s at the lightest heat, 10 mm/s at the darkest (the listing's "40 ppm" was far
+     *  too fast). Seconds per mm grow in a straight line with the energy in between and past the darkest. */
     const val SPEC_MM_PER_S = 15.0
+    const val SPEC_DARK_MM_PER_S = 10.0
     const val REF_ENERGY = 5000
+    const val DARK_ENERGY = 17000
     const val CONNECT_S = 3.0
     const val COPY_OVERHEAD_S = 1.0
     const val MIN_MM_PER_S = 2.0
@@ -97,9 +99,15 @@ object Protocol {
 
     fun paperMm(lines: Int, dpi: Int) = lines * 25.4 / dpi
 
+    /** 15 mm/s at the lightest energy, 10 mm/s at the darkest; never faster than the lightest. */
+    fun nominalSpeed(energy: Int): Double {
+        val f = (maxOf(if (energy == 0) REF_ENERGY else energy, REF_ENERGY) - REF_ENERGY).toDouble() / (DARK_ENERGY - REF_ENERGY)
+        return (1 / ((1 - f) / SPEC_MM_PER_S + f / SPEC_DARK_MM_PER_S)).coerceIn(MIN_MM_PER_S, MAX_MM_PER_S)
+    }
+
     /** Paper speed at [energy] (0 = the printer's default, taken as [REF_ENERGY]). A learnt energy uses its
-     *  figure; one between two learnt energies interpolates their seconds per mm; any other is scaled from
-     *  the closest learnt energy (ties: the lower one), or from the starting guess. */
+     *  figure; one between two learnt energies interpolates their seconds per mm; any other follows the
+     *  nominal curve from the closest learnt energy (ties: the lower one); nothing learnt: the nominal speed. */
     fun speedFor(energy: Int, learnt: Map<Int, Double> = emptyMap()): Double {
         val e = if (energy == 0) REF_ENERGY else energy
         learnt[e]?.let { return it }
@@ -109,9 +117,8 @@ object Protocol {
             val f = (e - lo).toDouble() / (hi - lo)
             return (1 / ((1 - f) / learnt.getValue(lo) + f / learnt.getValue(hi))).coerceIn(MIN_MM_PER_S, MAX_MM_PER_S)
         }
-        val e0 = learnt.keys.minWithOrNull(compareBy<Int>({ kotlin.math.abs(it - e) }, { it })) ?: REF_ENERGY
-        val v0 = learnt[e0] ?: SPEC_MM_PER_S
-        return (v0 * e0 / e).coerceIn(MIN_MM_PER_S, MAX_MM_PER_S)
+        val e0 = learnt.keys.minWithOrNull(compareBy<Int>({ kotlin.math.abs(it - e) }, { it })) ?: return nominalSpeed(e)
+        return (learnt.getValue(e0) * nominalSpeed(e) / nominalSpeed(e0)).coerceIn(MIN_MM_PER_S, MAX_MM_PER_S)
     }
 
     /** Seconds from pressing Print to the paper coming out, for [lines] rows of dots. */

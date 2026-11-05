@@ -19,6 +19,32 @@ class Model:
     mtu: int = 123
     interval_ms: int = 6
     use_spp: bool = False
+    paper: int = 2            # vendor "size": paper class (see PAPER)
+    labels: bool = False      # vendor "canPrintLabel": has a mode for die-cut labels
+
+
+# The vendor's "size" codes, named from the print widths each one has in models.json:
+# 1 = 96 dots (12 mm), 2 = 384/576 dots (48 mm), 3 = 576 dots at 200 dpi (72 mm),
+# 4 = 800-1280 dots (100-110 mm), 8 = 1664-2592 dots (A4 width).
+PAPER = {1: "narrow label tape (about 15 mm)", 2: "57 mm thermal roll (sold as 57 or 58 mm)",
+         3: "80 mm thermal roll", 4: "4-inch thermal labels or roll (about 110 mm)", 8: "A4 thermal paper"}
+
+
+def details(model):
+    """What a person needs to know about the printer, as (label, value) pairs.
+
+    Kept: what decides which paper to buy and how prints come out. Left out on purpose: the
+    transport tuning (MTU, chunk interval, compressed lines, frame format), the raw speed byte and
+    energy numbers, and the vendor's internal flags (device id, retract length, sensor values).
+    """
+    mm = model.width * 25.4 / model.dpi
+    paper = PAPER.get(model.paper, "thermal paper wider than the print width")
+    kinds = "plain thermal, sticker rolls" + (", die-cut labels" if model.labels else "")
+    return [("Paper", paper),
+            ("Paper types", kinds),
+            ("Print width", f"{mm:.1f} mm ({model.width} dots)"),
+            ("Resolution", f"{model.dpi} dpi ({model.dpi / 25.4:.0f} dots per mm)"),
+            ("Ink", "none: the paper darkens with heat, so prints fade in sun and warmth")]
 
 
 def _table():
@@ -49,6 +75,8 @@ def lookup(ble_name):
         mtu=best["mtu"] or 123,
         interval_ms=best["interval"] or 6,
         use_spp=bool(best["useSPP"]),
+        paper=best["size"],
+        labels=bool(best["canPrintLabel"]),
     )
 
 

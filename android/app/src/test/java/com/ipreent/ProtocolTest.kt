@@ -38,6 +38,16 @@ class ProtocolTest {
         val table = org.json.JSONArray(java.io.File("src/main/assets/models.json").readText())
         val m = Model.lookup(table, "SC03h-5363")
         assertEquals(listOf("SC03h", "384", "true", "180"), listOf(m.name, "${m.width}", "${m.rle}", "${m.mtu}"))
+        // Same case as test_printer_details in tests/test_protocol.py
+        assertEquals(listOf(
+            "Paper" to "57 mm thermal roll (sold as 57 or 58 mm)",
+            "Paper types" to "plain thermal, sticker rolls, die-cut labels",
+            "Print width" to "48.8 mm (384 dots)",
+            "Resolution" to "200 dpi (8 dots per mm)",
+            "Ink" to "none: the paper darkens with heat, so prints fade in sun and warmth",
+        ), m.details())
+        assertEquals("Paper" to "A4 thermal paper", Model.lookup(table, "A41II").details()[0])
+        assertEquals("Paper types" to "plain thermal, sticker rolls", Model.lookup(table, "GB01").details()[1])
     }
 
     // Same cases as tests/test_protocol.py
@@ -51,13 +61,15 @@ class ProtocolTest {
     @Test fun speedForEnergy() {
         assertEquals(15.0, Protocol.speedFor(5000), 1e-9)
         assertEquals(15.0, Protocol.speedFor(0), 1e-9)
-        assertEquals(9.375, Protocol.speedFor(8000), 1e-3)
-        assertEquals(4.412, Protocol.speedFor(17000), 1e-3)
+        assertEquals(15.0, Protocol.speedFor(1000), 1e-9)
+        assertEquals(13.333, Protocol.speedFor(8000), 1e-3)
+        assertEquals(11.613, Protocol.speedFor(12000), 1e-3)
+        assertEquals(10.0, Protocol.speedFor(17000), 1e-3)
         assertEquals(Protocol.MIN_MM_PER_S, Protocol.speedFor(500000), 1e-9)
         val learnt = mapOf(8000 to 12.0, 12000 to 10.0)
         assertEquals(12.0, Protocol.speedFor(8000, learnt), 1e-9)
-        assertEquals(19.2, Protocol.speedFor(5000, learnt), 1e-3)
-        assertEquals(7.059, Protocol.speedFor(17000, learnt), 1e-3)
+        assertEquals(13.5, Protocol.speedFor(5000, learnt), 1e-3)
+        assertEquals(8.611, Protocol.speedFor(17000, learnt), 1e-3)
         assertEquals(10.909, Protocol.speedFor(10000, learnt), 1e-3)
         assertEquals(11.2, Protocol.speedFor(9000, mapOf(5000 to 14.0, 17000 to 8.0)), 1e-3)
     }

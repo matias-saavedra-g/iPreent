@@ -347,3 +347,16 @@ Robolectric test (home, busy home, tool screen, printer sheet, busy dialog, queu
 ### Open
 - [ ] User to run `ipreent bench` (or print normally at different darkness levels) and send `timing.json`; then set
       the starting guess and the energy scaling from real numbers.
+
+### Nominal speed range, printer details (2026-11-05, later)
+- User: no paper left (last roll finished), so no benchmark for now. Use the nominal figures: 15 mm/s at
+  lightest, 10 mm/s at darkest. `nominal_speed(e)`: seconds/mm linear in energy between 5000 and 17000, continued
+  past the darkest, never faster than the lightest (Normal 13.3, Darker 11.6). Untimed levels next to a timed
+  one follow this curve's ratio instead of proportional scaling.
+- Printer details in all three settings screens from what models.json already has, no web lookup. Kept: paper
+  to buy (from the vendor `size` code: 1 = ~15 mm label tape, 2 = 57 mm roll, 3 = 80 mm, 4 = 4-inch, 8 = A4;
+  named from each code's print widths), paper types (`canPrintLabel` → die-cut labels too), print width, dpi,
+  "no ink, fades with heat", and the speed range. Left out: MTU, chunk interval, RLE, new frame format, speed byte,
+  raw energies, `hasId`, `backPaperNum`, `detectionValue`, `oneLength`, `headName`: transport tuning or vendor
+  internals that don't help choose paper or settings. Grayscale (vendor code says SC03h can) not shown: not built.
+- Open: roll diameter / core size isn't in the vendor table; would need the printer's manual.

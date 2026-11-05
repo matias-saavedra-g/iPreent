@@ -309,7 +309,7 @@ def _settings_lines():
     e = _default_energy()
     learnt = api.learnt_speeds()
     how = "learnt from your prints" if e in learnt else (
-        "estimated from other darkness levels" if learnt else "a starting guess until a print is timed")
+        "estimated from other darkness levels" if learnt else "nominal until a print is timed")
     return [f"darkness     {_darkness_name(e)}   (lightest, lighter, normal, darker, darkest or a number)",
             f"paper-speed  {api.known_speed(e):.1f} mm/s at this darkness, {how}; used for time estimates",
             f"             mm/s by darkness: {_speed_table()}   (* = timed; check with: ipreent bench)"]
@@ -324,6 +324,12 @@ async def cmd_settings(args):
         cfg = config.load()
         print(f"  printer      {cfg.get('name') or 'none yet (found on the first print)'}"
               + ("   (ipreent forget / ipreent scan)" if cfg.get("name") else ""))
+        if cfg.get("name"):
+            m = lookup(cfg.get("model") or cfg["name"])
+            how = cfg.get("port") or ("Bluetooth LE" if cfg.get("transport") == "ble" else "Bluetooth serial")
+            print(f"\nPrinter details ({m.name} profile, {how})")
+            for label, value in api.printer_details(m):
+                print(f"  {label:<13}{value}")
         return
     if args.value is None:
         sys.exit(f"ipreent settings {args.key} needs a value")
@@ -337,8 +343,8 @@ async def cmd_settings(args):
     else:                                  # paper-speed
         if args.value.lower() == "reset":
             api.save_speeds({}, prints=0)
-            print(f"Paper speed reset to the starting guess ({protocol.SPEC_MM_PER_S:.0f} mm/s at "
-                  f"the lightest darkness, slower when darker); it will be learnt again.")
+            print(f"Paper speed reset to the nominal {protocol.SPEC_MM_PER_S:.0f} mm/s (lightest) to "
+                  f"{protocol.SPEC_DARK_MM_PER_S:.0f} mm/s (darkest); it will be learnt again.")
             return
         try:
             v = float(args.value)
