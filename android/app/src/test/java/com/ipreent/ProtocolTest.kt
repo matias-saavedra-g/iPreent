@@ -41,13 +41,12 @@ class ProtocolTest {
         // Same case as test_printer_details in tests/test_protocol.py
         assertEquals(listOf(
             "Paper" to "57 mm thermal roll (sold as 57 or 58 mm)",
-            "Paper types" to "plain thermal, sticker rolls, die-cut labels",
+            "Labels" to "die-cut labels supported",
             "Print width" to "48.8 mm (384 dots)",
             "Resolution" to "200 dpi (8 dots per mm)",
-            "Ink" to "none: the paper darkens with heat, so prints fade in sun and warmth",
         ), m.details())
         assertEquals("Paper" to "A4 thermal paper", Model.lookup(table, "A41II").details()[0])
-        assertEquals("Paper types" to "plain thermal, sticker rolls", Model.lookup(table, "GB01").details()[1])
+        assertEquals(listOf("Paper", "Print width", "Resolution"), Model.lookup(table, "GB01").details().map { it.first })
     }
 
     // Same cases as tests/test_protocol.py

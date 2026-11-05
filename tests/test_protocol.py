@@ -81,10 +81,9 @@ def test_format_eta():
 
 
 SC03H_DETAILS = [("Paper", "57 mm thermal roll (sold as 57 or 58 mm)"),
-                 ("Paper types", "plain thermal, sticker rolls, die-cut labels"),
+                 ("Labels", "die-cut labels supported"),
                  ("Print width", "48.8 mm (384 dots)"),
-                 ("Resolution", "200 dpi (8 dots per mm)"),
-                 ("Ink", "none: the paper darkens with heat, so prints fade in sun and warmth")]
+                 ("Resolution", "200 dpi (8 dots per mm)")]
 
 
 def test_printer_details():
@@ -92,5 +91,5 @@ def test_printer_details():
     from ipreent.models import details, lookup
     assert details(lookup("SC03h-5363")) == SC03H_DETAILS
     assert details(lookup("A41II"))[0] == ("Paper", "A4 thermal paper")
-    assert details(lookup("GB01"))[1] == ("Paper types", "plain thermal, sticker rolls")
+    assert [k for k, _ in details(lookup("GB01"))] == ["Paper", "Print width", "Resolution"]
 

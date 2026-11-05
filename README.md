@@ -28,7 +28,7 @@ Each release also has a Windows exe and a zip; Obtainium only takes the `.apk`.
 - **Queue**: what is printing and what's waiting, each with the time left, a progress bar and a button to remove a
   waiting job. A badge shows how many jobs are open. **History**: everything printed, to reprint.
 - The **printer button** at the top right (name + gear) opens the printer settings: darkness, status and battery,
-  printer details (which paper to buy, print width, resolution, speed), find printers, forget the printer.
+  printer details (which paper to buy, print width, resolution), find printers, forget the printer.
 - Share a photo, PDF or text to iPreent from any app, or print from Chrome/Files with the iPreent print service.
 
 ## Printing while the printer is busy
@@ -53,7 +53,7 @@ These printers don't show that they're working unless you look at the paper slot
   banner, QR, barcode and **receipt** modes, with an exact preview, paper length and print time. The mode list is
   ordered by how likely you are to use it (same weights as the phone).
 - The printer card at the top left (or its gear) opens the printer settings: darkness, status and battery,
-  printer details (paper, print width, resolution, speed), change printer, feed paper, forget.
+  printer details (paper, print width, resolution), change printer, feed paper, forget.
 - The queue shows each job's countdown; pressing Print while something prints asks before queueing.
 - Dithering (Atkinson, Floyd–Steinberg, sharp), darkness, brightness, contrast, pages, copies, margin trim.
 - Tray menu: print clipboard (**Ctrl+Alt+P** anywhere), print file, quick note, feed paper, start with Windows.

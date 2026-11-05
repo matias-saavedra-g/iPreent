@@ -20,7 +20,7 @@ import time
 from PIL import Image
 
 from . import __version__, api, busy, config, convert, features, imaging, protocol, receipt
-from .models import lookup
+from .models import details, lookup
 
 
 ENERGY_PRESETS = {"lightest": 5000, "lighter": 6000, "normal": 8000, "darker": 12000, "darkest": 17000}
@@ -328,7 +328,7 @@ async def cmd_settings(args):
             m = lookup(cfg.get("model") or cfg["name"])
             how = cfg.get("port") or ("Bluetooth LE" if cfg.get("transport") == "ble" else "Bluetooth serial")
             print(f"\nPrinter details ({m.name} profile, {how})")
-            for label, value in api.printer_details(m):
+            for label, value in details(m):
                 print(f"  {label:<13}{value}")
         return
     if args.value is None:

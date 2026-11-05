@@ -28,7 +28,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QComb
 
 from .. import api, busy, config, convert, features, imaging, protocol, receipt
 from ..cli import ENERGY_PRESETS
-from ..models import lookup
+from ..models import details, lookup
 from . import spool
 from .server import Server
 from .worker import Worker
@@ -405,7 +405,7 @@ class MainWindow(QMainWindow):
         cfg = config.load()
         m = self.model()
         rows = "".join(f"<tr><td style='padding-right:12px'><b>{label}</b></td><td>{value}</td></tr>"
-                       for label, value in api.printer_details(m))
+                       for label, value in details(m))
         QMessageBox.information(self, "Printer details",
                                 f"<p>{cfg.get('name', m.name)} ({m.name} profile)</p><table>{rows}</table>")
 

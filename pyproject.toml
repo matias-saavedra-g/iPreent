@@ -1,6 +1,6 @@
 [project]
 name = "ipreent"
-version = "0.5.0"
+version = "0.5.1"
 license = {text = "MIT"}
 description = "Offline, account-free driver for iPrint / cat-style BLE thermal mini printers"
 requires-python = ">=3.9"

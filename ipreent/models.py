@@ -33,18 +33,18 @@ PAPER = {1: "narrow label tape (about 15 mm)", 2: "57 mm thermal roll (sold as 5
 def details(model):
     """What a person needs to know about the printer, as (label, value) pairs.
 
-    Kept: what decides which paper to buy and how prints come out. Left out on purpose: the
+    Kept: what decides which paper to buy and how prints come out (labels only when supported).
+    Left out on purpose: ink (there is none), paper speed, the
     transport tuning (MTU, chunk interval, compressed lines, frame format), the raw speed byte and
     energy numbers, and the vendor's internal flags (device id, retract length, sensor values).
     """
     mm = model.width * 25.4 / model.dpi
     paper = PAPER.get(model.paper, "thermal paper wider than the print width")
-    kinds = "plain thermal, sticker rolls" + (", die-cut labels" if model.labels else "")
-    return [("Paper", paper),
-            ("Paper types", kinds),
-            ("Print width", f"{mm:.1f} mm ({model.width} dots)"),
-            ("Resolution", f"{model.dpi} dpi ({model.dpi / 25.4:.0f} dots per mm)"),
-            ("Ink", "none: the paper darkens with heat, so prints fade in sun and warmth")]
+    out = [("Paper", paper)]
+    if model.labels:
+        out.append(("Labels", "die-cut labels supported"))
+    return out + [("Print width", f"{mm:.1f} mm ({model.width} dots)"),
+                  ("Resolution", f"{model.dpi} dpi ({model.dpi / 25.4:.0f} dots per mm)")]
 
 
 def _table():

@@ -22,12 +22,11 @@ data class Model(
     fun details(): List<Pair<String, String>> {
         val mm = width * 25.4 / dpi
         val paperName = PAPER[paper] ?: "thermal paper wider than the print width"
-        return listOf(
+        return listOfNotNull(
             "Paper" to paperName,
-            "Paper types" to "plain thermal, sticker rolls" + if (labels) ", die-cut labels" else "",
+            if (labels) "Labels" to "die-cut labels supported" else null,
             "Print width" to "${"%.1f".format(java.util.Locale.ROOT, mm)} mm ($width dots)",
             "Resolution" to "$dpi dpi (${"%.0f".format(java.util.Locale.ROOT, dpi / 25.4)} dots per mm)",
-            "Ink" to "none: the paper darkens with heat, so prints fade in sun and warmth",
         )
     }
 

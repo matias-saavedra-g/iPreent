@@ -360,3 +360,9 @@ Robolectric test (home, busy home, tool screen, printer sheet, busy dialog, queu
   raw energies, `hasId`, `backPaperNum`, `detectionValue`, `oneLength`, `headName`: transport tuning or vendor
   internals that don't help choose paper or settings. Grayscale (vendor code says SC03h can) not shown: not built.
 - Open: roll diameter / core size isn't in the vendor table; would need the printer's manual.
+
+### v0.5.1 (2026-11-05, later)
+- User trimmed the printer details: no "Ink" line, no generic paper types (only "Labels" when the model has the
+  die-cut label mode), no paper speed (the CLI `settings` paper-speed line and Android's speed line stay).
+- The v0.5.0 workflow didn't start, so this is released as v0.5.1 (versionCode +1), started with a manual
+  `release.yml` run on main.

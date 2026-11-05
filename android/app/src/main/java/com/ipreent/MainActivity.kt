@@ -424,9 +424,7 @@ private fun PrinterSheet(granted: Boolean, snack: SnackbarHostState, onClose: ()
                 Spacer(Modifier.height(16.dp))
                 Text("Printer details", style = MaterialTheme.typography.titleSmall)
                 Spacer(Modifier.height(4.dp))
-                val lo = Printers.speed(Protocol.REF_ENERGY).roundToInt()
-                val hi = Printers.speed(Protocol.DARK_ENERGY).roundToInt()
-                (Printers.model().details() + ("Paper speed" to "about $lo mm/s at lightest to $hi mm/s at darkest")).forEach { (label, value) ->
+                Printers.model().details().forEach { (label, value) ->
                     Row(Modifier.padding(vertical = 2.dp)) {
                         Text(label, style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(96.dp))
                         Text(value, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
