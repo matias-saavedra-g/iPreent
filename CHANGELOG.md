@@ -2,7 +2,20 @@
 
 Each `## vX.Y.Z` section becomes the notes of that GitHub Release.
 
-## v0.5.1
+## Unreleased
+**Templates** (all versions): 20 cute designs to fill in with your own text and print: hearts, a love letter, frames
+(scalloped, starry, ribbon, cloud, speech bubble), to-do, shopping and "things I love" lists, a sticky note, a
+reminder, a sunshine note, birthday, thank-you, confetti and gift-tag cards, a jar label and a name tag. Text shrinks
+to fit the design; lists, frames and notes grow longer when you write more. Two bundled fonts (Fredoka, Pacifico) so
+they look the same everywhere. Your own SVG files work too (docs/TEMPLATES.md shows how to add text boxes).
+- Android: Create › Templates: category chips, a gallery of previews, then the text boxes over the exact print
+  preview. *Your own SVG* adds a file to Mine.
+- Windows: Templates mode with chips, a strip of previews and the text boxes; *Add SVG…* or drop an `.svg` on the
+  window. HTTP API: `GET /templates`, `POST /template`.
+- Command line: `ipreent template` lists them, `ipreent template big-heart "Te quiero"` prints one, `--set`,
+  `--fields`, `--preview`.
+- The command line now needs Python 3.10 or newer (it already said so in INSTALL.txt) and installs `resvg_py`.
+
 **Downloads**
 - `iPreent-v0.5.1.apk`: Android app (Android 8+). Installs over v0.5.0. Also available through Obtainium (see README).
 - `iPreent-v0.5.1-portable.exe`: Windows app. One file, no install, no Python.

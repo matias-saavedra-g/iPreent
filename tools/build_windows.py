@@ -46,6 +46,9 @@ def main():
         "--distpath", str(ROOT / "dist"), "--workpath", str(BUILD / "work"), "--specpath", str(BUILD),
         "--add-data", f"{ROOT / 'ipreent' / 'models.json'}{';'}ipreent",
         "--add-data", f"{ROOT / 'ipreent' / 'desktop' / 'icons'}{';'}ipreent/desktop/icons",
+        "--add-data", f"{ROOT / 'ipreent' / 'templates'}{';'}ipreent/templates",
+        "--add-data", f"{ROOT / 'ipreent' / 'fonts'}{';'}ipreent/fonts",
+        "--hidden-import", "resvg_py", "--collect-binaries", "resvg_py",   # draws the template SVGs
         "--collect-submodules", "bleak", "--collect-submodules", "winrt",
         # Qt modules the app doesn't use: keeps the exe smaller.
         *[a for m in ("QtWebEngineCore", "QtWebEngineWidgets", "QtQuick", "QtQml", "Qt3DCore",

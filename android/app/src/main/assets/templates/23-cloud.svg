@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 300" width="384" height="300"
+     ip:name="Cloud" ip:category="frames">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <path d="M78 230 C30 230 24 168 70 160 C60 110 120 88 150 116 C166 64 248 60 262 112 C300 88 352 120 334 166 C374 176 362 234 316 230 Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <path d="M192 258.3 C190.3 252.4 181 251.9 181 259 C181 265.1 187.1 268.4 192 272.2 C196.9 268.4 203 265.1 203 259 C203 251.9 193.7 252.4 192 258.3Z" fill="#000"/>
+  <path d="M150 267.6 C148.9 263.9 143 263.6 143 268.1 C143 272 146.8 274.1 150 276.5 C153.2 274.1 157 272 157 268.1 C157 263.6 151.1 263.9 150 267.6Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/><path d="M234 267.6 C232.9 263.9 227 263.6 227 268.1 C227 272 230.8 274.1 234 276.5 C237.2 274.1 241 272 241 268.1 C241 263.6 235.1 263.9 234 267.6Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <path d="M36 48 Q38.6 57.4 48 60 Q38.6 62.6 36 72 Q33.4 62.6 24 60 Q33.4 57.4 36 48Z" fill="#000"/>
+  <path d="M354 45 Q356 52 363 54 Q356 56 354 63 Q352 56 345 54 Q352 52 354 45Z" fill="#000"/>
+  <rect ip:field="message" ip:label="Message" ip:default="Dream big" ip:font="script" ip:size="44" ip:min="18" x="88" y="128" width="230" height="88" fill="none"/>
+</svg>

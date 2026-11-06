@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 330" width="384" height="330"
+     ip:name="Sunshine" ip:category="notes">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <circle cx="192" cy="92" r="44" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <path d="M250 92 L270 92 M242.2 121 L259.5 131 M221 142.2 L231 159.5 M192 150 L192 170 M163 142.2 L153 159.5 M141.8 121 L124.5 131 M134 92 L114 92 M141.8 63 L124.5 53 M163 41.8 L153 24.5 M192 34 L192 14 M221 41.8 L231 24.5 M242.2 63 L259.5 53" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <circle cx="176" cy="84" r="5" fill="#000"/><circle cx="208" cy="84" r="5" fill="#000"/>
+  <path d="M174 102 q18 16 36 0" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M30 308 q13.5 -8 27 0 q13.5 8 27 0 q13.5 -8 27 0 q13.5 8 27 0 q13.5 -8 27 0 q13.5 8 27 0 q13.5 -8 27 0 q13.5 8 27 0 q13.5 -8 27 0 q13.5 8 27 0 q13.5 -8 27 0 q13.5 8 27 0" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <rect ip:field="title" ip:label="Title" ip:default="Good morning!" ip:font="script" ip:size="44" ip:min="20" ip:lines="1" x="24" y="182" width="336" height="64" fill="none"/>
+  <rect ip:field="message" ip:label="Message" ip:default="Have a sunny day" ip:size="26" ip:min="14" x="24" y="250" width="336" height="50" fill="none"/>
+</svg>

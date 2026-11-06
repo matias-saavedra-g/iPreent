@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 260" width="384" height="260"
+     ip:name="Jar label" ip:category="labels">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <ellipse cx="192" cy="130" rx="176" ry="112" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <ellipse cx="192" cy="130" rx="162" ry="98" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" stroke-dasharray="2 8"/>
+  <path d="M150 36 q42 -20 84 0" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <path d="M192 14 Q193.8 20.2 200 22 Q193.8 23.8 192 30 Q190.2 23.8 184 22 Q190.2 20.2 192 14Z" fill="#000"/>
+  <path d="M110 168 L274 168" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+  <rect ip:field="name" ip:label="Name" ip:default="Strawberry jam" ip:font="script" ip:size="44" ip:min="18" x="64" y="74" width="256" height="90" fill="none"/>
+  <rect ip:field="date" ip:label="Date or note" ip:default="November 2026" ip:size="24" ip:min="12" ip:lines="1" x="90" y="174" width="204" height="40" fill="none"/>
+</svg>

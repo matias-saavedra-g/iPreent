@@ -11,5 +11,6 @@ iPreent command line
        ipreent scan
        ipreent text "Hello"
        ipreent receipt -b "My shop" -i "Coffee" 1800 2 -i "Bread" 1.200
+       ipreent template big-heart "Te quiero"
 
 Everything else (PDFs, photos, receipts, options) is in README.md, or run: ipreent --help

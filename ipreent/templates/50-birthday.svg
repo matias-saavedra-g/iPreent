@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 400" width="384" height="400"
+     ip:name="Birthday cake" ip:category="party">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <rect x="102" y="96" width="180" height="70" rx="10" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <rect x="82" y="166" width="220" height="70" rx="10" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <path d="M102 116 q15 18 30 0 q15 18 30 0 q15 18 30 0 q15 18 30 0 q15 18 30 0 q15 18 30 0" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M82 186 q18 18 36 0 q18 18 36 0 q18 18 36 0 q18 18 36 0 q18 18 36 0 q20 18 40 0" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M60 238 L324 238" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <rect x="136" y="56" width="12" height="40" rx="3" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M142 46 q-10 -12 0 -26 q10 14 0 26 Z" fill="#000"/>
+  <rect x="186" y="56" width="12" height="40" rx="3" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M192 46 q-10 -12 0 -26 q10 14 0 26 Z" fill="#000"/>
+  <rect x="236" y="56" width="12" height="40" rx="3" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M242 46 q-10 -12 0 -26 q10 14 0 26 Z" fill="#000"/>
+  <path d="M40 46 L43.9 54.6 L53.3 55.7 L46.4 62.1 L48.2 71.3 L40 66.7 L31.8 71.3 L33.6 62.1 L26.7 55.7 L36.1 54.6Z" fill="#000"/>
+  <path d="M344 109 L347.1 115.7 L354.5 116.6 L349 121.6 L350.5 128.9 L344 125.3 L337.5 128.9 L339 121.6 L333.5 116.6 L340.9 115.7Z" fill="#000"/>
+  <path d="M330 28 Q332.6 37.4 342 40 Q332.6 42.6 330 52 Q327.4 42.6 318 40 Q327.4 37.4 330 28Z" fill="#000"/>
+  <path d="M52 170 Q54.2 177.8 62 180 Q54.2 182.2 52 190 Q49.8 182.2 42 180 Q49.8 177.8 52 170Z" fill="#000"/>
+  <circle cx="34" cy="120" r="5" fill="#000"/><circle cx="356" cy="200" r="5" fill="#000"/>
+  <rect ip:field="title" ip:label="Title" ip:default="Happy birthday" ip:font="script" ip:size="46" ip:min="20" ip:lines="1" x="16" y="252" width="352" height="70" fill="none"/>
+  <rect ip:field="name" ip:label="Name" ip:default="Sofía" ip:size="40" ip:min="18" ip:lines="1" x="16" y="322" width="352" height="62" fill="none"/>
+</svg>

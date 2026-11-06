@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 300" width="384" height="300"
+     ip:name="Speech bubble" ip:category="frames">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <path d="M58 30 L326 30 Q356 30 356 60 L356 186 Q356 216 326 216 L150 216 L92 270 L104 216 L58 216 Q28 216 28 186 L28 60 Q28 30 58 30 Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <circle cx="300" cy="262" r="7" fill="#000"/><circle cx="324" cy="282" r="4" fill="#000"/>
+  <rect ip:field="message" ip:label="Message" ip:default="Psst… you're awesome!" ip:size="36" ip:min="16" x="48" y="46" width="288" height="156" fill="none"/>
+</svg>

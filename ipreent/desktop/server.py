@@ -15,6 +15,10 @@ Endpoints (all answer JSON):
     POST /barcode             body = plain text, or JSON {"text"} (Code 128)
     POST /receipt             JSON {"business", "address", "url", "footer", "number",
                               "items": [{"name", "price", "qty"}]} (total in CLP, barcode)
+    GET  /templates           the template collection: [{"id", "name", "category", "fields": [{"key", "label",
+                              "default", "multiline"}]}]
+    POST /template            JSON {"name": "big-heart", "values": {"message": "..."}}, or ?name=big-heart with
+                              plain text for the first box (missing boxes keep their example text)
     POST /feed                ?lines=100
 Query options for every print: dither=atkinson|floyd|threshold, darkness=1..5, copies=N,
 pages=1-2,5, trim=0|1, rotate=0|1, brightness=-50..50, contrast=50..200, wait=1 (answer when printed).
@@ -33,7 +37,7 @@ from urllib.parse import parse_qs, urlparse
 
 from PIL import Image
 
-from .. import __version__, config, imaging, receipt
+from .. import __version__, config, imaging, receipt, templates
 
 MAX_BODY = 64 * 1024 * 1024
 
@@ -275,6 +279,38 @@ class _Handler(BaseHTTPRequestHandler):
             raise ApiError(400, f'{e} (send {{"business": ..., "items": [{{"name", "price", "qty"}}]}})')
         job = self._queue(q, f"API receipt {receipt.clp(r.total)}", lambda w: [(r.image(w), True)])
         return {**job, "number": r.number, "total": r.total}
+
+    def get_templates(self, q):
+        return [{"id": t.id, "name": t.name, "category": t.category,
+                 "fields": [{"key": f.key, "label": f.label, "default": f.default, "multiline": f.multiline}
+                            for f in t.fields]} for t in templates.all_templates()]
+
+    def post_template(self, q):
+        raw = self._body()
+        try:
+            if raw.strip().startswith(b"{"):
+                data = json.loads(raw)
+                name, values = str(data.get("name") or q.get("name") or ""), data.get("values") or {}
+                if not isinstance(values, dict):
+                    raise ApiError(400, '"values" must be an object: {"message": "..."}')
+                values = {str(k): str(v) for k, v in values.items()}
+            else:
+                name, values = q.get("name", ""), None
+            if not name:
+                raise ApiError(400, 'send {"name": "big-heart", "values": {...}} (list: GET /templates)')
+            t = templates.find(name, files=False)        # never a file path: callers can't read our disk
+            if values is None:
+                text = raw.decode("utf-8", "replace")
+                values = {t.fields[0].key: text} if t.fields and text.strip() else {}
+            unknown = set(values) - {f.key for f in t.fields}
+            if unknown:
+                raise ApiError(400, f"{t.name} has no box {', '.join(sorted(unknown))} "
+                                    f"(it has: {', '.join(f.key for f in t.fields) or 'none'})")
+        except templates.TemplateError as e:
+            raise ApiError(404, str(e))
+        except ValueError as e:
+            raise ApiError(400, f"bad JSON: {e}")
+        return self._queue(q, f"API {t.name}", lambda w: [(templates.render(t, values, w), True)])
 
     def post_feed(self, q):
         jid = self.api.worker.feed(int(q.get("lines", 100)))

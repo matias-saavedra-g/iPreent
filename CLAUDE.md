@@ -12,7 +12,8 @@ change makes any of these wrong, fix the doc in the same commit.
 - **JOURNAL.md** is the project log: add findings, decisions and open questions under today's date (newest at the
   bottom). Old entries say `freeprint`; that's history.
 - The Android app is a port of the Python code: `protocol.py` ↔ `Protocol.kt`, `imaging.py` ↔ `Imaging.kt`,
-  `receipt.py` ↔ `Receipt.kt`, `features.py` ↔ `Features.kt`. Change both and keep the shared test cases in step
+  `receipt.py` ↔ `Receipt.kt`, `features.py` ↔ `Features.kt`, `templates.py` ↔ `Templates.kt` (the template SVGs and
+  fonts are copied into `android/app/src/main/assets`; a test checks they match). Change both and keep the shared test cases in step
   (`tests/` ↔ `android/app/src/test`). Print-time estimates live in `protocol.py` / `Protocol.kt` too.
 - Python tests never touch the real config dir (`tests/conftest.py` points it at a temp dir); keep it that way, since
   printing now writes `timing.json`, `usage.json` and the `print.lock` / `busy.json` pair there.

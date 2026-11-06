@@ -6,6 +6,8 @@ Examples:
   ipreent text "Hello"               print text (or: echo hi | ipreent text)
   ipreent status                     paper, battery
   ipreent receipt -b "My shop" -i "Coffee" 1800 -i "Empanada" 2990 2
+  ipreent template                   cute designs to fill in: hearts, frames, lists, tags
+  ipreent template big-heart "Te quiero"   print one with your text
   ipreent queue                      what is printing and how long it has left
   ipreent settings darkness darker   change the default darkness
 The printer used last is remembered; `ipreent forget` clears it. Run `ipreent` alone for an overview.
@@ -19,7 +21,7 @@ import time
 
 from PIL import Image
 
-from . import __version__, api, busy, config, convert, features, imaging, protocol, receipt
+from . import __version__, api, busy, config, convert, features, imaging, protocol, receipt, templates
 from .models import details, lookup
 
 
@@ -250,6 +252,79 @@ async def cmd_receipt(args):
     await _print_items(args, lambda w: [(r.image(w), True)], f"Receipt {receipt.clp(r.total)}")
 
 
+def _template_values(t, args):
+    """Field values from the positional texts (in field order) and --set KEY=TEXT. "\\n" = new line, - = stdin."""
+    values = {}
+    keys = [f.key for f in t.fields]
+    if len(args.text) > len(keys):
+        raise templates.TemplateError(
+            f"{t.name} has {len(keys)} text box{'es' if len(keys) != 1 else ''} ({', '.join(keys) or 'none'}), "
+            f"got {len(args.text)} texts")
+    values.update(zip(keys, args.text))
+    for item in args.set or ():
+        key, eq, text = item.partition("=")
+        if not eq or key not in keys:
+            raise templates.TemplateError(f"--set needs KEY=TEXT with KEY one of: {', '.join(keys) or 'none'}")
+        values[key] = text
+    for k, v in values.items():
+        values[k] = sys.stdin.read().rstrip("\n") if v == "-" else v.replace("\\n", "\n")
+    return values
+
+
+def _template_list(category=None):
+    items = templates.all_templates()
+    print("Templates (print one with: ipreent template NAME \"your text\"; see its boxes with --fields)\n")
+    for cat, label in templates.CATEGORIES.items():
+        group = [(n, t) for n, t in enumerate(items, 1) if t.category == cat]
+        if not group or (category and category != cat):
+            continue
+        print(label)
+        for n, t in group:
+            boxes = ", ".join(f.key for f in t.fields) or "no text"
+            print(f"  {n:>2}  {t.id:<18} {t.name:<18} {boxes}")
+        print()
+    print(f"Your own SVG files in {templates.user_dir()} show up under Mine (format: docs/TEMPLATES.md).")
+
+
+def _template_fields(t):
+    print(f"{t.name} ({t.id}, {templates.CATEGORIES[t.category]}):")
+    if not t.fields:
+        print("  no text boxes: prints the picture as it is")
+    for f in t.fields:
+        how = "one line" if not f.multiline else ("one item per line" if f.list != "none" else "any length")
+        print(f"  {f.key:<10} {f.label}, {how}. Example: {f.default!r}")
+    if t.stretch is not None:
+        print("  The design grows longer when the text needs more room.")
+
+
+async def cmd_template(args):
+    if not args.name:
+        _template_list(args.category)
+        return
+    try:
+        t = templates.find(args.name)
+        if args.fields:
+            _template_fields(t)
+            return
+        values = _template_values(t, args)
+        templates.render(t, values, 8)          # checks the SVG draws before taking the printer
+    except templates.TemplateError as e:
+        sys.exit(f"Error: {e}")
+
+    def items(width):
+        return [(templates.render(t, values, width), True)]
+    if args.preview:
+        width = args.width or _offline_model(args).width
+        rows, _ = api.rows_for(items(width), width)
+        img = Image.new("1", (width, len(rows)), 1)
+        img.putdata([0 if px else 1 for row in rows for px in row])
+        img.save(args.preview)
+        print(f"Wrote {args.preview}: {t.name}, {width}x{len(rows)} dots")
+        return
+    first = next((v for v in values.values() if v.strip()), t.name)
+    await _print_items(args, items, f"{t.name}: {first.splitlines()[0][:30]}" if first != t.name else t.name)
+
+
 async def cmd_status(args):
     info = busy.current()
     if info:                               # it can't take a second connection while printing
@@ -427,6 +502,7 @@ HOME = {
     "print": ("ipreent print FILE...", "photos, PDFs, text files"),
     "text": ('ipreent text "Hello"', "a note (or pipe text in)"),
     "receipt": ('ipreent receipt -i "Coffee" 1800', "a receipt with total and barcode"),
+    "template": ('ipreent template', "cute designs: hearts, frames, lists, tags"),
     "status": ("ipreent status", "paper and battery"),
     "preview": ("ipreent preview FILE", "PNG of what would print"),
     "queue": ("ipreent queue", "what is printing, time left"),
@@ -571,6 +647,30 @@ def main(argv=None):
     s.add_argument("--feed", type=int, help="blank lines after the print (default ~96)")
     queue_args(s)
     s.set_defaults(fn=cmd_receipt)
+
+    s = sub.add_parser(
+        "template", help="cute designs to fill in: hearts, frames, lists, notes, tags",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description="Print a ready-made design (a heart, a frame, a to-do list, a gift tag…) with your own "
+                    "text.\nThe text shrinks to fit; lists and frames grow longer when they need to. Without "
+                    "NAME, lists\nthe templates. Your own SVG files work too (see docs/TEMPLATES.md).",
+        epilog="examples:\n"
+               "  ipreent template                                  # the collection\n"
+               "  ipreent template big-heart \"Te quiero mucho\"\n"
+               "  ipreent template birthday --set name=Sofía --preview cake.png\n"
+               "  ipreent template to-do \"Hoy\" \"Leche\\nPan\\nCafé\"         # \\n = new line\n"
+               "  ipreent template gift-tag --fields                 # what you can fill in\n"
+               "  ipreent template ./my-design.svg")
+    s.add_argument("name", nargs="?", help="template name or number from the list, or an SVG file")
+    s.add_argument("text", nargs="*", help="text for the boxes, in order (- = stdin)")
+    s.add_argument("-s", "--set", action="append", metavar="KEY=TEXT", help="text for one box by name (repeatable)")
+    s.add_argument("--fields", action="store_true", help="show the template's text boxes and stop")
+    s.add_argument("--category", choices=list(templates.CATEGORIES), help="list only this category")
+    s.add_argument("--preview", metavar="PNG", help="save a picture instead of printing")
+    s.add_argument("-n", "--copies", type=int, default=1)
+    s.add_argument("--feed", type=int, help="blank lines after the print (default ~96)")
+    queue_args(s)
+    s.set_defaults(fn=cmd_template)
 
     s = sub.add_parser("status", help="paper / battery")
     s.add_argument("--json", action="store_true")

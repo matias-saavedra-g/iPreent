@@ -5,6 +5,7 @@ import io
 import json
 import os
 import secrets
+import shutil
 import socket
 import sys
 import time
@@ -13,12 +14,12 @@ from pathlib import Path
 
 from PIL import Image
 from PySide6.QtCore import (QAbstractAnimation, QAbstractNativeEventFilter, QBuffer, QEasingCurve,
-                            QIODevice, QPoint, QPointF, QRectF, QSettings, QSize, Qt, QTimer,
+                            QIODevice, QPoint, QPointF, QRectF, QSettings, QSize, Qt, QTimer, QUrl,
                             QVariantAnimation)
-from PySide6.QtGui import (QAction, QActionGroup, QBrush, QColor, QFont, QFontDatabase, QGuiApplication,
-                           QIcon, QImage, QKeySequence, QPainter, QPixmap, QShortcut)
+from PySide6.QtGui import (QAction, QActionGroup, QBrush, QColor, QDesktopServices, QFont, QFontDatabase,
+                           QGuiApplication, QIcon, QImage, QKeySequence, QPainter, QPixmap, QShortcut)
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
-from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QComboBox, QDialog,
+from PySide6.QtWidgets import (QAbstractItemView, QApplication, QButtonGroup, QCheckBox, QComboBox, QDialog,
                                QDialogButtonBox, QFileDialog, QFormLayout, QFrame, QHBoxLayout,
                                QHeaderView, QInputDialog, QLabel, QLineEdit, QListWidget,
                                QListWidgetItem, QMainWindow, QMenu, QMessageBox, QPlainTextEdit,
@@ -26,7 +27,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QApplication, QCheckBox, QComb
                                QSystemTrayIcon, QTableWidget, QTableWidgetItem, QToolButton,
                                QVBoxLayout, QWidget)
 
-from .. import api, busy, config, convert, features, imaging, protocol, receipt
+from .. import api, busy, config, convert, features, imaging, protocol, receipt, templates
 from ..cli import ENERGY_PRESETS
 from ..models import details, lookup
 from . import spool
@@ -40,7 +41,7 @@ DARKNESS_NAMES = ["Lightest", "Lighter", "Normal", "Darker", "Darkest"]
 # key: (label, Segoe Fluent / MDL2 icon glyph). The nav order comes from features.DESKTOP.
 MODES = {"photo": ("Photo", "\uE91B"), "document": ("Document", "\uE8A5"), "text": ("Text", "\uE8D2"),
          "receipt": ("Receipt", "\uE719"), "list": ("Checklist", "\uE9D5"), "qr": ("QR code", "\uED14"),
-         "banner": ("Banner", "\uE7C1"), "barcode": ("Barcode", "\uE8EC")}
+         "banner": ("Banner", "\uE7C1"), "barcode": ("Barcode", "\uE8EC"), "template": ("Templates", "\uEB52")}
 OLD_MODES = ["photo", "text", "list", "banner", "qr", "barcode", "receipt"]   # saved as a row number before 0.5
 GLYPH_SETTINGS, GLYPH_PRINTER = "\uE713", "\uE749"
 ICON_FONTS = ("Segoe Fluent Icons", "Segoe MDL2 Assets")
@@ -69,6 +70,12 @@ QPushButton#print { background: palette(accent); color: palette(button-text); bo
 QPushButton#print:hover { background: palette(highlight); }
 QPushButton#print:disabled { background: palette(midlight); color: palette(placeholder-text); }
 QScrollArea#paperArea, QScrollArea#paperArea > QWidget > QWidget { background: transparent; border: none; }
+QPushButton#chip { border: 1px solid palette(mid); border-radius: 13px; padding: 3px 12px; background: transparent; }
+QPushButton#chip:checked { background: palette(accent); color: palette(button-text); border-color: palette(accent); }
+QListWidget#gallery { background: transparent; border: none; }
+QListWidget#gallery::item { border-radius: 6px; padding: 4px; }
+QListWidget#gallery::item:selected { background: palette(midlight); color: palette(text);
+                                     border: 2px solid palette(accent); }
 """
 
 
@@ -460,6 +467,7 @@ class MainWindow(QMainWindow):
         add("barcode", bw)
         self.barcode.textChanged.connect(self.schedule)
         add("receipt", self._receipt_editor())
+        add("template", self._template_editor())
         for e in (self.text, self.list_items):
             e.textChanged.connect(self.schedule)
         for e in (self.list_title, self.banner, self.qr):
@@ -617,6 +625,171 @@ class MainWindow(QMainWindow):
             return None
         return r
 
+    # -- templates: a strip of thumbnails (filter chips above), the chosen one's text boxes below --
+
+    def _template_editor(self):
+        try:
+            self.tpl_values = json.loads(self.settings.value("template_values", "{}"))   # id -> {key: text}
+        except (TypeError, ValueError):
+            self.tpl_values = {}
+        self.tpl_current = None
+        self.tpl_loaded = False
+        w = QWidget()
+        v = QVBoxLayout(w)
+        v.setContentsMargins(0, 0, 0, 0)
+        chips = QHBoxLayout()
+        chips.setSpacing(6)
+        self.tpl_chips = QButtonGroup(w)
+        for key, label in [("all", "All"), *templates.CATEGORIES.items()]:
+            b = QPushButton(label, objectName="chip", checkable=True, cursor=Qt.PointingHandCursor)
+            b.setProperty("category", key)
+            b.setChecked(key == "all")
+            self.tpl_chips.addButton(b)
+            chips.addWidget(b)
+        self.tpl_chips.buttonClicked.connect(self.filter_templates)
+        chips.addStretch(1)
+        add = QPushButton("Add SVG…", toolTip="Use your own SVG file as a template (it goes to Mine)")
+        add.clicked.connect(self.add_template_files)
+        folder = QPushButton("Folder", toolTip="Open the folder with your own templates")
+        folder.clicked.connect(self.open_template_folder)
+        chips.addWidget(add)
+        chips.addWidget(folder)
+        v.addLayout(chips)
+        self.gallery = QListWidget(objectName="gallery", viewMode=QListWidget.IconMode, flow=QListWidget.LeftToRight,
+                                   movement=QListWidget.Static, wrapping=False, uniformItemSizes=True)
+        self.gallery.setIconSize(QSize(96, 96))
+        self.gallery.setGridSize(QSize(118, 128))
+        self.gallery.setFixedHeight(150)
+        self.gallery.setHorizontalScrollMode(QAbstractItemView.ScrollPerPixel)
+        self.gallery.currentItemChanged.connect(self.template_chosen)
+        v.addWidget(self.gallery)
+        self.tpl_form_box = QWidget()
+        self.tpl_form = QFormLayout(self.tpl_form_box)
+        self.tpl_form.setContentsMargins(0, 4, 0, 0)
+        v.addWidget(self.tpl_form_box)
+        bottom = QHBoxLayout()
+        self.tpl_note = QLabel(objectName="subtle", wordWrap=True)
+        reset = QPushButton("Example text", toolTip="Put the template's example text back")
+        reset.clicked.connect(self.reset_template_text)
+        bottom.addWidget(self.tpl_note, 1)
+        bottom.addWidget(reset)
+        v.addLayout(bottom)
+        return w
+
+    def load_templates(self, select=None):
+        """Thumbnails for the gallery, made the first time Templates is opened (and after adding files)."""
+        QApplication.setOverrideCursor(Qt.WaitCursor)
+        try:
+            self.gallery.blockSignals(True)
+            self.gallery.clear()
+            want = select or self.settings.value("template_id") or ""
+            pick = None
+            for t in templates.all_templates():
+                try:
+                    pix = QPixmap.fromImage(self.thumb_qimage(templates.thumbnail(t, 192)))
+                except templates.TemplateError:
+                    continue
+                it = QListWidgetItem(QIcon(pix), t.name)
+                it.setData(Qt.UserRole, t)
+                it.setToolTip(f"{t.name} · {templates.CATEGORIES[t.category]}")
+                self.gallery.addItem(it)
+                if pick is None or t.id == want:
+                    pick = it
+            self.tpl_loaded = True
+            has_mine = any(self.gallery.item(i).data(Qt.UserRole).category == "mine" for i in range(self.gallery.count()))
+            for chip in self.tpl_chips.buttons():
+                if chip.property("category") == "mine":
+                    chip.setVisible(has_mine)
+                    if chip.isChecked() and not has_mine:
+                        self.tpl_chips.buttons()[0].setChecked(True)
+            self.filter_templates()
+            self.gallery.blockSignals(False)
+            if pick is not None:
+                self.gallery.setCurrentItem(pick)
+                self.gallery.scrollToItem(pick)
+        finally:
+            QApplication.restoreOverrideCursor()
+
+    @staticmethod
+    def thumb_qimage(img):
+        """A thumbnail on a square white card, so tall and short designs line up in the strip."""
+        side = max(img.width, img.height) + 8
+        card = Image.new("L", (side, side), 255)
+        card.paste(img, ((side - img.width) // 2, (side - img.height) // 2))
+        data = card.tobytes()
+        return QImage(data, side, side, side, QImage.Format_Grayscale8).copy()
+
+    def filter_templates(self, *_):
+        b = self.tpl_chips.checkedButton()
+        cat = b.property("category") if b else "all"
+        for i in range(self.gallery.count()):
+            it = self.gallery.item(i)
+            it.setHidden(cat != "all" and it.data(Qt.UserRole).category != cat)
+
+    def template_chosen(self, item, _prev=None):
+        t = item.data(Qt.UserRole) if item else None
+        self.tpl_current = t
+        while self.tpl_form.rowCount():
+            self.tpl_form.removeRow(0)
+        if t is None:
+            self.schedule()
+            return
+        values = self.tpl_values.get(t.id, {})
+        for f in t.fields:
+            text = values.get(f.key, f.default)
+            if f.multiline:
+                e = QPlainTextEdit(text, placeholderText=f.default)
+                e.setFixedHeight(84 if f.list != "none" else 58)
+                e.textChanged.connect(lambda e=e, k=f.key: self.template_text(k, e.toPlainText()))
+            else:
+                e = QLineEdit(text, placeholderText=f.default)
+                e.textChanged.connect(lambda v, k=f.key: self.template_text(k, v))
+            self.tpl_form.addRow(f.label, e)
+        notes = []
+        if not t.fields:
+            notes.append("No text boxes: prints the picture as it is.")
+        if any(f.list != "none" for f in t.fields):
+            notes.append("One item per line.")
+        if t.stretch is not None:
+            notes.append("Grows longer when the text needs room.")
+        self.tpl_note.setText(" ".join(notes) or "Text shrinks to fit the design.")
+        self.schedule()
+
+    def template_text(self, key, text):
+        if self.tpl_current is not None:
+            self.tpl_values.setdefault(self.tpl_current.id, {})[key] = text
+            self.schedule()
+
+    def reset_template_text(self):
+        if self.tpl_current is not None:
+            self.tpl_values.pop(self.tpl_current.id, None)
+            self.template_chosen(self.gallery.currentItem())
+
+    def open_template_folder(self):
+        d = templates.user_dir()
+        d.mkdir(parents=True, exist_ok=True)
+        QDesktopServices.openUrl(QUrl.fromLocalFile(str(d)))
+
+    def add_template_files(self, paths=None):
+        if not paths:
+            paths, _ = QFileDialog.getOpenFileNames(self, "Add SVG templates", "", "SVG pictures (*.svg)")
+        added = None
+        for p in paths:
+            try:
+                t = templates.parse(Path(p).read_text(encoding="utf-8"), templates._id(p))
+                templates.svg_image(t.svg, 16, max(1, round(16 * t.height / t.width)))    # can resvg draw it?
+                d = templates.user_dir()
+                d.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(p, d / Path(p).name)
+                added = t.id
+            except (OSError, UnicodeDecodeError, templates.TemplateError) as e:
+                QMessageBox.warning(self, APP, f"Can't use {Path(p).name} as a template:\n{e}")
+        if added:
+            self.set_mode("template")
+            mine = next(b for b in self.tpl_chips.buttons() if b.property("category") == "mine")
+            mine.setChecked(True)
+            self.load_templates(select=added)
+
     def _editor(self, widget, *extra):
         w = QWidget()
         lay = QVBoxLayout(w)
@@ -730,6 +903,10 @@ class MainWindow(QMainWindow):
         s.setValue("dialog_quality", self.dialog_quality.currentData())
         s.setValue("doc_look", self.doc_look.currentData())
         s.setValue("mode_key", self.mode())
+        if getattr(self, "tpl_current", None) is not None:
+            s.setValue("template_id", self.tpl_current.id)
+        if hasattr(self, "tpl_values"):
+            s.setValue("template_values", json.dumps(self.tpl_values, ensure_ascii=False))
         if hasattr(self, "r_items"):
             s.setValue("receipt_business", self.r_business.text())
             s.setValue("receipt_address", self.r_address.text())
@@ -747,7 +924,9 @@ class MainWindow(QMainWindow):
     def mode_changed(self, row):
         key = self.mode()
         self.editors.setCurrentIndex(self.editor_of[key])
-        self.editors.setMaximumHeight(280 if key == "receipt" else 200)
+        self.editors.setMaximumHeight({"receipt": 280, "template": 420}.get(key, 200))
+        if key == "template" and not self.tpl_loaded:
+            self.load_templates()
         for widget, modes in self.mode_rows.items():
             self.form.setRowVisible(widget, key in modes)
         self.schedule()
@@ -826,6 +1005,15 @@ class MainWindow(QMainWindow):
         if mode == "receipt":
             r = self.receipt()
             return [(r.image(width), True)] if r else []
+        if mode == "template":
+            t = self.tpl_current
+            if t is None:
+                return []
+            try:
+                return [(templates.render(t, self.tpl_values.get(t.id, {}), width), True)]
+            except templates.TemplateError as e:
+                self.tpl_note.setText(f"Can't draw this template: {e}")
+                return []
         t = self.barcode.text().strip()
         self.barcode_error.setText("")
         if not t:
@@ -879,6 +1067,10 @@ class MainWindow(QMainWindow):
     def add_sources(self, paths=(), images=(), kind=None):
         """Pictures go to Photo, PDFs and text to Document (unless `kind` says where)."""
         first = None
+        svgs = [p for p in paths if str(p).lower().endswith(".svg")]
+        if svgs:                                   # SVG files become templates (Mine)
+            self.add_template_files(svgs)
+            paths = [p for p in paths if p not in svgs]
         for p in paths:
             try:
                 k = kind or ("photo" if convert.kind(p) == "image" else "document")
@@ -940,6 +1132,8 @@ class MainWindow(QMainWindow):
             label = src[0][0] + (f" +{len(src) - 1}" if len(src) > 1 else "")
         if mode == "receipt":
             label = self.r_total.text().replace("Total", "Receipt")
+        if mode == "template" and self.tpl_current is not None:
+            label = self.tpl_current.name
         if not self.confirm_busy(label):
             return
 

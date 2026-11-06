@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 300" width="384" height="300"
+     ip:name="Ribbon" ip:category="frames" ip:stretch="185">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <path d="M4 40 L54 40 L54 104 L4 104 L22 72 Z" fill="#000"/>
+  <path d="M380 40 L330 40 L330 104 L380 104 L362 72 Z" fill="#000"/>
+  <rect x="40" y="24" width="304" height="80" rx="4" fill="#000"/>
+  <rect x="48" y="31" width="288" height="66" rx="3" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="6 5"/>
+  <path d="M74 120 L74 274 L310 274 L310 120" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M92 256 L292 256" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" stroke-dasharray="2 8"/>
+  <rect ip:field="title" ip:label="Title" ip:default="Congrats!" ip:size="40" ip:min="18" ip:lines="1" ip:color="white" x="56" y="32" width="272" height="64" fill="none"/>
+  <rect ip:field="message" ip:label="Message" ip:default="So proud of you" ip:size="28" ip:min="20" x="90" y="130" width="204" height="110" fill="none"/>
+</svg>

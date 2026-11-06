@@ -96,3 +96,21 @@ def test_local_mode_refuses_web_pages_and_rebinding(server):
     assert code == 403
     code, _ = call(port, "/text", b"script", {"Host": f"localhost:{port}"})
     assert code == 200 and len(queued) == 1
+
+
+def test_templates_list_and_print(server, tmp_path):
+    pytest.importorskip("resvg_py")
+    s, queued = server
+    assert s.start("127.0.0.1", 0, "tok")
+    port = s.httpd.server_address[1]
+    code, items = call(port, "/templates")
+    assert code == 200 and any(t["id"] == "big-heart" for t in items)
+    code, job = call(port, "/template", json.dumps({"name": "big-heart", "values": {"message": "hola"}}).encode(),
+                     {"Content-Type": "application/json"})
+    assert code == 200 and job["label"] == "API Big heart" and queued[-1][1][0][0].width == 384
+    assert call(port, "/template?name=to-do", "Leche".encode())[0] == 200
+    assert call(port, "/template", b'{"name": "big-heart", "values": {"nope": "x"}}')[0] == 400
+    assert call(port, "/template", b'{"name": "zzz"}')[0] == 404
+    svg = tmp_path / "x.svg"
+    svg.write_text('<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"/>')
+    assert call(port, "/template", json.dumps({"name": str(svg)}).encode())[0] == 404   # no file paths

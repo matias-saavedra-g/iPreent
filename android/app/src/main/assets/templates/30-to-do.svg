@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 290" width="384" height="290"
+     ip:name="To-do list" ip:category="lists" ip:stretch="210">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <rect x="20" y="16" width="64" height="70" rx="8" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <rect x="36" y="8" width="32" height="16" rx="4" fill="#000"/>
+  <path d="M32 42 l6 6 l10 -12 M32 66 l6 6 l10 -12" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M56 44 h18 M56 68 h18" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <rect x="16" y="96" width="352" height="178" rx="14" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M16 250 L368 250" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" stroke-dasharray="2 8"/>
+  <rect ip:field="title" ip:label="Title" ip:default="To do" ip:size="38" ip:min="18" ip:lines="1" ip:align="left" x="100" y="20" width="268" height="66" fill="none"/>
+  <rect ip:field="items" ip:label="Items (one per line)" ip:default="Water the plants&#10;Call grandma&#10;Buy stamps" ip:size="26" ip:min="26" ip:list="check" ip:valign="top" x="34" y="110" width="316" height="130" fill="none"/>
+</svg>

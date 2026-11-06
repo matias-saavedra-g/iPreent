@@ -34,7 +34,8 @@ Manual runs have a `publish` input: `false` only builds and tests (use it to try
 version that already exists replaces its files but leaves its tag. **Never move or delete a published tag.**
 
 ## Android APK
-- Code: `android/` (Kotlin + Jetpack Compose, Material 3). minSdk 26 (Android 8), target/compile 35.
+- Code: `android/` (Kotlin + Jetpack Compose, Material 3). minSdk 26 (Android 8), target/compile 35. Libraries:
+  ZXing (codes), AndroidSVG 1.4 (template art). The template SVGs and fonts are copies in `app/src/main/assets`.
 - CI: `./gradlew --no-daemon testDebugUnitTest assembleRelease` (R8 minify on), then
   `apksigner verify --print-certs` must show the release certificate SHA-256 in `RELEASE_CERT_SHA256`.
 - Signing: secrets `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` (`ipreent`),
@@ -57,7 +58,8 @@ version that already exists replaces its files but leaves its tag. **Never move 
 - Code: `ipreent/desktop/` (PySide6) on top of the shared `ipreent/` package.
 - Build: `pip install -e ".[desktop]" pyinstaller` then `python tools/build_windows.py` → `dist/iPreent.exe`
   (PyInstaller `--onefile --windowed`; `--debug` builds a console version that shows tracebacks). It renders the
-  `.ico` from `assets/brand/*.svg`, bundles `models.json` and `ipreent/desktop/icons`, collects `bleak` + `winrt`,
+  `.ico` from `assets/brand/*.svg`, bundles `models.json`, `ipreent/desktop/icons`, `ipreent/templates` and
+  `ipreent/fonts`, collects `resvg_py` (draws the template SVGs), `bleak` + `winrt`,
   and leaves out unused Qt modules. **Only builds on Windows** (WinRT Bluetooth, `winreg`), hence the Windows runner.
 - Not code-signed: SmartScreen may warn on first start ("More info → Run anyway").
 - No installer and no updater: the user downloads the new exe and replaces the old one. Settings live in the
@@ -70,8 +72,9 @@ version that already exists replaces its files but leaves its tag. **Never move 
   `INSTALL.txt` (from `tools/cli-install.txt`). `__pycache__` is left out.
 - CI runs `pytest` first (deselecting `test_print_detects_image` and `test_emoji_text_uses_emoji_font`, which need
   Windows or an emoji font).
-- Install: Python 3.10+ (pyproject says `>=3.9`), then `pip install .` in the unzipped folder; gives the `ipreent`
-  command (and `ipreent-desktop` if `.[desktop]` is installed). Dependencies: bleak, Pillow, pyserial, pypdfium2.
+- Install: Python 3.10+ (pyproject says `>=3.10` since v0.6: `resvg_py` needs it), then `pip install .` in the
+  unzipped folder; gives the `ipreent` command (and `ipreent-desktop` if `.[desktop]` is installed). Dependencies:
+  bleak, Pillow, pyserial, pypdfium2, resvg_py (templates; prebuilt wheels for Windows, macOS and Linux).
 - Update: unzip the new version and `pip install .` again. Settings in the config dir (see ARCHITECTURE.md) stay.
 - Works on Windows, Linux (BlueZ) and macOS; only the Windows app is Windows-only.
 

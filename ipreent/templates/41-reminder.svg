@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 330" width="384" height="330"
+     ip:name="Reminder" ip:category="notes" ip:stretch="250">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <circle cx="192" cy="78" r="46" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <path d="M192 50 L192 80 L212 92" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <path d="M150 46 a20 20 0 0 1 26 -16 M234 46 a20 20 0 0 0 -26 -16" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <path d="M162 118 l-10 12 M222 118 l10 12" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <path d="M120 40 l-14 -6 M118 64 l-16 0 M264 40 l14 -6 M266 64 l16 0" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <rect x="24" y="142" width="336" height="172" rx="18" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4" stroke-dasharray="14 10"/>
+  <rect ip:field="title" ip:label="Title" ip:default="Don't forget!" ip:size="34" ip:min="18" ip:lines="1" x="40" y="150" width="304" height="52" fill="none"/>
+  <rect ip:field="message" ip:label="Reminder" ip:default="Dentist at 4 pm" ip:size="30" ip:min="22" x="40" y="206" width="304" height="94" fill="none"/>
+</svg>

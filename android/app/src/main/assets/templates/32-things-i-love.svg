@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 290" width="384" height="290"
+     ip:name="Things I love" ip:category="lists" ip:stretch="210">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <path d="M52 41.1 C47.2 24.2 20 22.6 20 43.4 C20 61 37.6 70.6 52 81.8 C66.4 70.6 84 61 84 43.4 C84 22.6 56.8 24.2 52 41.1Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <path d="M52 46.9 C49.8 39 37 38.2 37 48 C37 56.2 45.2 60.7 52 66 C58.8 60.7 67 56.2 67 48 C67 38.2 54.2 39 52 46.9Z" fill="#000"/>
+  <rect x="16" y="96" width="352" height="178" rx="14" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M16 250 L368 250" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" stroke-dasharray="2 8"/>
+  <rect ip:field="title" ip:label="Title" ip:default="Things I love" ip:size="38" ip:min="18" ip:lines="1" ip:align="left" x="100" y="20" width="268" height="66" fill="none"/>
+  <rect ip:field="items" ip:label="Items (one per line)" ip:default="Sunny mornings&#10;Your laugh&#10;Cats" ip:size="26" ip:min="26" ip:list="heart" ip:valign="top" x="34" y="110" width="316" height="130" fill="none"/>
+</svg>

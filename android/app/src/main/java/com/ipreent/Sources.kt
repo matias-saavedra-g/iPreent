@@ -10,6 +10,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.ParcelFileDescriptor
 import android.provider.MediaStore
+import android.provider.OpenableColumns
 
 /** Load what the user shared or picked into bitmaps at the paper width. Port of ipreent/convert.py. */
 object Sources {
@@ -34,6 +35,13 @@ object Sources {
                 if (big > 3000) d.setTargetSampleSize(big / 1500)   // phone photos: no need for 12 MP
             }
         else @Suppress("DEPRECATION") MediaStore.Images.Media.getBitmap(ctx.contentResolver, uri)
+
+    /** The file name a picker or share gave, if any. */
+    fun displayName(ctx: Context, uri: Uri): String? = runCatching {
+        ctx.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
+            if (c.moveToFirst()) c.getString(0) else null
+        }
+    }.getOrNull() ?: uri.lastPathSegment?.substringAfterLast('/')
 
     /** Images and PDFs become bitmaps; text files become text. */
     fun load(ctx: Context, uri: Uri, width: Int): Loaded {

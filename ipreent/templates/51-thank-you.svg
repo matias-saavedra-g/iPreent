@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 320" width="384" height="320"
+     ip:name="Thank you" ip:category="party" ip:stretch="230">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <path d="M20 20 q12.3 -7 24.6 0 q12.3 7 24.6 0 q12.3 -7 24.6 0 q12.3 7 24.6 0 q12.3 -7 24.6 0 q12.3 7 24.6 0 q12.3 -7 24.6 0 q12.3 7 24.6 0 q12.3 -7 24.6 0 q12.3 7 24.6 0 q12.3 -7 24.6 0 q12.3 7 24.6 0 q12.3 -7 24.6 0 q12.3 7 24.6 0" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <path d="M192 46.2 C189.4 37.2 175 36.4 175 47.4 C175 56.8 184.3 61.9 192 67.8 C199.7 61.9 209 56.8 209 47.4 C209 36.4 194.6 37.2 192 46.2Z" fill="#000"/>
+  <path d="M150 54.6 C148.5 49.3 140 48.8 140 55.3 C140 60.8 145.5 63.8 150 67.3 C154.5 63.8 160 60.8 160 55.3 C160 48.8 151.5 49.3 150 54.6Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <path d="M234 54.6 C232.5 49.3 224 48.8 224 55.3 C224 60.8 229.5 63.8 234 67.3 C238.5 63.8 244 60.8 244 55.3 C244 48.8 235.5 49.3 234 54.6Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <path d="M60 296 L324 296" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" stroke-dasharray="1 9"/>
+  <rect ip:field="title" ip:label="Title" ip:default="Thank you" ip:font="script" ip:size="64" ip:min="26" ip:lines="1" x="16" y="80" width="352" height="90" fill="none"/>
+  <rect ip:field="message" ip:label="Message" ip:default="for your purchase!&#10;We hope you love it." ip:size="26" ip:min="20" x="30" y="176" width="324" height="110" fill="none"/>
+</svg>

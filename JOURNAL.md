@@ -366,3 +366,53 @@ Robolectric test (home, busy home, tool screen, printer sheet, busy dialog, queu
   die-cut label mode), no paper speed (the CLI `settings` paper-speed line and Android's speed line stay).
 - The v0.5.0 workflow didn't start, so this is released as v0.5.1 (versionCode +1), started with a manual
   `release.yml` run on main.
+
+## 2026-11-06
+
+### Templates: cute SVG designs to fill in (all three apps)
+- User: a collection of cute, editable designs (frames, hearts with text inside, lists…) in the CLI, the Windows
+  app and Android, using the existing printing functions plus a new "collection" function. Asked for research on
+  what to build and how; won't be around to answer questions, so the decisions below are mine.
+- UX research (sources in docs/TEMPLATES.md): the template-gallery pattern (ui-patterns.com) = preview every
+  template, one tap to an editable copy pre-filled with realistic sample text, a small curated set with
+  categories (a big undifferentiated gallery recreates the blank page as a choice problem), keep a blank option.
+  Filter chips: single-select, short nouns, horizontal scroll (CMS design system; Material 3 same). What people
+  print on pocket printers (Phomemo blogs): to-do lists, journal stickers, notes, labels, gift tags, thank-you
+  notes. Label-printer apps (Niimbot, Phomemo, Stikkr) do templates + inline text; their reviews complain the print
+  doesn't match the screen → our preview is the exact 1-bit print. Threshold (not dithering) for text and line art
+  (Label LIVE, Neodynamic, Zebra).
+- Design: a template = an ordinary SVG + `ip:` attributes (namespace `urn:ipreent:template`): root `ip:name`,
+  `ip:category`, `ip:stretch`; invisible rects with `ip:field` etc. as text boxes. Art by resvg (PC) / AndroidSVG;
+  text drawn by us so it shrinks to fit (largest whole size from `ip:size` to `ip:min`), wraps, falls back to emoji
+  fonts and can **stretch** the design (repeat the pixel row at `ip:stretch`, move boxes below) when it doesn't fit
+  at the minimum. Self-contained SVGs also let users bring their own files (Mine) without a separate manifest.
+- Renderers: `resvg_py` 0.5.0 (MIT, abi3 wheels incl. Windows; needs Python ≥3.10, so `requires-python` is now
+  3.10 as INSTALL.txt already said). CairoSVG rejected (Cairo DLL on Windows), Qt SVG rejected (SVG Tiny only, and
+  the CLI doesn't depend on PySide6). Android: AndroidSVG 1.4 (Apache 2.0; last release is old but it's what Coil
+  uses). **Pitfall found**: AndroidSVG draws at the root `width`/`height` and ignores `RenderOptions.viewPort`'s
+  size; `setDocumentWidth/Height("100%")` (plus a viewBox when missing) fixes it. It only showed at widths other
+  than 384, so thumbnails (and 80 mm printers) would have been wrong.
+- Fonts: Fredoka SemiBold ("round") and Pacifico ("script"), SIL OFL 1.1 (license files next to them), taken
+  from the `@expo-google-fonts` npm packages; both have Spanish accents and ¡¿.
+- Collection: 20 original designs (MIT) in 6 categories (love, frames, lists, notes, party, labels), drawn at 384
+  units wide with ≥3-unit strokes and few large black areas (heat, speed, curl). Lists and notes stretch; the
+  minimum font sizes of stretching boxes are close to their maximum so they grow rather than go tiny.
+  Generated once with a scratch script (not committed); the SVG files are the source now.
+- Built: `ipreent/templates.py` ↔ `Templates.kt` (layout; shared cases in `test_templates.py` ↔ `TemplatesTest.kt`,
+  hand-checked numbers) + `TemplateArt.kt` (drawing). CLI `ipreent template` (list / `--fields` / print /
+  `--preview`, texts in order or `--set KEY=TEXT`, `\n`, `-` = stdin, any `.svg` path). Windows: Templates mode (chips,
+  thumbnail strip, text boxes, Add SVG / Folder / drop, texts remembered per template). HTTP API `GET /templates`,
+  `POST /template` (names only, no file paths). Android: Templates tool (chips, adaptive grid, editor, *Your own
+  SVG* → `filesDir/templates`, remove from Mine). Feature weights: template 0.10 on Android/Windows, 0.07 CLI.
+- Checked: pytest (only the two known Linux failures); Windows window driven offscreen (gallery, typing, filter,
+  print, settings saved); Android `testDebugUnitTest assembleRelease`; Robolectric screenshots of every template
+  (identical layout to the Python renders), the gallery and the editor (temporary test, removed).
+  **Not tried on a real phone, on Windows itself or on paper yet.**
+
+### Open
+- [ ] Print a few templates on the SC03h: check stroke weights, the script font at small sizes and that the big
+      black areas (ribbon, name tag) don't streak or slow the print too much.
+- [ ] Windows: check the template glyph (Heart, U+EB52) in the nav list on Windows 10 and 11.
+- [ ] Maybe later: more templates (seasonal: Christmas, Fiestas Patrias, Halloween), a "label sheet" that repeats a
+      small design, and photo slots (a frame around a picture).
+

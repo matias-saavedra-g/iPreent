@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 300" width="384" height="300"
+     ip:name="Heart garland" ip:category="love" ip:stretch="150">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <path d="M0 14 q27.4 -10 54.9 0 q27.4 10 54.9 0 q27.4 -10 54.9 0 q27.4 10 54.9 0 q27.4 -10 54.9 0 q27.4 10 54.9 0 q27.4 -10 54.9 0" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <path d="M0 286 q27.4 -10 54.9 0 q27.4 10 54.9 0 q27.4 -10 54.9 0 q27.4 10 54.9 0 q27.4 -10 54.9 0 q27.4 10 54.9 0 q27.4 -10 54.9 0" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <path d="M30 27.5 C27.1 17.5 11 16.5 11 28.9 C11 39.3 21.4 45 30 51.7 C38.5 45 49 39.3 49 28.9 C49 16.5 32.9 17.5 30 27.5Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M57 257.5 C54.1 247.5 38 246.5 38 258.9 C38 269.3 48.5 275 57 281.7 C65.5 275 76 269.3 76 258.9 C76 246.5 59.9 247.5 57 257.5Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M84 36.9 C81.8 28.9 69 28.2 69 38 C69 46.2 77.2 50.7 84 56 C90.8 50.7 99 46.2 99 38 C99 28.2 86.2 28.9 84 36.9Z" fill="#000"/>
+  <path d="M111 250.9 C108.8 242.9 96 242.2 96 251.9 C96 260.2 104.2 264.7 111 269.9 C117.8 264.7 126 260.2 126 251.9 C126 242.2 113.2 242.9 111 250.9Z" fill="#000"/>
+  <path d="M138 27.5 C135.2 17.5 119 16.5 119 28.9 C119 39.3 129.4 45 138 51.7 C146.6 45 157 39.3 157 28.9 C157 16.5 140.8 17.5 138 27.5Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M165 257.5 C162.2 247.5 146 246.5 146 258.9 C146 269.3 156.4 275 165 281.7 C173.6 275 184 269.3 184 258.9 C184 246.5 167.8 247.5 165 257.5Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M192 36.9 C189.8 28.9 177 28.2 177 38 C177 46.2 185.2 50.7 192 56 C198.8 50.7 207 46.2 207 38 C207 28.2 194.2 28.9 192 36.9Z" fill="#000"/>
+  <path d="M219 250.9 C216.8 242.9 204 242.2 204 251.9 C204 260.2 212.2 264.7 219 269.9 C225.8 264.7 234 260.2 234 251.9 C234 242.2 221.2 242.9 219 250.9Z" fill="#000"/>
+  <path d="M246 27.5 C243.2 17.5 227 16.5 227 28.9 C227 39.3 237.4 45 246 51.7 C254.6 45 265 39.3 265 28.9 C265 16.5 248.8 17.5 246 27.5Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M273 257.5 C270.1 247.5 254 246.5 254 258.9 C254 269.3 264.4 275 273 281.7 C281.6 275 292 269.3 292 258.9 C292 246.5 275.9 247.5 273 257.5Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M300 36.9 C297.8 28.9 285 28.2 285 38 C285 46.2 293.2 50.7 300 56 C306.8 50.7 315 46.2 315 38 C315 28.2 302.2 28.9 300 36.9Z" fill="#000"/>
+  <path d="M327 250.9 C324.8 242.9 312 242.2 312 251.9 C312 260.2 320.2 264.7 327 269.9 C333.8 264.7 342 260.2 342 251.9 C342 242.2 329.2 242.9 327 250.9Z" fill="#000"/>
+  <path d="M354 27.5 C351.1 17.5 335 16.5 335 28.9 C335 39.3 345.4 45 354 51.7 C362.6 45 373 39.3 373 28.9 C373 16.5 356.9 17.5 354 27.5Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M381 257.5 C378.1 247.5 362 246.5 362 258.9 C362 269.3 372.4 275 381 281.7 C389.6 275 400 269.3 400 258.9 C400 246.5 383.9 247.5 381 257.5Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <rect ip:field="message" ip:label="Message" ip:default="Happy&#10;anniversary!" ip:font="script" ip:size="48" ip:min="28" x="24" y="80" width="336" height="140" fill="none"/>
+</svg>

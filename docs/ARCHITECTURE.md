@@ -7,12 +7,12 @@ moves something described here, update this file in the same commit.
 ```
                 ┌──────────── ipreent/ (Python package) ────────────┐
                 │ protocol  models  imaging  receipt  convert       │
-                │ features  busy  config  api  ble  spp             │
+                │ templates features  busy  config  api  ble  spp   │
                 └──────┬───────────────────────────────┬────────────┘
            cli.py (command line)           desktop/ (Windows app, PySide6)
                                                    app · worker · server · spool
 
-   android/app/src/main/java/com/ipreent/  ← Kotlin port of protocol, models, imaging, receipt, features
+   android/app/src/main/java/com/ipreent/  ← Kotlin port of protocol, models, imaging, receipt, templates, features
 ```
 The printer protocol is in [PROTOCOL.md](../PROTOCOL.md): frames `51 78 CMD 00 LEN DATA CRC8 FF`, one 1-bit row
 of 384 dots per line frame (raw or run-length), energy/speed/feed commands, and the printer's flow-control
@@ -25,6 +25,7 @@ notification. Everything prints by turning content into a list of rows (0/1 per 
 | `models.py` + `models.json` | 187 printer profiles (width, dpi, speeds, MTU, RLE, serial-only flag, paper class, label mode) looked up by the longest model number that prefixes the Bluetooth name; `details()` = what the settings screens show (paper to buy, die-cut labels if supported, print width, resolution) and deliberately not ink, speed, transport tuning or vendor flags | `Model.kt` (+ `assets/models.json`) |
 | `imaging.py` | Images → gray → 1-bit rows (Floyd–Steinberg, Atkinson, threshold), text with emoji fallback, checklist, banner, QR (segno), Code 128 | `Imaging.kt` |
 | `receipt.py` | Receipts (BOLETA): CLP parsing/formatting, totals, layout, receipt number = print time | `Receipt.kt` |
+| `templates.py` + `templates/*.svg` + `fonts/` | Templates (docs/TEMPLATES.md): SVG designs with `ip:` text boxes; `parse`, `wrap`/`fit`/`layout` (shrink to fit, stretch at `ip:stretch`), `render` (art with resvg_py, text with `imaging.draw_text` and the bundled Fredoka/Pacifico fonts), user SVGs from `<config dir>/templates` (Mine) | `Templates.kt` (layout) + `TemplateArt.kt` (AndroidSVG drawing; `assets/templates`, `assets/fonts`) |
 | `convert.py` | File type detection, PDF pages (pypdfium2), text files → images | `Sources.kt` (Android loading) |
 | `features.py` | Tool weights + decayed usage → home-screen order (`DESKTOP`, `CLI` tables) | `Features.kt` (`ANDROID` table) |
 | `busy.py` | One print at a time across programs on a PC: OS lock on `print.lock` + `busy.json` (label, start, estimate, queue behind) | none (Android is one app) |
@@ -34,10 +35,13 @@ notification. Everything prints by turning content into a list of rows (0/1 per 
 | `cli.py` | Command line (see below) | |
 
 Shared test cases: `tests/test_protocol.py` ↔ `ProtocolTest.kt` (incl. the SC03h details), `test_receipt.py` ↔ `ReceiptTest.kt`,
-`test_features.py` ↔ `FeaturesTest.kt`. Change both sides together.
+`test_features.py` ↔ `FeaturesTest.kt`, `test_templates.py` ↔ `TemplatesTest.kt`. Change both sides together. The template
+SVGs and fonts exist twice (`ipreent/templates`, `ipreent/fonts` and `android/app/src/main/assets/`); a Python test
+fails if the copies differ.
 
 ## Command line (`ipreent/cli.py`)
-- Subcommands, listed in `--help` by `features.CLI` weight: `print`, `text`, `receipt`, `status`, `preview`,
+- Subcommands, listed in `--help` by `features.CLI` weight: `print`, `text`, `receipt`, `status`, `template`
+  (list, `--fields`, print or `--preview` a template; texts in field order or `--set KEY=TEXT`), `preview`,
   `queue`, `scan`, `feed`, `settings`, `forget`, `bench` (one short strip per darkness level, timed, to learn the
   real speed and show how much darkness slows the printer). Plain `ipreent` shows an overview (printer, settings, queue,
   three most used commands by weight + usage).
@@ -52,23 +56,27 @@ Shared test cases: `tests/test_protocol.py` ↔ `ProtocolTest.kt` (incl. the SC0
 - `app.py`: `MainWindow` (left: printer card with gear menu, mode list ordered by `features.DESKTOP`, queue with
   countdowns; centre: editor + exact preview; right: print settings, only the rows the mode uses) and `App`
   (tray menu, Ctrl+Alt+P hotkey, single instance via `QLocalServer`, HTTP API, print-dialog bridge, autostart).
-  Modes are keys: `photo, document, text, receipt, list, qr, banner, barcode` (saved as `mode_key`).
+  Modes are keys: `photo, document, text, receipt, template, list, qr, banner, barcode` (saved as `mode_key`).
+  Templates mode: filter chips + a horizontal strip of thumbnails (made the first time the mode opens) above the
+  chosen template's text boxes; *Add SVG…*/dropped `.svg` files are copied to `<config dir>/templates` (Mine).
   Print → `confirm_busy` (asks if a job is open here or another program holds the lock) → paper-slip animation →
   `worker.print_job(..., lines=)`.
 - `worker.py`: one asyncio thread for all Bluetooth work (bleak's WinRT backend can't share Qt's thread). Jobs run
   one at a time; the worker holds the cross-program lock while its queue has jobs. Signals: `queued, started,
   progress, estimate, blocked, finished, status, found`.
-- `server.py`: HTTP API, off by default; `127.0.0.1:8787` with no token but refusing browser requests (`Origin`)
+- `server.py`: HTTP API (incl. `GET /templates`, `POST /template`, by name only, never a file path), off by default; `127.0.0.1:8787` with no token but refusing browser requests (`Origin`)
   and non-localhost `Host` (DNS rebinding); LAN mode (`0.0.0.0`) needs the bearer token.
 - `spool.py`: "iPreent" printer in Windows print dialogs = Microsoft Print to PDF writing
   `C:\ProgramData\iPreent\spool\job.pdf`; the app polls it every second. Install/uninstall via one UAC prompt.
 
 ## Android app (`android/app/src/main/java/com/ipreent/`)
 - `MainActivity.kt`: Compose UI. Nav bar **Create · Queue · History** (Material 3: 3–5 destinations). Create =
-  home grid of `Tool`s (`photo, document, text, receipt, list, code, banner`), order fixed per run from
+  home grid of `Tool`s (`photo, document, text, receipt, template, list, code, banner`), order fixed per run from
   `Features.ANDROID` + usage (top two get big tiles). Tool screens have a back arrow; the top bar always has the
   printer chip (name + gear → `PrinterSheet`: darkness, status/battery, find, forget). Print → `BusyDialog` if
   a job is open → `Fly` paper slip to the Queue icon → `Printers.enqueue`. History reprints use the same path.
+  Templates tool: `TemplateGallery` (filter chips, adaptive grid of thumbnails, *Your own SVG* card →
+  `filesDir/templates`) → `TemplateEditor` (one text field per box, exact preview, PrintBar); back returns to the gallery.
 - `Printers.kt`: app-wide state: model table, remembered printer (`printerName` flow), darkness, the queue
   (`QueueEntry`: waiting/connecting/printing/done/failed/cancelled, thumbnail, estimate, progress; cancel waiting
   jobs), learnt speed, history (each print saved as its exact 1-bit PNG, last 50).
@@ -84,9 +92,10 @@ Shared test cases: `tests/test_protocol.py` ↔ `ProtocolTest.kt` (incl. the SC0
 | | `timing.json` | learnt paper speed per energy (`speeds`, mm/s), number of timed prints, `log` of the last 100 timed prints (energy, lines, seconds, black share, whether the printer said "printing") |
 | | `print.lock`, `busy.json` | cross-program lock and the job holding it |
 | CLI | `receipt.json`, `settings.json`, `usage.json` | receipt header; default darkness; command usage |
-| Windows | registry `HKCU\Software\iPreent\iPreent` (QSettings) | print settings, mode, receipt form, API settings + token, usage |
+| Windows | registry `HKCU\Software\iPreent\iPreent` (QSettings) | print settings, mode, receipt form, template texts (`template_values`, `template_id`), API settings + token, usage |
 | | `HKCU\...\CurrentVersion\Run` | "Start with Windows" |
-| Android | SharedPreferences `printer`, `receipt`, `usage`; `filesDir/history/*.png` | printer, darkness, learnt speed per energy (`speeds` = `5000=14.2;8000=9.1`); receipt form; tool usage; print history |
+| CLI + Windows | config dir: `templates/*.svg` | the user's own templates (Mine) |
+| Android | SharedPreferences `printer`, `receipt`, `usage`, `templates`; `filesDir/history/*.png`, `filesDir/templates/*.svg` | printer, darkness, learnt speed per energy (`speeds` = `5000=14.2;8000=9.1`); receipt form; tool usage; template texts (id → JSON); print history; own templates (Mine) |
 
 ## Checking changes without hardware
 - `pytest -q` (two known Linux failures: no emoji font; `winreg`). Tests never touch the real config dir

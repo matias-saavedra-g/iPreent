@@ -17,6 +17,11 @@ Don't open a public issue for them. Ordinary bugs go in Issues.
 - **"Print from any app" printer** (Windows, optional, needs one admin prompt): Windows' own *Microsoft Print to
   PDF* driver writes to `C:\ProgramData\iPreent\spool`, which every local user can write to. Anyone signed in to the
   PC can therefore send something to the printer while the app runs. Remove it from the tray menu if that matters.
+- **Templates** read SVG files: the built-in ones, and your own from the config folder (PC) or the file you pick
+  (Android, copied into the app's private storage). They are parsed as XML without loading external entities
+  (Python's ElementTree never fetches them; on Android doctypes are refused where the parser supports it) and drawn by resvg / AndroidSVG, which don't run scripts or fetch anything from the network. The HTTP
+  API's `POST /template` only takes template names, never a file path, so a caller can't make the app read other
+  files on the PC.
 - **Android**: Bluetooth permissions only (location only on Android 11 and older, as the system requires for BLE
   scans). No internet permission. The share target and print service only print what they are given.
 - **Release APKs** are signed with the iPreent key (certificate SHA-256

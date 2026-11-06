@@ -29,6 +29,9 @@ Each release also has a Windows exe and a zip; Obtainium only takes the `.apk`.
   waiting job. A badge shows how many jobs are open. **History**: everything printed, to reprint.
 - The **printer button** at the top right (name + gear) opens the printer settings: darkness, status and battery,
   printer details (which paper to buy, print width, resolution), find printers, forget the printer.
+- **Templates**: cute designs to fill in (hearts, frames, to-do and shopping lists, notes, birthday and
+  thank-you cards, gift tags, jar labels, name tags). Pick one from the gallery, type your text (it shrinks to
+  fit; lists grow longer), print. *Your own SVG* adds any SVG file. See [docs/TEMPLATES.md](docs/TEMPLATES.md).
 - Share a photo, PDF or text to iPreent from any app, or print from Chrome/Files with the iPreent print service.
 
 ## Printing while the printer is busy
@@ -50,7 +53,8 @@ These printers don't show that they're working unless you look at the paper slot
 (or run it from source with `ipreent-desktop`).
 - Fluent look (Windows 11 style, Mica, system accent); follows the light/dark setting live.
 - **Photo** and **Document** modes (pictures dithered; PDFs and text sharp by default), plus text, checklist,
-  banner, QR, barcode and **receipt** modes, with an exact preview, paper length and print time. The mode list is
+  banner, QR, barcode, **receipt** and **templates** (hearts, frames, lists, cards and labels to fill in; add your
+  own SVGs) modes, with an exact preview, paper length and print time. The mode list is
   ordered by how likely you are to use it (same weights as the phone).
 - The printer card at the top left (or its gear) opens the printer settings: darkness, status and battery,
   printer details (paper, print width, resolution), change printer, feed paper, forget.
@@ -80,6 +84,8 @@ curl -X POST localhost:8787/banner -d "HAPPY BIRTHDAY"
 curl -X POST localhost:8787/barcode -d "ORDER-12345"                     # Code 128
 curl -X POST localhost:8787/receipt -H "Content-Type: application/json" \
      -d '{"business":"My shop","items":[{"name":"Coffee","price":1800,"qty":2}]}'   # see Receipts
+curl -X POST localhost:8787/template -H "Content-Type: application/json" \
+     -d '{"name":"birthday","values":{"name":"Sofía"}}'                    # GET /templates lists them
 curl -X POST "localhost:8787/feed?lines=100"
 curl localhost:8787/status        # printer + queue
 curl localhost:8787/jobs/3        # queued | printing | done | failed, "seconds": time estimate
@@ -126,6 +132,10 @@ ipreent queue --watch               # what is printing (here or in the Windows a
 ipreent settings darkness darker    # default darkness; `ipreent settings` lists all settings and printer details
 ipreent bench                       # time short strips at 3 darkness levels to learn the real speed
 ipreent receipt -b "My shop" -i "Coffee" 1800 2 -i "Bread" 1.200   # see Receipts below
+ipreent template                    # cute designs: hearts, frames, lists, cards, tags (docs/TEMPLATES.md)
+ipreent template big-heart "Te quiero"              # print one with your text
+ipreent template to-do "Hoy" "Leche\nPan\nCafé"      # boxes in order; \n = new line
+ipreent template birthday --set name=Sofía --preview cake.png
 ```
 Options can go before or after the command (`ipreent text hi --ble`).
 If the printer is busy, it asks *Add this print to the queue? [Y/n]* and waits its turn with a countdown;

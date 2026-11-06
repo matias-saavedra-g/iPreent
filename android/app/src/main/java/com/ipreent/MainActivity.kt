@@ -24,6 +24,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -83,6 +84,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Printers.init(this)
+        TemplateArt.init(this)
         handle(intent)
         setContent {
             val dark = androidx.compose.foundation.isSystemInDarkTheme()
@@ -121,6 +123,7 @@ private enum class Tool(val key: String, val label: String, val blurb: String, v
     DOCUMENT("document", "Document", "PDFs, sharp text", Icons.Default.Description),
     TEXT("text", "Text", "Notes and messages", Icons.Default.TextFields),
     RECEIPT("receipt", "Receipt", "Boleta with total and barcode", Icons.Default.Receipt),
+    TEMPLATE("template", "Templates", "Hearts, frames, lists, tags", Icons.Default.AutoAwesome),
     LIST("list", "Checklist", "To-do lists with boxes", Icons.Default.Checklist),
     CODE("code", "QR & barcode", "Links, labels, product codes", Icons.Default.QrCode2),
     BANNER("banner", "Banner", "Big text along the paper", Icons.Default.ViewDay);
@@ -279,6 +282,7 @@ private fun App(shared: MutableState<Sources.Loaded?>) {
                                 Tool.BANNER -> BannerTab(print)
                                 Tool.CODE -> CodeTab(print)
                                 Tool.RECEIPT -> ReceiptTab(print)
+                                Tool.TEMPLATE -> TemplatesTab(print)
                             }
                         }
                     }
@@ -866,6 +870,121 @@ private fun ReceiptTab(print: (Job) -> Unit) {
                 job?.let(print)
             }
         }
+    }
+}
+
+/** Templates: a gallery (category chips + thumbnails + "your own SVG"), then the chosen one's text boxes over
+ *  an exact preview. Back from the editor returns to the gallery. */
+@Composable
+private fun TemplatesTab(print: (Job) -> Unit) {
+    var all by remember { mutableStateOf(TemplateArt.all()) }
+    var chosenId by rememberSaveable { mutableStateOf<String?>(null) }
+    val chosen = all.firstOrNull { it.id == chosenId }
+    if (chosen == null) TemplateGallery(all, pick = { chosenId = it.id }, imported = { all = TemplateArt.all(); chosenId = it.id })
+    else {
+        BackHandler { chosenId = null }
+        TemplateEditor(chosen, print, removed = { TemplateArt.delete(chosen); all = TemplateArt.all(); chosenId = null })
+    }
+}
+
+/** Gallery thumbnails, made once per run (each takes a few milliseconds). */
+private object Thumbs {
+    private val cache = HashMap<String, Bitmap>()
+    @Synchronized fun get(t: Templates.Template): Bitmap? = cache.getOrPut(t.category + "/" + t.id) {
+        runCatching { TemplateArt.render(t, null, 240) }.getOrNull() ?: return null
+    }
+}
+
+@Composable
+private fun TemplateGallery(all: List<Templates.Template>, pick: (Templates.Template) -> Unit, imported: (Templates.Template) -> Unit) {
+    val ctx = LocalContext.current
+    var category by rememberSaveable { mutableStateOf("all") }
+    var error by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
+    val open = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let {
+            scope.launch {
+                runCatching { withContext(Dispatchers.IO) { TemplateArt.import(ctx, it) } }
+                    .onSuccess { t -> error = null; imported(t) }
+                    .onFailure { e -> error = "Can't use that file: ${e.message}" }
+            }
+        }
+    }
+    val cats = listOf("all" to "All") + Templates.CATEGORIES.filter { (k, _) -> all.any { it.category == k } }.toList()
+    val shown = all.filter { category == "all" || it.category == category }
+    Column(Modifier.fillMaxSize()) {
+        LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            items(cats, key = { it.first }) { (key, label) -> FilterChip(category == key, { category = key }, { Text(label) }) }
+        }
+        error?.let { Text(it, Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+        LazyVerticalGrid(GridCells.Adaptive(150.dp), contentPadding = PaddingValues(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            items(shown, key = { it.category + "/" + it.id }) { t ->
+                val thumb by produceState<Bitmap?>(null, t) { value = withContext(Dispatchers.Default) { Thumbs.get(t) } }
+                Card(onClick = { pick(t) }, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
+                    Box(Modifier.fillMaxWidth().aspectRatio(1f).padding(8.dp).clip(MaterialTheme.shapes.small).background(Color.White),
+                        contentAlignment = Alignment.Center) {
+                        thumb?.let { Image(it.asImageBitmap(), t.name, Modifier.fillMaxSize().padding(6.dp), contentScale = ContentScale.Fit) }
+                            ?: CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp)
+                    }
+                    Text(t.name, Modifier.padding(start = 12.dp, end = 12.dp, bottom = 10.dp), style = MaterialTheme.typography.titleSmall,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
+            if (category == "all" || category == "mine") item(key = "add") {
+                OutlinedCard(onClick = { open.launch(arrayOf("image/svg+xml")) }) {
+                    Column(Modifier.fillMaxWidth().aspectRatio(0.86f).padding(12.dp), verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(Icons.Default.Add, null, tint = MaterialTheme.colorScheme.primary)
+                        Text("Your own SVG", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 8.dp))
+                        Text("Any SVG file; docs/TEMPLATES.md shows how to add text boxes", style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TemplateEditor(t: Templates.Template, print: (Job) -> Unit, removed: () -> Unit) {
+    val ctx = LocalContext.current
+    val prefs = remember { ctx.getSharedPreferences("templates", Context.MODE_PRIVATE) }
+    // What you typed is kept per template (SharedPreferences "templates": id -> JSON of box -> text).
+    val values = remember(t.id) {
+        mutableStateMapOf<String, String>().apply {
+            putAll(t.defaults())
+            runCatching { JSONObject(prefs.getString(t.id, "{}")!!).let { o -> o.keys().forEach { k -> if (k in this) put(k, o.getString(k)) } } }
+        }
+    }
+    fun save() = prefs.edit().putString(t.id, JSONObject(values.toMap()).toString()).apply()
+    var error by remember(t.id) { mutableStateOf<String?>(null) }
+    val snapshot = values.toMap()
+    val rows = rememberRows(t.id, snapshot) { w ->
+        runCatching { textRows(TemplateArt.render(t, snapshot, w), w) }
+            .onSuccess { error = null }.onFailure { error = "Can't draw this template: ${it.message}" }.getOrNull()
+    }
+    Column(Modifier.fillMaxSize()) {
+        Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+            Text(t.name, Modifier.padding(start = 16.dp, top = 4.dp), style = MaterialTheme.typography.titleMedium)
+            for (f in t.fields) {
+                OutlinedTextField(values[f.key] ?: "", { values[f.key] = it; save() },
+                    Modifier.fillMaxWidth().padding(16.dp, 4.dp), label = { Text(f.label) }, singleLine = !f.multiline,
+                    minLines = if (f.list != "none") 3 else 1,
+                    supportingText = if (f.list != "none") ({ Text("One item per line") }) else null)
+            }
+            Row(Modifier.padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+                if (t.fields.isNotEmpty()) TextButton({ values.putAll(t.defaults()); prefs.edit().remove(t.id).apply() }) { Text("Example text") }
+                if (t.category == "mine") TextButton(removed) { Text("Remove from Mine") }
+                Spacer(Modifier.weight(1f))
+                if (t.stretch != null) Text("Grows to fit", Modifier.padding(end = 8.dp), style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            error?.let { Text(it, Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
+            Preview(rows?.let { Imaging.preview(it, Printers.width) })
+        }
+        val first = t.fields.firstNotNullOfOrNull { f -> values[f.key]?.lineSequence()?.firstOrNull { it.isNotBlank() } }
+        PrintBar(rows?.size) { n -> rows?.let { print(Job(listOfNotNull(t.name, first).joinToString(": "), it, Printers.width, Protocol.MODE_TEXT, n)) } }
     }
 }
 

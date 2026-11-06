@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 330" width="384" height="330"
+     ip:name="Big heart" ip:category="love">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <path d="M192 113.9 C167.2 26.4 27 18.2 27 125.5 C27 216.2 117.8 265.7 192 323.4 C266.2 265.7 357 216.2 357 125.5 C357 18.2 216.8 26.4 192 113.9Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="7"/>
+  <path d="M192 118.7 C169.3 38.6 41 31.1 41 129.2 C41 212.3 124 257.6 192 310.4 C259.9 257.6 343 212.3 343 129.2 C343 31.1 214.7 38.6 192 118.7Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" stroke-dasharray="2 9"/>
+  <path d="M40 24 Q43.5 36.5 56 40 Q43.5 43.5 40 56 Q36.5 43.5 24 40 Q36.5 36.5 40 24Z" fill="#000"/>
+  <path d="M350 278 Q352.6 287.4 362 290 Q352.6 292.6 350 302 Q347.4 292.6 338 290 Q347.4 287.4 350 278Z" fill="#000"/>
+  <path d="M352 27 Q354 34 361 36 Q354 38 352 45 Q350 38 343 36 Q350 34 352 27Z" fill="#000"/>
+  <rect ip:field="message" ip:label="Message" ip:default="You make my heart smile" ip:font="script" ip:size="42" ip:min="16" x="92" y="104" width="200" height="120" fill="none"/>
+</svg>

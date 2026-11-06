@@ -1,7 +1,10 @@
 """Turn images and text into rows of 0/1 pixels at the printer's width."""
 from functools import lru_cache
+from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont, ImageOps
+
+FONTS = Path(__file__).parent / "fonts"      # bundled, SIL Open Font License (see the OFL-*.txt there)
 
 
 def image_rows(img, width, dither=True, threshold=128, auto_rotate=True):
@@ -30,6 +33,9 @@ FACES = {
     "mono": ("DejaVuSansMono.ttf", "consola.ttf", "Menlo.ttc", "cour.ttf", "Courier New.ttf"),
     "monobold": ("DejaVuSansMono-Bold.ttf", "consolab.ttf", "courbd.ttf", "Courier New Bold.ttf",
                  "DejaVuSansMono.ttf", "consola.ttf"),
+    # Bundled with iPreent for templates, so they look the same on every computer and phone.
+    "round": (str(FONTS / "Fredoka-SemiBold.ttf"),),
+    "script": (str(FONTS / "Pacifico-Regular.ttf"),),
 }
 
 
@@ -106,10 +112,11 @@ def text_length(text, size, kind="sans"):
     return sum(f.getlength(t) for t, f in _runs(text, size, kind))
 
 
-def draw_text(draw, xy, text, size, kind="sans"):
+def draw_text(draw, xy, text, size, kind="sans", fill=0, anchor="la"):
+    """Text at xy (top-left by default; anchor "ls" puts xy on the baseline), emoji from fallback fonts."""
     x, y = xy
     for t, f in _runs(text, size, kind):
-        draw.text((x, y), t, font=f, fill=0)
+        draw.text((x, y), t, font=f, fill=fill, anchor=anchor)
         x += f.getlength(t)
 
 

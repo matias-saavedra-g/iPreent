@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 480" width="384" height="480"
+     ip:name="Love letter" ip:category="love">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <rect x="34" y="70" width="316" height="250" rx="10" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <path d="M34 80 L192 196 L350 80" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <path d="M34 312 L150 214 M350 312 L234 214" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M192 185.5 C187.3 169 161 167.5 161 187.6 C161 204.7 178.1 214 192 224.8 C205.9 214 223 204.7 223 187.6 C223 167.5 196.7 169 192 185.5Z" fill="#000"/>
+  <path d="M192 191.6 C190.1 184.7 179 184 179 192.5 C179 199.6 186.2 203.5 192 208.1 C197.8 203.5 205 199.6 205 192.5 C205 184 193.9 184.7 192 191.6Z" fill="#fff"/>
+  <path d="M58 29.6 C56 22.7 45 22 45 30.5 C45 37.6 52.1 41.5 58 46.1 C63.9 41.5 71 37.6 71 30.5 C71 22 60 22.7 58 29.6Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M330 24.2 C327.4 15.2 313 14.4 313 25.4 C313 34.8 322.4 39.9 330 45.8 C337.6 39.9 347 34.8 347 25.4 C347 14.4 332.6 15.2 330 24.2Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M300 47.3 C298.8 43 292 42.6 292 47.8 C292 52.2 296.4 54.6 300 57.4 C303.6 54.6 308 52.2 308 47.8 C308 42.6 301.2 43 300 47.3Z" fill="#000"/>
+  <path d="M60 352 q11 -6 22 0 q11 6 22 0 q11 -6 22 0 q11 6 22 0 q11 -6 22 0 q11 6 22 0 q11 -6 22 0 q11 6 22 0 q11 -6 22 0 q11 6 22 0 q11 -6 22 0 q11 6 22 0" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <rect ip:field="to" ip:label="To" ip:default="For you" ip:font="script" ip:size="40" ip:min="18" ip:lines="1" x="60" y="230" width="264" height="76" fill="none"/>
+  <rect ip:field="message" ip:label="Message" ip:default="Every day with you&#10;is my favourite day" ip:size="28" ip:min="16" x="30" y="370" width="324" height="100" fill="none"/>
+</svg>
