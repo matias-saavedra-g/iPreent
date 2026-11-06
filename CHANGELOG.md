@@ -2,7 +2,12 @@
 
 Each `## vX.Y.Z` section becomes the notes of that GitHub Release.
 
-## Unreleased
+## v0.6.0
+**Downloads**
+- `iPreent-v0.6.0.apk`: Android app (Android 8+). Installs over v0.5.1. Also available through Obtainium (see README).
+- `iPreent-v0.6.0-portable.exe`: Windows app. One file, no install, no Python.
+- `ipreent-cli-v0.6.0.zip`: command line for Windows, Linux and macOS. Needs Python 3.10+; see `INSTALL.txt`.
+
 **Templates** (all versions): 20 cute designs to fill in with your own text and print: hearts, a love letter, frames
 (scalloped, starry, ribbon, cloud, speech bubble), to-do, shopping and "things I love" lists, a sticky note, a
 reminder, a sunshine note, birthday, thank-you, confetti and gift-tag cards, a jar label and a name tag. Text shrinks

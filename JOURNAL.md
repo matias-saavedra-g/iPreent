@@ -416,3 +416,6 @@ Robolectric test (home, busy home, tool screen, printer sheet, busy dialog, queu
 - [ ] Maybe later: more templates (seasonal: Christmas, Fiestas Patrias, Halloween), a "label sheet" that repeats a
       small design, and photo slots (a frame around a picture).
 
+### v0.6.0 (2026-11-06, later)
+- User approved the templates. Example names in templates and docs are now Matías and Yuliana (birthday, name tag,
+  gift tag). Version 0.6.0, versionCode 6; merged into main. Release workflow not started yet.

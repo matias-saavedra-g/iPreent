@@ -7,6 +7,6 @@
   <path d="M192 68 C170 20 120 30 140 6 M192 68 C214 20 264 30 244 6" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
   <path d="M192 130 L197.1 141 L209.1 142.4 L200.2 150.7 L202.6 162.6 L192 156.6 L181.4 162.6 L183.8 150.7 L174.9 142.4 L186.9 141Z" fill="#000"/>
   <path d="M84 280 L300 280" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
-  <rect ip:field="to" ip:label="To" ip:default="To: Mom" ip:font="script" ip:size="44" ip:min="20" x="66" y="176" width="252" height="100" fill="none"/>
-  <rect ip:field="from" ip:label="From" ip:default="With love, Ana" ip:size="28" ip:min="14" x="66" y="290" width="252" height="90" fill="none"/>
+  <rect ip:field="to" ip:label="To" ip:default="To: Yuliana" ip:font="script" ip:size="44" ip:min="20" x="66" y="176" width="252" height="100" fill="none"/>
+  <rect ip:field="from" ip:label="From" ip:default="With love, Matías" ip:size="28" ip:min="14" x="66" y="290" width="252" height="90" fill="none"/>
 </svg>

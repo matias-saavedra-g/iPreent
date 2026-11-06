@@ -18,5 +18,5 @@
   <path d="M52 170 Q54.2 177.8 62 180 Q54.2 182.2 52 190 Q49.8 182.2 42 180 Q49.8 177.8 52 170Z" fill="#000"/>
   <circle cx="34" cy="120" r="5" fill="#000"/><circle cx="356" cy="200" r="5" fill="#000"/>
   <rect ip:field="title" ip:label="Title" ip:default="Happy birthday" ip:font="script" ip:size="46" ip:min="20" ip:lines="1" x="16" y="252" width="352" height="70" fill="none"/>
-  <rect ip:field="name" ip:label="Name" ip:default="Sofía" ip:size="40" ip:min="18" ip:lines="1" x="16" y="322" width="352" height="62" fill="none"/>
+  <rect ip:field="name" ip:label="Name" ip:default="Yuliana" ip:size="40" ip:min="18" ip:lines="1" x="16" y="322" width="352" height="62" fill="none"/>
 </svg>

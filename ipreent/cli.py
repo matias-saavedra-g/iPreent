@@ -657,7 +657,7 @@ def main(argv=None):
         epilog="examples:\n"
                "  ipreent template                                  # the collection\n"
                "  ipreent template big-heart \"Te quiero mucho\"\n"
-               "  ipreent template birthday --set name=Sofía --preview cake.png\n"
+               "  ipreent template birthday --set name=Yuliana --preview cake.png\n"
                "  ipreent template to-do \"Hoy\" \"Leche\\nPan\\nCafé\"         # \\n = new line\n"
                "  ipreent template gift-tag --fields                 # what you can fill in\n"
                "  ipreent template ./my-design.svg")

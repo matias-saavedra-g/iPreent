@@ -85,7 +85,7 @@ curl -X POST localhost:8787/barcode -d "ORDER-12345"                     # Code 
 curl -X POST localhost:8787/receipt -H "Content-Type: application/json" \
      -d '{"business":"My shop","items":[{"name":"Coffee","price":1800,"qty":2}]}'   # see Receipts
 curl -X POST localhost:8787/template -H "Content-Type: application/json" \
-     -d '{"name":"birthday","values":{"name":"Sofía"}}'                    # GET /templates lists them
+     -d '{"name":"birthday","values":{"name":"Yuliana"}}'                    # GET /templates lists them
 curl -X POST "localhost:8787/feed?lines=100"
 curl localhost:8787/status        # printer + queue
 curl localhost:8787/jobs/3        # queued | printing | done | failed, "seconds": time estimate
@@ -135,7 +135,7 @@ ipreent receipt -b "My shop" -i "Coffee" 1800 2 -i "Bread" 1.200   # see Receipt
 ipreent template                    # cute designs: hearts, frames, lists, cards, tags (docs/TEMPLATES.md)
 ipreent template big-heart "Te quiero"              # print one with your text
 ipreent template to-do "Hoy" "Leche\nPan\nCafé"      # boxes in order; \n = new line
-ipreent template birthday --set name=Sofía --preview cake.png
+ipreent template birthday --set name=Yuliana --preview cake.png
 ```
 Options can go before or after the command (`ipreent text hi --ble`).
 If the printer is busy, it asks *Add this print to the queue? [Y/n]* and waits its turn with a countdown;

@@ -5,5 +5,5 @@
   <path d="M10 88 L374 88 L374 32 Q374 10 352 10 L32 10 Q10 10 10 32 Z" fill="#000"/>
   <path d="M40 202 L344 202" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" stroke-dasharray="3 6"/>
   <rect ip:field="hello" ip:label="Top line" ip:default="HELLO my name is" ip:size="34" ip:min="14" ip:lines="1" ip:color="white" x="26" y="16" width="332" height="64" fill="none"/>
-  <rect ip:field="name" ip:label="Name" ip:default="Alex" ip:font="script" ip:size="56" ip:min="22" ip:lines="1" x="26" y="98" width="332" height="96" fill="none"/>
+  <rect ip:field="name" ip:label="Name" ip:default="Matías" ip:font="script" ip:size="56" ip:min="22" ip:lines="1" x="26" y="98" width="332" height="96" fill="none"/>
 </svg>

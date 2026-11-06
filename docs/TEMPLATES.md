@@ -11,7 +11,7 @@ print. Same collection and same look in all three apps:
   `--set KEY=TEXT` fills a box by name, `--fields` shows a template's boxes, `--preview out.png` saves a picture.
   `\n` in a text is a new line. Any `.svg` path works as the name.
 - **HTTP API** (Windows app): `GET /templates`; `POST /template` with
-  `{"name": "birthday", "values": {"name": "Sofía"}}`.
+  `{"name": "birthday", "values": {"name": "Yuliana"}}`.
 
 What you type is remembered per template (Windows: registry; Android: SharedPreferences `templates`).
 *Example text* puts the template's sample text back.
