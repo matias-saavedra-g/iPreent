@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 400" width="384" height="400"
+     ip:name="Halloween" ip:category="holidays" ip:season="10-10..10-31">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <path d="M190 70 Q186 46 200 30" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="8"/>
+  <ellipse cx="146" cy="150" rx="62" ry="80" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <ellipse cx="238" cy="150" rx="62" ry="80" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <ellipse cx="192" cy="150" rx="62" ry="84" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <path d="M156 116 L176 140 L136 140 Z M228 116 L248 140 L208 140 Z" fill="#000"/>
+  <path d="M184 150 L200 150 L192 164 Z" fill="#000"/>
+  <path d="M136 180 Q192 226 248 180 L236 186 L226 176 L214 192 L204 180 L192 194 L180 180 L170 192 L158 176 L148 186 Z" fill="#000"/>
+  <path d="M34 220 L34 132 Q34 92 66 92 Q98 92 98 132 L98 220 L87 208 L76 220 L66 208 L55 220 L44 208 Z" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <circle cx="56" cy="132" r="5" fill="#000"/><circle cx="76" cy="132" r="5" fill="#000"/>
+  <ellipse cx="66" cy="154" rx="6" ry="8" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <path d="M300 40 q10 -10 18 0 q4 -8 8 0 q4 -8 8 0 q8 -10 18 0 q-12 2 -14 12 q-6 -6 -12 0 q-6 -6 -12 0 q-2 -10 -14 -12 Z" fill="#000"/>
+  <path d="M318 206 q7 -7 13 0 q3 -6 6 0 q3 -6 6 0 q6 -7 13 0 q-9 1 -10 9 q-4 -4 -9 0 q-5 -4 -9 0 q-1 -8 -10 -9 Z" fill="#000"/>
+  <path d="M40 31 L42.5 36.5 L48.6 37.2 L44.1 41.3 L45.3 47.3 L40 44.3 L34.7 47.3 L35.9 41.3 L31.4 37.2 L37.5 36.5Z" fill="#000"/>
+  <circle cx="356" cy="140" r="4" fill="#000"/>
+  <rect ip:field="title" ip:label="Title" ip:default="Trick or treat!" ip:font="script" ip:size="48" ip:min="20" ip:lines="1" x="16" y="252" width="352" height="76" fill="none"/>
+  <rect ip:field="message" ip:label="Message" ip:default="Happy Halloween" ip:size="30" ip:min="14" x="24" y="328" width="336" height="58" fill="none"/>
+</svg>

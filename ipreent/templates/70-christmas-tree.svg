@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 440" width="384" height="440"
+     ip:name="Christmas tree" ip:category="christmas" ip:season="11-01..12-26">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <rect x="174" y="276" width="36" height="40" rx="4" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <path d="M192 165 L324 285 Q291 297 258 285 Q225 297 192 285 Q159 297 126 285 Q93 297 60 285 Z" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <path d="M192 100 L290 212 Q257.3 224 224.7 212 Q192 224 159.3 212 Q126.7 224 94 212 Z" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <path d="M192 62 L256 142 Q224 154 192 142 Q160 154 128 142 Z" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <path d="M140 252 Q192 226 252 236 M150 182 Q196 196 238 172 M168 118 Q196 128 214 112" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3" stroke-dasharray="1 8"/>
+  <path d="M192 18 L199.3 33.9 L216.7 36 L203.9 47.9 L207.3 65 L192 56.5 L176.7 65 L180.1 47.9 L167.3 36 L184.7 33.9Z" fill="#000"/>
+  <circle cx="120" cy="262" r="8" fill="#000" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+  <circle cx="196" cy="258" r="8" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+  <circle cx="268" cy="262" r="8" fill="#000" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+  <circle cx="232" cy="226" r="8" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+  <circle cx="150" cy="222" r="8" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+  <circle cx="176" cy="196" r="8" fill="#000" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+  <circle cx="230" cy="192" r="8" fill="#000" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+  <circle cx="204" cy="158" r="8" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+  <circle cx="160" cy="160" r="8" fill="#000" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+  <circle cx="192" cy="120" r="8" fill="#000" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+  <path d="M52 70 L52 46 M52 55.1 L46.5 50.5 M52 55.1 L57.5 50.5 M52 62.3 L48 58.9 M52 62.3 L56 58.9 M52 70 L72.8 58 M64.9 62.6 L66.1 55.5 M64.9 62.6 L71.7 65 M58.7 66.2 L59.6 61 M58.7 66.2 L63.6 68 M52 70 L72.8 82 M64.9 77.4 L71.7 75 M64.9 77.4 L66.1 84.5 M58.7 73.8 L63.6 72 M58.7 73.8 L59.6 79 M52 70 L52 94 M52 84.9 L57.5 89.5 M52 84.9 L46.5 89.5 M52 77.7 L56 81.1 M52 77.7 L48 81.1 M52 70 L31.2 82 M39.1 77.4 L37.9 84.5 M39.1 77.4 L32.3 75 M45.3 73.8 L44.4 79 M45.3 73.8 L40.4 72 M52 70 L31.2 58 M39.1 62.6 L32.3 65 M39.1 62.6 L37.9 55.5 M45.3 66.2 L40.4 68 M45.3 66.2 L44.4 61" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <path d="M336 210 L336 192 M336 198.8 L331.9 195.4 M336 198.8 L340.1 195.4 M336 204.2 L333 201.7 M336 204.2 L339 201.7 M336 210 L351.6 201 M345.7 204.4 L346.6 199.1 M345.7 204.4 L350.7 206.3 M341 207.1 L341.7 203.2 M341 207.1 L344.7 208.5 M336 210 L351.6 219 M345.7 215.6 L350.7 213.7 M345.7 215.6 L346.6 220.9 M341 212.9 L344.7 211.5 M341 212.9 L341.7 216.8 M336 210 L336 228 M336 221.2 L340.1 224.6 M336 221.2 L331.9 224.6 M336 215.8 L339 218.3 M336 215.8 L333 218.3 M336 210 L320.4 219 M326.3 215.6 L325.4 220.9 M326.3 215.6 L321.3 213.7 M331 212.9 L330.3 216.8 M331 212.9 L327.3 211.5 M336 210 L320.4 201 M326.3 204.4 L321.3 206.3 M326.3 204.4 L325.4 199.1 M331 207.1 L327.3 208.5 M331 207.1 L330.3 203.2" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <path d="M330 48 Q332.6 57.4 342 60 Q332.6 62.6 330 72 Q327.4 62.6 318 60 Q327.4 57.4 330 48Z" fill="#000"/>
+  <path d="M54 205 Q56 212 63 214 Q56 216 54 223 Q52 216 45 214 Q52 212 54 205Z" fill="#000"/>
+  <circle cx="76" cy="140" r="4" fill="#000"/><circle cx="314" cy="130" r="4" fill="#000"/>
+  <rect ip:field="title" ip:label="Title" ip:default="Merry Christmas" ip:font="script" ip:size="46" ip:min="20" ip:lines="1" x="16" y="322" width="352" height="66" fill="none"/>
+  <rect ip:field="message" ip:label="Message" ip:default="Love, Matías" ip:size="30" ip:min="14" x="16" y="388" width="352" height="46" fill="none"/>
+</svg>

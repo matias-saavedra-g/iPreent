@@ -75,6 +75,30 @@ class TemplatesTest {
         assertTrue(lay.items.isEmpty()); assertEquals(100, lay.height)
     }
 
+    // Same cases as test_seasons_and_gallery_order in tests/test_templates.py
+    @Test fun seasonsAndGalleryOrder() {
+        assertEquals(Templates.Season(11, 1, 12, 26), Templates.season("11-01..12-26"))
+        assertEquals(Templates.Season(12, 15, 1, 6), Templates.season(" 12-15 .. 01-06 "))
+        assertEquals(null, Templates.season("13-01..12-26"))
+        assertEquals(null, Templates.season("Christmas"))
+        assertEquals(null, Templates.season(null))
+        val head = "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:ip=\"urn:ipreent:template\" viewBox=\"0 0 384 100\" "
+        val box = "><rect ip:field=\"a\" x=\"0\" y=\"0\" width=\"10\" height=\"10\"/></svg>"
+        val xmas = Templates.parse(head + "ip:category=\"christmas\" ip:season=\"11-01..12-26\"" + box, "xmas")
+        val ny = Templates.parse(head + "ip:category=\"holidays\" ip:season=\"12-15..01-06\"" + box, "ny")
+        val love = Templates.parse(head + "ip:category=\"love\"" + box, "love")
+        assertTrue(xmas.inSeason(11, 1) && xmas.inSeason(12, 26) && !xmas.inSeason(12, 27) && !xmas.inSeason(10, 31))
+        assertTrue(ny.inSeason(12, 31) && ny.inSeason(1, 6) && !ny.inSeason(1, 7) && !ny.inSeason(12, 14))
+        assertTrue(!love.inSeason(2, 14))
+        val items = listOf(love, ny, xmas)
+        assertEquals(listOf("xmas", "love", "ny"), Templates.galleryOrder(items, 11, 7).map { it.id })
+        assertEquals(listOf("ny", "xmas", "love"), Templates.galleryOrder(items, 12, 20).map { it.id })
+        assertEquals(listOf("love", "ny", "xmas"), Templates.galleryOrder(items, 7, 1).map { it.id })
+        assertEquals(listOf("christmas", "love", "holidays"), Templates.categoryOrder(items, 11, 7))
+        assertEquals(listOf("holidays", "love", "christmas"), Templates.categoryOrder(items, 1, 2))
+        assertEquals(listOf("love", "christmas", "holidays"), Templates.categoryOrder(items, 7, 1))
+    }
+
     @Test fun bundledTemplatesParse() {
         val files = File("src/main/assets/templates").listFiles { f -> f.name.endsWith(".svg") }!!.sortedBy { it.name }
         assertTrue(files.size >= 15)
@@ -83,7 +107,9 @@ class TemplatesTest {
         for (t in all) {
             assertEquals(t.id, 384.0, t.width, 0.0)
             assertTrue(t.id, t.fields.isNotEmpty() && t.category != "mine")
+            if (t.category == "christmas" || t.category == "holidays") assertTrue(t.id, t.season != null)
         }
+        assertTrue(all.count { it.category == "christmas" } >= 6)
         assertEquals("big-heart", Templates.idOf("10-big-heart.svg"))
     }
 

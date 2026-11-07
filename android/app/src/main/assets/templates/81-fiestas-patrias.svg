@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 400" width="384" height="400"
+     ip:name="Fiestas Patrias" ip:category="holidays" ip:season="09-01..09-20">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <path d="M86 22 L146 82 L86 142 L26 82 Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <path d="M86 22 L86 142 M26 82 L146 82" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <path d="M86 142 q-14 16 0 30 q14 16 0 30" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <path d="M78 166 l16 -8 l0 16 Z M78 196 l16 -8 l0 16 Z" fill="#000"/>
+  <path d="M146 82 Q170 120 180 160" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" stroke-dasharray="2 6"/>
+  <rect x="196" y="36" width="160" height="100" rx="3" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <path d="M248 36 L248 86 M196 86 L356 86" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M222 44 L226.8 54.4 L238.2 55.7 L229.8 63.5 L232 74.8 L222 69.2 L212 74.8 L214.2 63.5 L205.8 55.7 L217.2 54.4Z" fill="#000"/>
+  <path d="M204 92 L204 130 M214 92 L214 130 M224 92 L224 130 M234 92 L234 130 M244 92 L244 130 M254 92 L254 130 M264 92 L264 130 M274 92 L274 130 M284 92 L284 130 M294 92 L294 130 M304 92 L304 130 M314 92 L314 130 M324 92 L324 130 M334 92 L334 130 M344 92 L344 130" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/>
+  <path d="M196 36 L196 160" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <path d="M14 340 Q192 372 370 340" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <path d="M17 343 L43 343 L30 369 Z" fill="#000" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <path d="M57 349.3 L83 349.3 L70 375.3 Z" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <path d="M97 353.9 L123 353.9 L110 379.9 Z" fill="#000" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <path d="M137 356.6 L163 356.6 L150 382.6 Z" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <path d="M177 357.6 L203 357.6 L190 383.6 Z" fill="#000" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <path d="M217 356.8 L243 356.8 L230 382.8 Z" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <path d="M257 354.2 L283 354.2 L270 380.2 Z" fill="#000" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <path d="M297 349.9 L323 349.9 L310 375.9 Z" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <path d="M337 343.7 L363 343.7 L350 369.7 Z" fill="#000" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <rect ip:field="title" ip:label="Title" ip:default="¡Viva Chile!" ip:font="script" ip:size="52" ip:min="22" ip:lines="1" x="16" y="172" width="352" height="80" fill="none"/>
+  <rect ip:field="message" ip:label="Message" ip:default="Felices Fiestas Patrias" ip:size="30" ip:min="14" x="24" y="254" width="336" height="64" fill="none"/>
+</svg>

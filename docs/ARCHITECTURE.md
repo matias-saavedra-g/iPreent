@@ -21,16 +21,16 @@ notification. Everything prints by turning content into a list of rows (0/1 per 
 ## Python package `ipreent/`
 | Module | Job | Kotlin twin |
 |---|---|---|
-| `protocol.py` | Frames, CRC8, row encodings, `print_job` byte stream, notification parsing, **print-time estimate** (`speed_for` per energy, `estimate_seconds`, `learn_speeds`, `format_eta`; nominal 15 mm/s at energy 5000 to 10 mm/s at 17000, seconds/mm linear in energy, until each level is timed) | `Protocol.kt` |
+| `protocol.py` | Frames, CRC8, row encodings, `print_job` byte stream, notification parsing, **print-time estimate** (`speed_for`, `estimate_seconds`, `measured_speed`, `format_eta`; a fixed 10 mm/s, the slowest nominal speed, at every darkness, unless the debug setting overrides it; timed prints are logged, never learnt) | `Protocol.kt` |
 | `models.py` + `models.json` | 187 printer profiles (width, dpi, speeds, MTU, RLE, serial-only flag, paper class, label mode) looked up by the longest model number that prefixes the Bluetooth name; `details()` = what the settings screens show (paper to buy, die-cut labels if supported, print width, resolution) and deliberately not ink, speed, transport tuning or vendor flags | `Model.kt` (+ `assets/models.json`) |
 | `imaging.py` | Images → gray → 1-bit rows (Floyd–Steinberg, Atkinson, threshold), text with emoji fallback, checklist, banner, QR (segno), Code 128 | `Imaging.kt` |
 | `receipt.py` | Receipts (BOLETA): CLP parsing/formatting, totals, layout, receipt number = print time | `Receipt.kt` |
-| `templates.py` + `templates/*.svg` + `fonts/` | Templates (docs/TEMPLATES.md): SVG designs with `ip:` text boxes; `parse`, `wrap`/`fit`/`layout` (shrink to fit, stretch at `ip:stretch`), `render` (art with resvg_py, text with `imaging.draw_text` and the bundled Fredoka/Pacifico fonts), user SVGs from `<config dir>/templates` (Mine) | `Templates.kt` (layout) + `TemplateArt.kt` (AndroidSVG drawing; `assets/templates`, `assets/fonts`) |
+| `templates.py` + `templates/*.svg` + `fonts/` | Templates (docs/TEMPLATES.md): SVG designs with `ip:` text boxes; `parse`, `wrap`/`fit`/`layout` (shrink to fit, stretch at `ip:stretch`), `gallery_order`/`category_order` (`ip:season`: in-season templates and chips first), `render` (art with resvg_py, text with `imaging.draw_text` and the bundled Fredoka/Pacifico fonts), user SVGs from `<config dir>/templates` (Mine) | `Templates.kt` (layout) + `TemplateArt.kt` (AndroidSVG drawing; `assets/templates`, `assets/fonts`) |
 | `convert.py` | File type detection, PDF pages (pypdfium2), text files → images | `Sources.kt` (Android loading) |
 | `features.py` | Tool weights + decayed usage → home-screen order (`DESKTOP`, `CLI` tables) | `Features.kt` (`ANDROID` table) |
 | `busy.py` | One print at a time across programs on a PC: OS lock on `print.lock` + `busy.json` (label, start, estimate, queue behind) | none (Android is one app) |
 | `config.py` | Config dir: `%APPDATA%\ipreent` (Windows), `~/Library/Application Support/ipreent` (macOS), `~/.config/ipreent` | SharedPreferences |
-| `api.py` | `connect()` (explicit target → remembered printer → scan), `rows_for`, `print_rows` (times each print and calls `learn_speed`), `estimate`, sync helpers `print_text/print_file/status` | `Printers.kt` |
+| `api.py` | `connect()` (explicit target → remembered printer → scan), `rows_for`, `print_rows` (times each print and calls `log_print`), `estimate`, `known_speed` / `debug_speed` / `set_debug_speed`, sync helpers `print_text/print_file/status` | `Printers.kt` |
 | `ble.py` / `spp.py` | Bluetooth LE (bleak) and Bluetooth serial (pyserial / RFCOMM socket) transports | `BlePrinter.kt` (BLE only) |
 | `cli.py` | Command line (see below) | |
 
@@ -42,8 +42,9 @@ fails if the copies differ.
 ## Command line (`ipreent/cli.py`)
 - Subcommands, listed in `--help` by `features.CLI` weight: `print`, `text`, `receipt`, `status`, `template`
   (list, `--fields`, print or `--preview` a template; texts in field order or `--set KEY=TEXT`), `preview`,
-  `queue`, `scan`, `feed`, `settings`, `forget`, `bench` (one short strip per darkness level, timed, to learn the
-  real speed and show how much darkness slows the printer). Plain `ipreent` shows an overview (printer, settings, queue,
+  `queue`, `scan`, `feed`, `settings` (darkness; `paper-speed` = the debug speed for estimates, `reset` = 10 mm/s),
+  `forget`, `bench` (one short strip per darkness level, timed, to measure the real speed and show how much
+  darkness slows the printer; it doesn't change the estimates). Plain `ipreent` shows an overview (printer, settings, queue,
   three most used commands by weight + usage).
 - Connection options (`-a/-p/--rfcomm/--ble/-m`) and tuning (`--width/--energy/--speed/--rle`) work before or
   after the subcommand.
@@ -57,7 +58,9 @@ fails if the copies differ.
   countdowns; centre: editor + exact preview; right: print settings, only the rows the mode uses) and `App`
   (tray menu, Ctrl+Alt+P hotkey, single instance via `QLocalServer`, HTTP API, print-dialog bridge, autostart).
   Modes are keys: `photo, document, text, receipt, template, list, qr, banner, barcode` (saved as `mode_key`).
-  Templates mode: filter chips + a horizontal strip of thumbnails (made the first time the mode opens) above the
+  Printer menu: holding Shift while opening it adds *Debug settings…* (paper speed for estimates, shared with
+  the CLI through `timing.json`; stays listed afterwards, QSettings `debug_unlocked`).
+  Templates mode: filter chips (scroll sideways; in-season category first) + a horizontal strip of thumbnails (made the first time the mode opens) above the
   chosen template's text boxes; *Add SVG…*/dropped `.svg` files are copied to `<config dir>/templates` (Mine).
   Print → `confirm_busy` (asks if a job is open here or another program holds the lock) → paper-slip animation →
   `worker.print_job(..., lines=)`.
@@ -73,13 +76,14 @@ fails if the copies differ.
 - `MainActivity.kt`: Compose UI. Nav bar **Create · Queue · History** (Material 3: 3–5 destinations). Create =
   home grid of `Tool`s (`photo, document, text, receipt, template, list, code, banner`), order fixed per run from
   `Features.ANDROID` + usage (top two get big tiles). Tool screens have a back arrow; the top bar always has the
-  printer chip (name + gear → `PrinterSheet`: darkness, status/battery, find, forget). Print → `BusyDialog` if
+  printer chip (name + gear → `PrinterSheet`: darkness, status/battery, find, forget; tapping the printer's name
+  7 times opens `DebugSettings`, the paper speed for estimates). Print → `BusyDialog` if
   a job is open → `Fly` paper slip to the Queue icon → `Printers.enqueue`. History reprints use the same path.
-  Templates tool: `TemplateGallery` (filter chips, adaptive grid of thumbnails, *Your own SVG* card →
+  Templates tool: `TemplateGallery` (filter chips, in-season templates and chip first, adaptive grid of thumbnails, *Your own SVG* card →
   `filesDir/templates`) → `TemplateEditor` (one text field per box, exact preview, PrintBar); back returns to the gallery.
 - `Printers.kt`: app-wide state: model table, remembered printer (`printerName` flow), darkness, the queue
   (`QueueEntry`: waiting/connecting/printing/done/failed/cancelled, thumbnail, estimate, progress; cancel waiting
-  jobs), learnt speed, history (each print saved as its exact 1-bit PNG, last 50).
+  jobs), estimate speed (nominal 10 mm/s or `debugSpeed`), history (each print saved as its exact 1-bit PNG, last 50).
 - `BlePrinter.kt` (GATT transport with flow control), `Protocol.kt`, `Model.kt`, `Imaging.kt`, `Receipt.kt`,
   `Features.kt`, `Sources.kt` (load shared/picked images, PDFs via PdfRenderer, text),
   `IpreentPrintService.kt` (Android print service: "Print" from Chrome/Files shows iPreent).
@@ -89,13 +93,13 @@ fails if the copies differ.
 | App | Where | What |
 |---|---|---|
 | CLI + Windows (shared) | config dir: `config.json` | remembered printer (name, address/port, transport, model) |
-| | `timing.json` | learnt paper speed per energy (`speeds`, mm/s), number of timed prints, `log` of the last 100 timed prints (energy, lines, seconds, black share, whether the printer said "printing") |
+| | `timing.json` | `debug_mm_per_s` (debug speed for estimates; absent = 10 mm/s), number of timed prints, `log` of the last 100 timed prints (energy, lines, seconds, black share, whether the printer said "printing"); older files' learnt `speeds` are ignored and dropped |
 | | `print.lock`, `busy.json` | cross-program lock and the job holding it |
 | CLI | `receipt.json`, `settings.json`, `usage.json` | receipt header; default darkness; command usage |
-| Windows | registry `HKCU\Software\iPreent\iPreent` (QSettings) | print settings, mode, receipt form, template texts (`template_values`, `template_id`), API settings + token, usage |
+| Windows | registry `HKCU\Software\iPreent\iPreent` (QSettings) | print settings, mode, receipt form, template texts (`template_values`, `template_id`), API settings + token, usage, `debug_unlocked` |
 | | `HKCU\...\CurrentVersion\Run` | "Start with Windows" |
 | CLI + Windows | config dir: `templates/*.svg` | the user's own templates (Mine) |
-| Android | SharedPreferences `printer`, `receipt`, `usage`, `templates`; `filesDir/history/*.png`, `filesDir/templates/*.svg` | printer, darkness, learnt speed per energy (`speeds` = `5000=14.2;8000=9.1`); receipt form; tool usage; template texts (id → JSON); print history; own templates (Mine) |
+| Android | SharedPreferences `printer`, `receipt`, `usage`, `templates`; `filesDir/history/*.png`, `filesDir/templates/*.svg` | printer, darkness, `debug_mm_per_s`, `debug_unlocked`, `last_measured_mm_per_s` (shown in the debug settings only); receipt form; tool usage; template texts (id → JSON); print history; own templates (Mine) |
 
 ## Checking changes without hardware
 - `pytest -q` (two known Linux failures: no emoji font; `winreg`). Tests never touch the real config dir

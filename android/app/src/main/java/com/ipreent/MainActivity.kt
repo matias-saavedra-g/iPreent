@@ -8,6 +8,7 @@ import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -22,6 +23,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -381,6 +383,38 @@ private fun PrinterChip(printing: Boolean, onClick: () -> Unit) {
     )
 }
 
+/** Paper speed for time estimates (opened by tapping the printer's name 7 times in [PrinterSheet]). */
+@Composable
+private fun DebugSettings(debugSpeed: Double?, onHide: () -> Unit) {
+    val nominal = Protocol.NOMINAL_MM_PER_S.toFloat()
+    var value by remember(debugSpeed) { mutableFloatStateOf((debugSpeed ?: Protocol.NOMINAL_MM_PER_S).toFloat().coerceIn(2f, 30f)) }
+    HorizontalDivider(Modifier.padding(vertical = 12.dp))
+    Text("Debug settings", style = MaterialTheme.typography.titleSmall)
+    Spacer(Modifier.height(4.dp))
+    Text("Time estimates assume the printer's slowest nominal speed, ${"%.0f".format(nominal)} mm/s, because measured " +
+            "times aren't reliable yet. Change it only to test another figure.",
+        style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Spacer(Modifier.height(8.dp))
+    Row {
+        Text("Paper speed", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+        Text("${"%.1f".format(value)} mm/s", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+    }
+    // 2 to 30 mm/s, snapped to 0.5 (no tick marks: 56 of them would just be noise).
+    Slider(value, { value = (it * 2).roundToInt() / 2f }, valueRange = 2f..30f,
+        onValueChangeFinished = { Printers.setDebugSpeed(value.toDouble()) })
+    Printers.lastMeasuredSpeed?.let {
+        Text("The last timed print looked like about ${"%.1f".format(it)} mm/s (not used).",
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+    Row {
+        TextButton({ value = nominal; Printers.setDebugSpeed(null) }, enabled = debugSpeed != null) {
+            Text("Back to ${"%.0f".format(nominal)} mm/s")
+        }
+        Spacer(Modifier.weight(1f))
+        TextButton(onHide) { Text("Hide") }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PrinterSheet(granted: Boolean, snack: SnackbarHostState, onClose: () -> Unit) {
@@ -388,11 +422,26 @@ private fun PrinterSheet(granted: Boolean, snack: SnackbarHostState, onClose: ()
     val name by Printers.printerName.collectAsState()
     val darkness by Printers.darkness.collectAsState()
     val status by Printers.status.collectAsState()
+    val debugSpeed by Printers.debugSpeed.collectAsState()
     var found by remember { mutableStateOf<List<Found>?>(null) }
     var scanning by remember { mutableStateOf(false) }
+    // Hidden debug settings: tap the printer's name 7 times, like Android's "build number".
+    val context = LocalContext.current
+    var debugOpen by remember { mutableStateOf(Printers.debugUnlocked) }
+    var taps by remember { mutableIntStateOf(0) }
+    var toast by remember { mutableStateOf<Toast?>(null) }
+    fun say(text: String) { toast?.cancel(); toast = Toast.makeText(context, text, Toast.LENGTH_SHORT).also { it.show() } }
     ModalBottomSheet(onDismissRequest = onClose) {
         Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = 24.dp).padding(bottom = 24.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.clickable(
+                interactionSource = remember { MutableInteractionSource() }, indication = null) {
+                taps++
+                when {
+                    debugOpen -> if (taps == 1) say("Debug settings are already open, below")
+                    taps >= 7 -> { Printers.debugUnlocked = true; debugOpen = true; say("Debug settings unlocked") }
+                    taps >= 3 -> say(if (taps == 6) "1 more tap to open the debug settings" else "${7 - taps} more taps to open the debug settings")
+                }
+            }) {
                 Box(Modifier.size(48.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
                     Icon(Icons.Default.Print, null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
                 }
@@ -415,13 +464,8 @@ private fun PrinterSheet(granted: Boolean, snack: SnackbarHostState, onClose: ()
                 Text("Darker (prints slower)", style = MaterialTheme.typography.labelSmall)
             }
             Spacer(Modifier.height(8.dp))
-            val learnt = Printers.learntSpeeds
-            Text("Print speed at ${darkness.label.lowercase()}: about ${"%.1f".format(Printers.speed(darkness.energy))} mm/s, " +
-                    when {
-                        darkness.energy in learnt -> "learnt from your prints"
-                        learnt.isNotEmpty() -> "estimated from the levels you've printed at"
-                        else -> "nominal until a print is timed"
-                    },
+            Text("Time estimates assume ${"%.1f".format(Printers.speed())} mm/s at every darkness" +
+                    if (debugSpeed != null) " (debug setting)." else ", the printer's slowest nominal speed.",
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             if (name != null) {
                 // Which paper to buy and what the printer can do; transport tuning is left out (Model.details).
@@ -436,6 +480,7 @@ private fun PrinterSheet(granted: Boolean, snack: SnackbarHostState, onClose: ()
                     }
                 }
             }
+            if (debugOpen) DebugSettings(debugSpeed, onHide = { Printers.debugUnlocked = false; debugOpen = false; taps = 0 })
             HorizontalDivider(Modifier.padding(vertical = 12.dp))
             ListItem(headlineContent = { Text("Check status and battery") },
                 leadingContent = { Icon(Icons.Default.BatteryStd, null) },
@@ -635,12 +680,12 @@ private fun rememberRows(vararg keys: Any?, source: suspend (Int) -> List<ByteAr
 private fun PrintBar(lines: Int?, onPrint: (copies: Int) -> Unit) {
     val fly = LocalFly.current
     var copies by remember { mutableIntStateOf(1) }
-    val darkness by Printers.darkness.collectAsState()   // darker prints slower: re-estimate when it changes
+    val debugSpeed by Printers.debugSpeed.collectAsState()   // re-estimate when the debug speed changes
     Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
         IconButton({ if (copies > 1) copies-- }) { Icon(Icons.Default.Remove, "fewer") }
         Text("×$copies")
         IconButton({ copies++ }) { Icon(Icons.Default.Add, "more") }
-        if (lines != null) Text("about ${eta(Printers.estimate(lines, copies, energy = darkness.energy))}", style = MaterialTheme.typography.bodySmall,
+        if (lines != null) Text("about ${eta(Printers.estimate(lines, copies, mmPerS = Protocol.speedFor(debugSpeed)))}", style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.weight(1f))
         Button({ onPrint(copies) }, enabled = lines != null,
@@ -910,8 +955,11 @@ private fun TemplateGallery(all: List<Templates.Template>, pick: (Templates.Temp
             }
         }
     }
-    val cats = listOf("all" to "All") + Templates.CATEGORIES.filter { (k, _) -> all.any { it.category == k } }.toList()
-    val shown = all.filter { category == "all" || it.category == category }
+    // In-season templates (Christmas in November and December, ...) and their chip come first.
+    val today = remember { java.time.LocalDate.now() }
+    val ordered = remember(all, today) { Templates.galleryOrder(all, today.monthValue, today.dayOfMonth) }
+    val cats = listOf("all" to "All") + Templates.categoryOrder(all, today.monthValue, today.dayOfMonth).map { it to Templates.CATEGORIES.getValue(it) }
+    val shown = ordered.filter { category == "all" || it.category == category }
     Column(Modifier.fillMaxSize()) {
         LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(cats, key = { it.first }) { (key, label) -> FilterChip(category == key, { category = key }, { Text(label) }) }

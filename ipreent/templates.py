@@ -39,7 +39,7 @@ HERE = Path(__file__).parent / "templates"
 
 # Gallery categories, in the order the filter chips show them. "mine" = the user's own SVG files.
 CATEGORIES = {"love": "Love", "frames": "Frames", "lists": "Lists", "notes": "Notes", "party": "Party",
-              "labels": "Labels", "mine": "Mine"}
+              "labels": "Labels", "christmas": "Christmas", "holidays": "Holidays", "mine": "Mine"}
 FONTS = ("round", "script", "sans", "bold")
 LISTS = ("none", "check", "dot", "heart")
 LINE_HEIGHT = 1.25        # line pitch, in font sizes
@@ -86,6 +86,14 @@ class Template:
     fields: tuple
     svg: str = dfield(repr=False, compare=False)
     path: str = ""
+    season: tuple | None = None   # ((month, day), (month, day)), inclusive; may wrap past New Year
+
+    def in_season(self, month, day):
+        """True if (month, day) falls in the template's `ip:season` (e.g. 11-01..12-26)."""
+        if not self.season:
+            return False
+        start, end, d = self.season[0], self.season[1], (month, day)
+        return start <= d <= end if start <= end else d >= start or d <= end
 
     def defaults(self):
         return {f.key: f.default for f in self.fields}
@@ -104,6 +112,17 @@ def _num(v, default=0.0):
 
 def _ip(el, name, default=None):
     return el.get(f"{{{NS}}}{name}", default)
+
+
+def _season(v):
+    """'11-01..12-26' → ((11, 1), (12, 26)); None if missing or malformed."""
+    m = re.fullmatch(r"\s*(\d{1,2})-(\d{1,2})\s*\.\.\s*(\d{1,2})-(\d{1,2})\s*", v or "")
+    if not m:
+        return None
+    a, b, c, d = (int(x) for x in m.groups())
+    if not (1 <= a <= 12 and 1 <= c <= 12 and 1 <= b <= 31 and 1 <= d <= 31):
+        return None
+    return (a, b), (c, d)
 
 
 def parse(svg, id="template", path=""):
@@ -148,7 +167,7 @@ def parse(svg, id="template", path=""):
     return Template(id=id, name=_ip(root, "name") or id.replace("-", " ").capitalize(),
                     category=category if category in CATEGORIES else "mine",
                     width=w, height=h, stretch=stretch, fields=tuple(f for f in fields if f.w > 0 and f.h > 0),
-                    svg=svg, path=path)
+                    svg=svg, path=path, season=_season(_ip(root, "season")))
 
 
 def _id(path):
@@ -178,6 +197,20 @@ def mine():
 
 def all_templates():
     return builtin() + mine()
+
+
+def gallery_order(items, month, day):
+    """Templates in season (Christmas in November and December, ...) first, the rest in file order.
+    Used by the galleries; the command line keeps file order so its numbers don't move."""
+    return sorted(items, key=lambda t: not t.in_season(month, day))
+
+
+def category_order(items, month, day):
+    """Category keys for the filter chips: those with a template in season first, then CATEGORIES order;
+    only categories that have templates."""
+    used = [k for k in CATEGORIES if any(t.category == k for t in items)]
+    hot = {t.category for t in items if t.in_season(month, day)}
+    return sorted(used, key=lambda k: k not in hot)
 
 
 def find(name, files=True):

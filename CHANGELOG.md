@@ -2,6 +2,28 @@
 
 Each `## vX.Y.Z` section becomes the notes of that GitHub Release.
 
+## v0.7.0
+**Downloads**
+- `iPreent-v0.7.0.apk`: Android app (Android 8+). Installs over v0.6.0. Also available through Obtainium (see README).
+- `iPreent-v0.7.0-portable.exe`: Windows app. One file, no install, no Python.
+- `ipreent-cli-v0.7.0.zip`: command line for Windows, Linux and macOS. Needs Python 3.10+; see `INSTALL.txt`.
+
+**Christmas and holiday templates** (all versions): 17 new designs. Christmas: a tree, a gift tag with holly, an
+ornament with a name, a letter to the Viejito Pascuero (a wish list that grows), a snowflake frame, a countdown
+with candy canes, a stocking and a wreath. Other holidays celebrated in Chile: New Year, Fiestas Patrias (kite,
+flag and bunting), Halloween, Valentine's, Easter, Mother's, Father's, Children's and Teachers' Day. No
+Thanksgiving. Templates in season come first in the Android and Windows galleries, with their chip first too
+(Christmas from 1 November to 26 December). Your own SVGs can have a season too (`ip:season`, docs/TEMPLATES.md).
+On Windows the category chips now scroll sideways, so the window can still be made narrow.
+
+**Print times assume 10 mm/s.** Timing real prints wasn't reliable, so estimates no longer learn from them: they
+use the printer's slowest nominal speed, 10 mm/s, at every darkness, so a queued print is never promised too
+early. Prints are still timed and logged, only to check later (`ipreent bench` still measures the speed).
+**Debug settings** change the speed the estimates use, only to test another figure:
+- Android: tap the printer's name in the printer sheet 7 times.
+- Windows: hold Shift while opening the printer menu → *Debug settings…*.
+- Command line: `ipreent settings paper-speed 12` (`reset` goes back to 10). Shared with the Windows app.
+
 ## v0.6.0
 **Downloads**
 - `iPreent-v0.6.0.apk`: Android app (Android 8+). Installs over v0.5.1. Also available through Obtainium (see README).

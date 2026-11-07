@@ -20,7 +20,7 @@ from PySide6.QtGui import (QAction, QActionGroup, QBrush, QColor, QDesktopServic
                            QGuiApplication, QIcon, QImage, QKeySequence, QPainter, QPixmap, QShortcut)
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
 from PySide6.QtWidgets import (QAbstractItemView, QApplication, QButtonGroup, QCheckBox, QComboBox, QDialog,
-                               QDialogButtonBox, QFileDialog, QFormLayout, QFrame, QHBoxLayout,
+                               QDialogButtonBox, QDoubleSpinBox, QFileDialog, QFormLayout, QFrame, QHBoxLayout,
                                QHeaderView, QInputDialog, QLabel, QLineEdit, QListWidget,
                                QListWidgetItem, QMainWindow, QMenu, QMessageBox, QPlainTextEdit,
                                QPushButton, QScrollArea, QSlider, QSpinBox, QStackedWidget,
@@ -401,6 +401,11 @@ class MainWindow(QMainWindow):
         details.setEnabled(bool(config.load().get("name")))
         m.addAction("Change printer…", self.choose_printer)
         m.addAction("Feed paper", self.worker.feed)
+        # Hidden debug settings: hold Shift while opening this menu (they stay listed afterwards).
+        if (QApplication.keyboardModifiers() & Qt.ShiftModifier
+                or self.settings.value("debug_unlocked", False, bool)):
+            self.settings.setValue("debug_unlocked", True)
+            m.addAction("Debug settings…", self.debug_settings)
         m.addSeparator()
         forget = m.addAction("Forget this printer", self.forget_printer)
         forget.setEnabled(bool(config.load().get("name")))
@@ -415,6 +420,38 @@ class MainWindow(QMainWindow):
                        for label, value in details(m))
         QMessageBox.information(self, "Printer details",
                                 f"<p>{cfg.get('name', m.name)} ({m.name} profile)</p><table>{rows}</table>")
+
+    def debug_settings(self):
+        """Paper speed used for time estimates (shared with `ipreent settings paper-speed`)."""
+        d = QDialog(self)
+        d.setWindowTitle("Debug settings")
+        lay = QVBoxLayout(d)
+        note = (f"Time estimates assume the printer's slowest nominal speed, "
+                f"{protocol.NOMINAL_MM_PER_S:g} mm/s, at every darkness. Change it only to test "
+                f"another figure; it's shared with the command line.")
+        seen = api.last_measured_speed()
+        if seen:
+            note += f"<br><br>The last timed print looked like about {seen:.1f} mm/s (not used: not reliable yet)."
+        info = QLabel(note, wordWrap=True)
+        lay.addWidget(info)
+        form = QFormLayout()
+        spin = QDoubleSpinBox(decimals=1, singleStep=0.5, suffix=" mm/s")
+        spin.setRange(protocol.MIN_MM_PER_S, protocol.MAX_MM_PER_S)
+        spin.setValue(api.known_speed())
+        form.addRow("Paper speed", spin)
+        lay.addLayout(form)
+        box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel | QDialogButtonBox.Reset)
+        box.button(QDialogButtonBox.Reset).setText(f"Nominal ({protocol.NOMINAL_MM_PER_S:g} mm/s)")
+        box.button(QDialogButtonBox.Reset).clicked.connect(lambda: spin.setValue(protocol.NOMINAL_MM_PER_S))
+        box.accepted.connect(d.accept)
+        box.rejected.connect(d.reject)
+        lay.addWidget(box)
+        if d.exec() != QDialog.Accepted:
+            return None
+        v = spin.value()
+        api.set_debug_speed(None if abs(v - protocol.NOMINAL_MM_PER_S) < 1e-9 else v)
+        self.update_length()
+        return v
 
     def forget_printer(self):
         config.forget()
@@ -637,10 +674,17 @@ class MainWindow(QMainWindow):
         w = QWidget()
         v = QVBoxLayout(w)
         v.setContentsMargins(0, 0, 0, 0)
-        chips = QHBoxLayout()
+        # The chips scroll sideways when the window is narrow, so they don't set its minimum width.
+        chip_box = QWidget()
+        chips = QHBoxLayout(chip_box)
+        chips.setContentsMargins(0, 0, 0, 0)
         chips.setSpacing(6)
         self.tpl_chips = QButtonGroup(w)
-        for key, label in [("all", "All"), *templates.CATEGORIES.items()]:
+        # Chips of the categories in season (Christmas in November and December, ...) come first.
+        today = time.localtime()
+        order = templates.category_order(templates.builtin(), today.tm_mon, today.tm_mday)
+        for key in ["all", *order, *(k for k in templates.CATEGORIES if k not in order)]:
+            label = "All" if key == "all" else templates.CATEGORIES[key]
             b = QPushButton(label, objectName="chip", checkable=True, cursor=Qt.PointingHandCursor)
             b.setProperty("category", key)
             b.setChecked(key == "all")
@@ -648,13 +692,19 @@ class MainWindow(QMainWindow):
             chips.addWidget(b)
         self.tpl_chips.buttonClicked.connect(self.filter_templates)
         chips.addStretch(1)
+        chip_scroll = QScrollArea(widgetResizable=True, frameShape=QFrame.NoFrame)
+        chip_scroll.setWidget(chip_box)
+        chip_scroll.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        chip_scroll.setFixedHeight(chip_box.sizeHint().height() + chip_scroll.horizontalScrollBar().sizeHint().height() + 2)
+        top = QHBoxLayout()
+        top.addWidget(chip_scroll, 1)
         add = QPushButton("Add SVG…", toolTip="Use your own SVG file as a template (it goes to Mine)")
         add.clicked.connect(self.add_template_files)
         folder = QPushButton("Folder", toolTip="Open the folder with your own templates")
         folder.clicked.connect(self.open_template_folder)
-        chips.addWidget(add)
-        chips.addWidget(folder)
-        v.addLayout(chips)
+        top.addWidget(add, 0, Qt.AlignTop)
+        top.addWidget(folder, 0, Qt.AlignTop)
+        v.addLayout(top)
         self.gallery = QListWidget(objectName="gallery", viewMode=QListWidget.IconMode, flow=QListWidget.LeftToRight,
                                    movement=QListWidget.Static, wrapping=False, uniformItemSizes=True)
         self.gallery.setIconSize(QSize(96, 96))
@@ -684,7 +734,8 @@ class MainWindow(QMainWindow):
             self.gallery.clear()
             want = select or self.settings.value("template_id") or ""
             pick = None
-            for t in templates.all_templates():
+            today = time.localtime()
+            for t in templates.gallery_order(templates.all_templates(), today.tm_mon, today.tm_mday):
                 try:
                     pix = QPixmap.fromImage(self.thumb_qimage(templates.thumbnail(t, 192)))
                 except templates.TemplateError:
@@ -943,7 +994,7 @@ class MainWindow(QMainWindow):
         self.update_length()
 
     def update_length(self):
-        """Paper and time under the preview; follows copies and darkness (darker prints slower)."""
+        """Paper and time under the preview; follows the copies (time at the nominal or debug speed)."""
         m = getattr(self, "_preview_model", None)
         if not self.rows or m is None:
             return

@@ -86,6 +86,28 @@ def test_empty_fields_draw_nothing():
     assert lay.items == () and lay.height == 100
 
 
+def test_seasons_and_gallery_order():
+    # Same cases as TemplatesTest.kt.
+    assert t._season("11-01..12-26") == ((11, 1), (12, 26))
+    assert t._season(" 12-15 .. 01-06 ") == ((12, 15), (1, 6))
+    assert t._season("13-01..12-26") is None and t._season("Christmas") is None and t._season(None) is None
+    head = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 100" '
+    box = '><rect ip:field="a" x="0" y="0" width="10" height="10"/></svg>'
+    xmas = t.parse(head + 'ip:category="christmas" ip:season="11-01..12-26"' + box, "xmas")
+    ny = t.parse(head + 'ip:category="holidays" ip:season="12-15..01-06"' + box, "ny")
+    love = t.parse(head + 'ip:category="love"' + box, "love")
+    assert xmas.in_season(11, 1) and xmas.in_season(12, 26) and not xmas.in_season(12, 27) and not xmas.in_season(10, 31)
+    assert ny.in_season(12, 31) and ny.in_season(1, 6) and not ny.in_season(1, 7) and not ny.in_season(12, 14)
+    assert not love.in_season(2, 14)
+    items = [love, ny, xmas]
+    assert [x.id for x in t.gallery_order(items, 11, 7)] == ["xmas", "love", "ny"]
+    assert [x.id for x in t.gallery_order(items, 12, 20)] == ["ny", "xmas", "love"]
+    assert [x.id for x in t.gallery_order(items, 7, 1)] == ["love", "ny", "xmas"]
+    assert t.category_order(items, 11, 7) == ["christmas", "love", "holidays"]
+    assert t.category_order(items, 1, 2) == ["holidays", "love", "christmas"]
+    assert t.category_order(items, 7, 1) == ["love", "christmas", "holidays"]
+
+
 # ---- Python only -------------------------------------------------------------------------------
 
 def test_builtin_collection_is_complete_and_sane():
@@ -94,6 +116,10 @@ def test_builtin_collection_is_complete_and_sane():
     assert len({x.id for x in items}) == len(items)
     used = {x.category for x in items}
     assert used <= set(t.CATEGORIES) - {"mine"} and len(used) >= 5
+    assert {"christmas", "holidays"} <= used
+    assert sum(x.category == "christmas" for x in items) >= 6
+    assert all(x.season for x in items if x.category in ("christmas", "holidays"))
+    assert not any("thanksgiving" in x.id for x in items)         # not celebrated in Chile
     for x in items:
         assert x.width == 384 and x.fields, x.id
         for f in x.fields:

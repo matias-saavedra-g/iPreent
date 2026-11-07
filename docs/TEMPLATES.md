@@ -1,7 +1,7 @@
 # Templates
 
-Ready-made designs (hearts, frames, lists, notes, party cards, labels) that you fill in with your own text and
-print. Same collection and same look in all three apps:
+Ready-made designs (hearts, frames, lists, notes, party cards, labels, Christmas and other holidays) that you fill
+in with your own text and print. Same collection and same look in all three apps:
 
 - **Android**: Create › **Templates**: category chips, a grid of thumbnails, tap one to fill in its text boxes
   over the exact preview, then Print. *Your own SVG* adds any SVG file to **Mine**.
@@ -12,6 +12,10 @@ print. Same collection and same look in all three apps:
   `\n` in a text is a new line. Any `.svg` path works as the name.
 - **HTTP API** (Windows app): `GET /templates`; `POST /template` with
   `{"name": "birthday", "values": {"name": "Yuliana"}}`.
+
+**Seasons**: templates with an `ip:season` (Christmas from 1 November to 26 December, New Year from 15 December to
+6 January, Fiestas Patrias in September, ...) come first in the Android and Windows galleries while in season, and
+so does their category chip. The command line keeps file order, so `ipreent template 3` always means the same one.
 
 What you type is remembered per template (Windows: registry; Android: SharedPreferences `templates`).
 *Example text* puts the template's sample text back.
@@ -51,7 +55,8 @@ extra attributes. Then add the iPreent namespace and mark the text boxes with in
 | On the root `<svg>` | |
 |---|---|
 | `ip:name` | Name in the gallery (default: from the file name). |
-| `ip:category` | `love`, `frames`, `lists`, `notes`, `party` or `labels` (your own files always show under Mine). |
+| `ip:category` | `love`, `frames`, `lists`, `notes`, `party`, `labels`, `christmas` or `holidays` (your own files always show under Mine). |
+| `ip:season` | Optional: `MM-DD..MM-DD`, inclusive, may wrap past New Year (`12-15..01-06`). In season, the template and its chip come first in the galleries. |
 | `ip:stretch` | Optional: y of the row to repeat when a box crossing it needs more room. Pick a row where only straight vertical lines cross (sides of a frame), not a curve. |
 
 | On a text box (any element with `x`, `y`, `width`, `height`, usually `<rect fill="none">`) | |
@@ -80,7 +85,7 @@ Windows app, or *Your own SVG* on Android. An SVG without text boxes prints as a
   ([ui-patterns.com](https://ui-patterns.com/patterns/TemplateGallery)) recommends exactly this: preview every
   template, make starting instant with example content to replace piece by piece, start small and add categories,
   and warns that a large undifferentiated gallery turns the blank-page problem into a choice problem. So: 20
-  templates in 6 categories, thumbnails rendered with their example text, and the other tools (Text, Checklist)
+  templates in 6 categories at first (37 in 8 with the holidays), thumbnails rendered with their example text, and the other tools (Text, Checklist)
   stay as the blank option.
 - **Filter chips for the categories**, single-select, short nouns, horizontally scrollable
   ([CMS design system: filter chip](https://design.cms.gov/components/filter-chip); Material 3 chips work the same way).
@@ -102,4 +107,10 @@ Windows app, or *Your own SVG* on Android. An SVG without text boxes prints as a
   ([Qt docs](https://doc.qt.io/qtforpython-6/overviews/svgrendering.html)). Android has no built-in SVG renderer for
   files at runtime, so **AndroidSVG 1.4** (Apache 2.0; [site](https://bigbadaboom.github.io/androidsvg/download.html)).
   Text isn't left to the SVG renderers, so it looks the same on both and can shrink, wrap and stretch.
-- **Art**: all 20 designs were drawn for iPreent (MIT, like the code), so there are no third-party artwork licences.
+- **Holidays (2026-11-07)**: Christmas (8 designs: tree, gift tag, ornament, letter to the *Viejito Pascuero*,
+  snowflake frame, countdown, stocking, wreath) and the other dates people mark in Chile: New Year, Fiestas Patrias,
+  Halloween, Valentine's, Easter, Mother's Day (2nd Sunday of May), Father's Day (3rd Sunday of June), Children's
+  Day (2nd Sunday of August) and Teachers' Day (16 October). No Thanksgiving: it isn't celebrated in Chile. Seasons
+  end on the latest date the day can fall on. Chilean ones (Fiestas Patrias, the letter to Santa) have Spanish
+  example text.
+- **Art**: all designs were drawn for iPreent (MIT, like the code), so there are no third-party artwork licences.

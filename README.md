@@ -30,7 +30,9 @@ Each release also has a Windows exe and a zip; Obtainium only takes the `.apk`.
 - The **printer button** at the top right (name + gear) opens the printer settings: darkness, status and battery,
   printer details (which paper to buy, print width, resolution), find printers, forget the printer.
 - **Templates**: cute designs to fill in (hearts, frames, to-do and shopping lists, notes, birthday and
-  thank-you cards, gift tags, jar labels, name tags). Pick one from the gallery, type your text (it shrinks to
+  thank-you cards, gift tags, jar labels, name tags, **Christmas** and other holidays: New Year, Fiestas Patrias,
+  Halloween, Valentine's, Easter, Mother's, Father's, Children's and Teachers' Day; the ones in season come
+  first). Pick one from the gallery, type your text (it shrinks to
   fit; lists grow longer), print. *Your own SVG* adds any SVG file. See [docs/TEMPLATES.md](docs/TEMPLATES.md).
 - Share a photo, PDF or text to iPreent from any app, or print from Chrome/Files with the iPreent print service.
 
@@ -39,11 +41,14 @@ These printers don't show that they're working unless you look at the paper slot
 - Pressing **Print** sends a little paper slip flying into the queue, and the queue shows a countdown.
 - Pressing Print again while something is still printing asks first: *The printer is busy: “Photo” is printing,
   about 0:12 left. Add “Note” to the queue? It should start in about 0:12.*
-- Times come from the paper length and the darkness: darker prints take longer, because the head heats each line
-  for longer. They start from the nominal 15 mm/s at the lightest darkness down to 10 mm/s at the darkest (the
-  listing's "40 ppm" turned out far too fast). Each finished print is timed and learnt for the darkness it used.
-  The command line and the Windows app share what they've learnt on the same PC; `ipreent settings` shows the
-  speed at each darkness, and `ipreent bench` measures it on about 11 cm of paper.
+- Times come from the paper length at a fixed **10 mm/s**, the printer's slowest nominal speed, whatever the
+  darkness: timing real prints wasn't reliable, and it's better to be told a print takes a bit longer than it
+  does. (The listing's "40 ppm" turned out far too fast.) Prints are still timed and logged, but only to check the
+  speed later; `ipreent bench` measures it on about 11 cm of paper.
+- **Debug settings** change the speed the estimates use, only to test another figure: on Android tap the
+  printer's name in the printer sheet 7 times; on Windows hold **Shift** while opening the printer menu
+  (*Debug settings…*); on the command line `ipreent settings paper-speed 12` (`reset` goes back to 10). The
+  command line and the Windows app share this setting on the same PC.
 - The command line and the Windows app also wait for each other instead of fighting over the Bluetooth
   connection (`ipreent queue` shows what the other one is printing).
 
@@ -130,9 +135,9 @@ ipreent forget                      # forget the remembered printer
 ipreent                             # overview: printer, settings, queue, most used commands
 ipreent queue --watch               # what is printing (here or in the Windows app) and the time left
 ipreent settings darkness darker    # default darkness; `ipreent settings` lists all settings and printer details
-ipreent bench                       # time short strips at 3 darkness levels to learn the real speed
+ipreent bench                       # time short strips at 3 darkness levels to measure the real speed
 ipreent receipt -b "My shop" -i "Coffee" 1800 2 -i "Bread" 1.200   # see Receipts below
-ipreent template                    # cute designs: hearts, frames, lists, cards, tags (docs/TEMPLATES.md)
+ipreent template                    # cute designs: hearts, frames, lists, cards, tags, Christmas (docs/TEMPLATES.md)
 ipreent template big-heart "Te quiero"              # print one with your text
 ipreent template to-do "Hoy" "Leche\nPan\nCafé"      # boxes in order; \n = new line
 ipreent template birthday --set name=Yuliana --preview cake.png

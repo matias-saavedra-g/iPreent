@@ -419,3 +419,43 @@ Robolectric test (home, busy home, tool screen, printer sheet, busy dialog, queu
 ### v0.6.0 (2026-11-06, later)
 - User approved the templates. Example names in templates and docs are now Matías and Yuliana (birthday, name tag,
   gift tag). Version 0.6.0, versionCode 6; merged into main. Release workflow not started yet.
+
+## 2026-11-07
+
+### Print times: fixed 10 mm/s, debug settings (all three apps)
+- User: the learnt print times weren't accurate. Fix the estimate at 10 mm/s and assume the slowest setting; allow
+  changing it only from hidden debug settings. Won't be around; updates go to Telegram.
+- Decision: `speed_for(override)` = the debug value or `NOMINAL_MM_PER_S = 10.0` (the old darkest nominal), the
+  same at every darkness. Removed the per-energy learning (`learn_speed(s)`, `nominal_speed`, energy curve) from
+  `protocol.py` ↔ `Protocol.kt`. Timed prints are still logged (`timing.json` `log`; Android keeps only
+  `last_measured_mm_per_s`) and shown in the debug settings as "not used". Old learnt `speeds` are ignored and
+  dropped on the next write, so upgrading users get 10 mm/s at once.
+- There were no debug settings yet. Added: Android = tap the printer's name in the printer sheet 7 times (Android's
+  "build number" convention, with a countdown toast from the 3rd tap; *Hide* puts them away); Windows = hold Shift
+  while opening the printer menu (stays listed afterwards); CLI = the existing `ipreent settings paper-speed`
+  (now one value, `reset` = 10). CLI and Windows share it via `timing.json` `debug_mm_per_s`.
+- Checked: pytest; Windows debug dialog driven offscreen (set 14 → estimates 14; Nominal → 10, key removed);
+  Android unit tests; Robolectric render of the debug section (temporary, removed).
+
+### Christmas and holiday templates
+- User: a collection of holiday SVGs, especially Christmas; no Thanksgiving (not celebrated in Chile).
+- 17 designs, drawn with a scratch generator (not committed; the SVGs are the source): `christmas` category
+  (70-77: tree, gift tag, ornament, letter to the Viejito Pascuero, snowflake frame, countdown, stocking, wreath)
+  and `holidays` (80-88: New Year, Fiestas Patrias, Halloween, Valentine's, Easter, Mother's, Father's, Children's,
+  Teachers' Day). Chilean dates: Mother's Day 2nd Sunday of May, Father's Day 3rd Sunday of June, Children's Day
+  2nd Sunday of August, Teachers' Day 16 October. Spanish example text only where the holiday is Chilean.
+- New `ip:season="MM-DD..MM-DD"` (inclusive, may wrap past New Year): galleries put in-season templates and their
+  chip first (`gallery_order` / `category_order` ↔ `galleryOrder` / `categoryOrder`, shared test cases). The CLI
+  keeps file order so `ipreent template N` stays stable.
+- Two clip-paths (egg, tie) and one on the ornament: render the same in resvg and AndroidSVG (checked with
+  Robolectric).
+- Windows: two more chips pushed the window's minimum width from about 1260 to 1367 px; the chip row is now a
+  horizontal scroll area (minimum 938 px).
+
+### v0.7.0
+- Version 0.7.0, versionCode 7; merged into main and the release workflow started from main.
+
+### Open
+- [ ] Print the new templates on the SC03h (thin snowflake arms at 3 units, the wreath's many leaves, the hatched flag).
+- [ ] Time a few real prints against a stopwatch; if 10 mm/s is far off, change the nominal value (one constant per
+      app) instead of using the debug setting.

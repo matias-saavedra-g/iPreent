@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 400" width="384" height="400"
+     ip:name="Children's Day" ip:category="holidays" ip:season="07-25..08-14">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <path d="M120 154 Q140 210 192 250 M192 134 Q180 200 192 250 M264 160 Q246 210 192 250" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <ellipse cx="120" cy="100" rx="44" ry="54" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <path d="M112 164 L128 164 L120 153 Z" fill="#000" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <path d="M95.8 86.5 Q98.0 62.2 115.6 59.5" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+  <circle cx="132" cy="100" r="5" fill="#000"/>
+  <circle cx="110" cy="122" r="5" fill="#000"/>
+  <circle cx="140" cy="128" r="5" fill="#000"/>
+  <circle cx="120" cy="76" r="5" fill="#000"/>
+  <ellipse cx="264" cy="106" rx="44" ry="54" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <path d="M256 170 L272 170 L264 159 Z" fill="#000" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <path d="M239.8 92.5 Q242.0 68.2 259.6 65.5" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+  <path d="M224 112 Q264 128 304 112 M230 134 Q264 150 298 134" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <ellipse cx="192" cy="80" rx="46" ry="56" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <path d="M184 146 L200 146 L192 135 Z" fill="#000" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <path d="M166.7 66.0 Q169.0 40.800000000000004 187.4 38.0" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+  <path d="M192 79.9 C189.3 70.3 174 69.4 174 81.1 C174 91 183.9 96.4 192 102.7 C200.1 96.4 210 91 210 81.1 C210 69.4 194.7 70.3 192 79.9Z" fill="#000"/>
+  <path d="M46 186 L49.9 194.6 L59.3 195.7 L52.4 202.1 L54.2 211.3 L46 206.7 L37.8 211.3 L39.6 202.1 L32.7 195.7 L42.1 194.6Z" fill="#000"/>
+  <path d="M340 209 L343.1 215.7 L350.5 216.6 L345 221.6 L346.5 228.9 L340 225.3 L333.5 228.9 L335 221.6 L329.5 216.6 L336.9 215.7Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+  <path d="M40 40 Q42.2 47.8 50 50 Q42.2 52.2 40 60 Q37.8 52.2 30 50 Q37.8 47.8 40 40Z" fill="#000"/>
+  <path d="M344 28 Q346.6 37.4 356 40 Q346.6 42.6 344 52 Q341.4 42.6 332 40 Q341.4 37.4 344 28Z" fill="#000"/>
+  <rect ip:field="title" ip:label="Title" ip:default="Happy Children's Day" ip:font="script" ip:size="44" ip:min="18" ip:lines="1" x="16" y="262" width="352" height="66" fill="none"/>
+  <rect ip:field="name" ip:label="Name" ip:default="Yuliana" ip:size="36" ip:min="16" ip:lines="1" x="24" y="330" width="336" height="60" fill="none"/>
+</svg>

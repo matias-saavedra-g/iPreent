@@ -137,7 +137,7 @@ def rows_for(items, width, dither=True):
 
 
 async def print_rows(p, rows, mode=protocol.MODE_IMAGE, copies=1, progress=None, energy=None,
-                     speed=None, feed=None, learn=True, poll=0.5):
+                     speed=None, feed=None, log=True, poll=0.5):
     job = protocol.print_job(rows, p.model, energy=energy, speed=speed, mode=mode, feed_after=feed)
     t0 = time.monotonic()
     busy_seen = False
@@ -145,41 +145,52 @@ async def print_rows(p, rows, mode=protocol.MODE_IMAGE, copies=1, progress=None,
         await p.send(job, progress)
         await p.wait_done(interval=poll)
         busy_seen |= bool(getattr(p, "busy_seen", False))
-    if learn:
+    if log:
         used = p.model.energy if energy is None else energy
-        learn_speed(len(rows), p.model, copies, time.monotonic() - t0, feed, energy=used,
-                    black=black_fraction(rows), busy_seen=busy_seen)
+        log_print(len(rows), p.model, copies, time.monotonic() - t0, feed, energy=used,
+                  black=black_fraction(rows), busy_seen=busy_seen)
     return job
 
 
 # ---- print time ------------------------------------------------------------------------------
-# timing.json: {"speeds": {"8000": 9.1, ...}, "prints": n, "log": [last LOG_SIZE timed prints]}.
-# Speeds are kept per energy (darkness), since more heat prints slower. The log keeps the raw
-# figures (no content) so the speed model can be checked against everyday prints, no test paper.
+# Estimates use a fixed paper speed: the slowest nominal 10 mm/s, or the debug override
+# (timing.json "debug_mm_per_s", set with `ipreent settings paper-speed` or the Windows debug
+# settings). Timed prints are only logged (timing.json "log", raw figures, no content) so the speed
+# can be checked later; they no longer change the estimates. Older files' learnt "speeds" are ignored.
 LOG_SIZE = 100
 
 
-def learnt_speeds():
-    """{energy: mm/s} learnt from timed prints. (The old single "mm_per_s" mixed every darkness
-    level and is ignored.)"""
-    out = {}
-    for k, v in (config.load_extra("timing").get("speeds") or {}).items():
-        try:
-            out[int(k)] = float(v)
-        except (TypeError, ValueError):
-            pass
-    return out
+def debug_speed():
+    """The debug paper speed in mm/s, or None when estimates use the nominal speed."""
+    v = config.load_extra("timing").get("debug_mm_per_s")
+    try:
+        v = float(v)
+    except (TypeError, ValueError):
+        return None
+    return protocol.speed_for(v) if v > 0 else None
+
+
+def set_debug_speed(mm_per_s=None):
+    """Set (mm/s) or clear (None) the debug paper speed. Returns the speed estimates now use."""
+    t = config.load_extra("timing")
+    t.pop("speeds", None)
+    t.pop("mm_per_s", None)
+    if mm_per_s:
+        t["debug_mm_per_s"] = round(protocol.speed_for(mm_per_s), 2)
+    else:
+        t.pop("debug_mm_per_s", None)
+    config.save_extra("timing", t)
+    return known_speed()
 
 
 def known_speed(energy=None):
-    """Paper speed in mm/s at `energy` (None = the lightest/reference level)."""
-    return protocol.speed_for(energy, learnt_speeds())
+    """Paper speed in mm/s used for estimates (the same at every darkness; `energy` is ignored)."""
+    return protocol.speed_for(debug_speed())
 
 
 def estimate(lines, model, copies=1, connect=True, feed=None, energy=None):
-    """Seconds this print should take at `energy` (None = the model's own), with what's been learnt."""
-    energy = model.energy if energy is None else energy
-    return protocol.estimate_seconds(lines, model.dpi, copies, known_speed(energy), feed, connect)
+    """Seconds this print should take (darkness no longer changes it; `energy` is kept for callers)."""
+    return protocol.estimate_seconds(lines, model.dpi, copies, known_speed(), feed, connect)
 
 
 def black_fraction(rows):
@@ -187,25 +198,27 @@ def black_fraction(rows):
     return sum(sum(r) for r in rows) / dots if dots else 0.0
 
 
-def save_speeds(speeds, prints=None, log=None):
-    t = config.load_extra("timing")
-    t["speeds"] = {str(e): round(v, 2) for e, v in sorted(speeds.items())}
-    t.pop("mm_per_s", None)
-    if prints is not None:
-        t["prints"] = prints
-    if log is not None:
-        t["log"] = log[-LOG_SIZE:]
-    try:
-        config.save_extra("timing", t)
-    except OSError:
-        pass
+def timing_log():
+    """The last LOG_SIZE timed prints, oldest first."""
+    return list(config.load_extra("timing").get("log") or [])
 
 
-def learn_speed(lines, model, copies, seconds, feed=None, energy=None, black=None, busy_seen=None):
-    """Learn from one timed print (connection excluded) and log it. Returns mm/s now known at `energy`."""
+def last_measured_speed():
+    """mm/s the last long-enough timed print showed (for the debug settings only), or None."""
+    for e in reversed(timing_log()):
+        try:
+            v = protocol.measured_speed(e["lines"], e["dpi"], e.get("copies", 1), e["seconds"], e.get("feed"))
+        except (KeyError, TypeError):
+            continue
+        if v:
+            return v
+    return None
+
+
+def log_print(lines, model, copies, seconds, feed=None, energy=None, black=None, busy_seen=None):
+    """Log one timed print (connection excluded) in timing.json. Estimates don't use it."""
     energy = (model.energy if energy is None else energy) or protocol.REF_ENERGY
     t = config.load_extra("timing")
-    new = protocol.learn_speeds(learnt_speeds(), energy, lines, model.dpi, copies, seconds, feed)
     feed = protocol.default_feed(model.dpi) if feed is None else feed
     entry = {"at": time.strftime("%Y-%m-%d %H:%M:%S"), "model": model.name, "energy": energy,
              "lines": lines, "feed": feed, "dpi": model.dpi, "copies": copies, "seconds": round(seconds, 2)}
@@ -213,9 +226,14 @@ def learn_speed(lines, model, copies, seconds, feed=None, energy=None, black=Non
         entry["black"] = round(black, 3)
     if busy_seen is not None:
         entry["busy_seen"] = busy_seen
-    log = list(t.get("log") or []) + [entry]
-    save_speeds(new, int(t.get("prints", 0) or 0) + 1, log)
-    return protocol.speed_for(energy, new)
+    t.pop("speeds", None)
+    t.pop("mm_per_s", None)
+    t["prints"] = int(t.get("prints", 0) or 0) + 1
+    t["log"] = (list(t.get("log") or []) + [entry])[-LOG_SIZE:]
+    try:
+        config.save_extra("timing", t)
+    except OSError:
+        pass
 
 
 async def status_async(p):

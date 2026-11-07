@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 400" width="384" height="400"
+     ip:name="Teachers' Day" ip:category="holidays" ip:season="10-01..10-16">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <path d="M122 92 C92 70 46 88 50 140 C54 196 92 232 122 218 C152 232 190 196 194 140 C198 88 152 70 122 92 Z" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <path d="M122 92 Q118 66 130 48" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <path d="M132 70 C140 48 168 42 180 50 C170 70 146 78 132 70 Z" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M72 130 Q74 110 90 102" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <g transform="rotate(-35 290 140)"><rect x="262" y="40" width="40" height="160" rx="4" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/><path d="M275.3 40 L275.3 200 M288.7 40 L288.7 200" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/><path d="M262 200 L282 244 L302 200" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/><path d="M275 228 L282 244 L289 228 Z" fill="#000"/><rect x="262" y="22" width="40" height="18" rx="6" fill="#000" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/></g>
+  <path d="M36 32 L39.4 39.3 L47.4 40.3 L41.5 45.8 L43.1 53.7 L36 49.8 L28.9 53.7 L30.5 45.8 L24.6 40.3 L32.6 39.3Z" fill="#000"/>
+  <path d="M40 230 Q42.2 237.8 50 240 Q42.2 242.2 40 250 Q37.8 242.2 30 240 Q37.8 237.8 40 230Z" fill="#000"/>
+  <path d="M350 227 Q352 234 359 236 Q352 238 350 245 Q348 238 341 236 Q348 234 350 227Z" fill="#000"/>
+  <rect ip:field="title" ip:label="Title" ip:default="Thank you, teacher!" ip:font="script" ip:size="44" ip:min="18" ip:lines="1" x="16" y="256" width="352" height="66" fill="none"/>
+  <rect ip:field="message" ip:label="Message" ip:default="For everything you&#10;taught me this year" ip:size="26" ip:min="14" x="24" y="322" width="336" height="70" fill="none"/>
+</svg>

@@ -86,12 +86,11 @@ object Protocol {
     fun defaultFeed(dpi: Int) = (if (dpi == 300) 72 else 48) * 2
 
     // ---- how long a print takes (port of the same block in protocol.py) ----
-    /** Nominal speeds: 15 mm/s at the lightest heat, 10 mm/s at the darkest (the listing's "40 ppm" was far
-     *  too fast). Seconds per mm grow in a straight line with the energy in between and past the darkest. */
-    const val SPEC_MM_PER_S = 15.0
-    const val SPEC_DARK_MM_PER_S = 10.0
+    /** Estimates assume the slowest nominal speed, 10 mm/s, at every darkness: timings taken from prints weren't
+     *  reliable, and a queue should never promise a print earlier than it comes out. A debug setting can replace
+     *  it ([speedFor]'s override). */
+    const val NOMINAL_MM_PER_S = 10.0
     const val REF_ENERGY = 5000
-    const val DARK_ENERGY = 17000
     const val CONNECT_S = 3.0
     const val COPY_OVERHEAD_S = 1.0
     const val MIN_MM_PER_S = 2.0
@@ -99,56 +98,25 @@ object Protocol {
 
     fun paperMm(lines: Int, dpi: Int) = lines * 25.4 / dpi
 
-    /** 15 mm/s at the lightest energy, 10 mm/s at the darkest; never faster than the lightest. */
-    fun nominalSpeed(energy: Int): Double {
-        val f = (maxOf(if (energy == 0) REF_ENERGY else energy, REF_ENERGY) - REF_ENERGY).toDouble() / (DARK_ENERGY - REF_ENERGY)
-        return (1 / ((1 - f) / SPEC_MM_PER_S + f / SPEC_DARK_MM_PER_S)).coerceIn(MIN_MM_PER_S, MAX_MM_PER_S)
-    }
-
-    /** Paper speed at [energy] (0 = the printer's default, taken as [REF_ENERGY]). A learnt energy uses its
-     *  figure; one between two learnt energies interpolates their seconds per mm; any other follows the
-     *  nominal curve from the closest learnt energy (ties: the lower one); nothing learnt: the nominal speed. */
-    fun speedFor(energy: Int, learnt: Map<Int, Double> = emptyMap()): Double {
-        val e = if (energy == 0) REF_ENERGY else energy
-        learnt[e]?.let { return it }
-        val lo = learnt.keys.filter { it < e }.maxOrNull()
-        val hi = learnt.keys.filter { it > e }.minOrNull()
-        if (lo != null && hi != null) {
-            val f = (e - lo).toDouble() / (hi - lo)
-            return (1 / ((1 - f) / learnt.getValue(lo) + f / learnt.getValue(hi))).coerceIn(MIN_MM_PER_S, MAX_MM_PER_S)
-        }
-        val e0 = learnt.keys.minWithOrNull(compareBy<Int>({ kotlin.math.abs(it - e) }, { it })) ?: return nominalSpeed(e)
-        return (learnt.getValue(e0) * nominalSpeed(e) / nominalSpeed(e0)).coerceIn(MIN_MM_PER_S, MAX_MM_PER_S)
-    }
+    /** Paper speed for estimates: the debug [override] (clamped to 2-100 mm/s) when set, else the nominal speed. */
+    fun speedFor(override: Double? = null): Double =
+        if (override == null || override.isNaN() || override <= 0) NOMINAL_MM_PER_S
+        else override.coerceIn(MIN_MM_PER_S, MAX_MM_PER_S)
 
     /** Seconds from pressing Print to the paper coming out, for [lines] rows of dots. */
-    fun estimateSeconds(lines: Int, dpi: Int = 200, copies: Int = 1, mmPerS: Double = SPEC_MM_PER_S,
+    fun estimateSeconds(lines: Int, dpi: Int = 200, copies: Int = 1, mmPerS: Double = NOMINAL_MM_PER_S,
                         feed: Int? = null, connect: Boolean = true): Double {
         val perCopy = paperMm(lines + (feed ?: defaultFeed(dpi)), dpi) / mmPerS + COPY_OVERHEAD_S
         return (if (connect) CONNECT_S else 0.0) + maxOf(1, copies) * perCopy
     }
 
-    /** mm/s shown by one timed print (connection excluded), or null if under 20 mm or nonsense. */
+    /** mm/s shown by one timed print (connection excluded), or null if under 20 mm or nonsense. Shown in the
+     *  debug settings only, never used for estimates. */
     fun measuredSpeed(lines: Int, dpi: Int, copies: Int, seconds: Double, feed: Int? = null): Double? {
         val mm = maxOf(1, copies) * paperMm(lines + (feed ?: defaultFeed(dpi)), dpi)
         val moving = seconds - maxOf(1, copies) * COPY_OVERHEAD_S
         if (mm < 20 || moving <= 0) return null
         return (mm / moving).coerceIn(MIN_MM_PER_S, MAX_MM_PER_S)
-    }
-
-    /** Blend one timed print (connection excluded) into the known speed. */
-    fun learnSpeed(old: Double, lines: Int, dpi: Int, copies: Int, seconds: Double, feed: Int? = null, alpha: Double = 0.3): Double {
-        val measured = measuredSpeed(lines, dpi, copies, seconds, feed) ?: return old
-        return old + alpha * (measured - old)
-    }
-
-    /** Speeds per energy after one timed print at [energy]: the first replaces the guess, later ones blend 30 %. */
-    fun learnSpeeds(learnt: Map<Int, Double>, energy: Int, lines: Int, dpi: Int, copies: Int, seconds: Double,
-                    feed: Int? = null): Map<Int, Double> {
-        val e = if (energy == 0) REF_ENERGY else energy
-        val measured = measuredSpeed(lines, dpi, copies, seconds, feed) ?: return learnt
-        val old = learnt[e]
-        return learnt + (e to if (old == null) measured else old + 0.3 * (measured - old))
     }
 
     /** 0:07, 1:30, 12:05; rounded up so a countdown never shows 0:00 before it's done. */

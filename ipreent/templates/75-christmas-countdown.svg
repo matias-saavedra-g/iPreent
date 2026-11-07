@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 380" width="384" height="380"
+     ip:name="Christmas countdown" ip:category="christmas" ip:season="11-01..12-26">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <path d="M44 350 L44 120 a20 20 0 0 1 40 0 l0 12" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="17"/>
+  <path d="M44 350 L44 120 a20 20 0 0 1 40 0 l0 12" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="8"/>
+  <path d="M40 132 L48 124 M40 148 L48 140 M40 164 L48 156 M40 180 L48 172 M40 196 L48 188 M40 212 L48 204 M40 228 L48 220 M40 244 L48 236 M40 260 L48 252 M40 276 L48 268 M40 292 L48 284 M40 308 L48 300 M40 324 L48 316 M40 340 L48 332" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M340 350 L340 120 a20 20 0 0 0 -40 0 l0 12" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="17"/>
+  <path d="M340 350 L340 120 a20 20 0 0 0 -40 0 l0 12" fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round" stroke-width="8"/>
+  <path d="M336 132 L344 124 M336 148 L344 140 M336 164 L344 156 M336 180 L344 172 M336 196 L344 188 M336 212 L344 204 M336 228 L344 220 M336 244 L344 236 M336 260 L344 252 M336 276 L344 268 M336 292 L344 284 M336 308 L344 300 M336 324 L344 316 M336 340 L344 332" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <rect x="112" y="96" width="160" height="150" rx="18" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <path d="M136 96 L136 84 M248 96 L248 84" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <path d="M112 128 L272 128" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <rect ip:field="title" ip:label="Title" ip:default="Days until Christmas" ip:size="30" ip:min="14" ip:lines="2" x="80" y="14" width="224" height="66" fill="none"/>
+  <rect ip:field="days" ip:label="Number" ip:default="24" ip:size="88" ip:min="30" ip:lines="1" x="118" y="132" width="148" height="110" fill="none"/>
+  <rect ip:field="message" ip:label="Message" ip:default="Ho ho ho!" ip:font="script" ip:size="42" ip:min="18" x="80" y="262" width="224" height="100" fill="none"/>
+</svg>

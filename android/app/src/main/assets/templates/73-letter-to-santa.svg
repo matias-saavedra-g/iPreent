@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 430" width="384" height="430"
+     ip:name="Letter to Santa" ip:category="christmas" ip:season="11-01..12-26" ip:stretch="300">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <path d="M30 92 Q52 20 104 18 Q128 18 134 52" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <path d="M30 92 Q52 20 104 18 Q122 18 132 40 L104 92 Z" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <circle cx="136" cy="56" r="12" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <rect x="20" y="86" width="98" height="24" rx="12" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <rect x="16" y="124" width="352" height="234" rx="14" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M16 334 L368 334" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" stroke-dasharray="2 8"/>
+  <path d="M352 135 L354.5 140.5 L360.6 141.2 L356.1 145.3 L357.3 151.3 L352 148.3 L346.7 151.3 L347.9 145.3 L343.4 141.2 L349.5 140.5Z" fill="#000"/>
+  <rect ip:field="title" ip:label="Title" ip:default="Querido Viejito Pascuero" ip:size="32" ip:min="16" ip:align="left" x="152" y="22" width="216" height="92" fill="none"/>
+  <rect ip:field="items" ip:label="Wishes (one per line)" ip:default="Una bicicleta&#10;Un rompecabezas&#10;Lápices de colores" ip:size="26" ip:min="26" ip:list="check" ip:valign="top" x="34" y="140" width="316" height="180" fill="none"/>
+  <rect ip:field="from" ip:label="From" ip:default="Con cariño, Yuliana" ip:font="script" ip:size="30" ip:min="16" ip:lines="1" x="16" y="368" width="352" height="52" fill="none"/>
+</svg>

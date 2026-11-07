@@ -274,6 +274,8 @@ def _template_values(t, args):
 def _template_list(category=None):
     items = templates.all_templates()
     print("Templates (print one with: ipreent template NAME \"your text\"; see its boxes with --fields)\n")
+    wid = max([18, *(len(t.id) for t in items)])
+    wname = max([18, *(len(t.name) for t in items)])
     for cat, label in templates.CATEGORIES.items():
         group = [(n, t) for n, t in enumerate(items, 1) if t.category == cat]
         if not group or (category and category != cat):
@@ -281,7 +283,7 @@ def _template_list(category=None):
         print(label)
         for n, t in group:
             boxes = ", ".join(f.key for f in t.fields) or "no text"
-            print(f"  {n:>2}  {t.id:<18} {t.name:<18} {boxes}")
+            print(f"  {n:>2}  {t.id:<{wid}} {t.name:<{wname}} {boxes}")
         print()
     print(f"Your own SVG files in {templates.user_dir()} show up under Mine (format: docs/TEMPLATES.md).")
 
@@ -373,21 +375,17 @@ async def cmd_queue(args):
     print("\nThe printer is free.")
 
 
-def _speed_table():
-    """'lightest 15* · lighter 12 · ...' (* = learnt from a timed print at that darkness)."""
-    learnt = api.learnt_speeds()
-    return " · ".join(f"{name} {api.known_speed(e):.0f}{'*' if e in learnt else ''}"
-                      for name, e in ENERGY_PRESETS.items())
+def _speed_line():
+    v = api.debug_speed()
+    how = ("debug value; back to the nominal speed with: ipreent settings paper-speed reset" if v else
+           "the slowest nominal speed, at every darkness")
+    return f"paper-speed  {api.known_speed():.1f} mm/s for time estimates ({how})"
 
 
 def _settings_lines():
     e = _default_energy()
-    learnt = api.learnt_speeds()
-    how = "learnt from your prints" if e in learnt else (
-        "estimated from other darkness levels" if learnt else "nominal until a print is timed")
     return [f"darkness     {_darkness_name(e)}   (lightest, lighter, normal, darker, darkest or a number)",
-            f"paper-speed  {api.known_speed(e):.1f} mm/s at this darkness, {how}; used for time estimates",
-            f"             mm/s by darkness: {_speed_table()}   (* = timed; check with: ipreent bench)"]
+            _speed_line()]
 
 
 async def cmd_settings(args):
@@ -415,11 +413,11 @@ async def cmd_settings(args):
             sys.exit(f"Error: {e}")
         config.save_extra("settings", s)
         print(f"Darkness is now {_darkness_name(s['energy'])} (energy {s['energy']}). --energy still overrides it.")
-    else:                                  # paper-speed
-        if args.value.lower() == "reset":
-            api.save_speeds({}, prints=0)
-            print(f"Paper speed reset to the nominal {protocol.SPEC_MM_PER_S:.0f} mm/s (lightest) to "
-                  f"{protocol.SPEC_DARK_MM_PER_S:.0f} mm/s (darkest); it will be learnt again.")
+    else:                                  # paper-speed (debug: estimates assume the slowest speed)
+        if args.value.lower() in ("reset", "nominal"):
+            api.set_debug_speed(None)
+            print(f"Paper speed back to the nominal {protocol.NOMINAL_MM_PER_S:g} mm/s (the slowest) "
+                  "for time estimates.")
             return
         try:
             v = float(args.value)
@@ -427,10 +425,9 @@ async def cmd_settings(args):
         except (ValueError, AssertionError):
             sys.exit(f"Error: paper-speed is mm/s between {protocol.MIN_MM_PER_S:.0f} and "
                      f"{protocol.MAX_MM_PER_S:.0f}, or 'reset'")
-        e = _default_energy()
-        api.save_speeds({e: v}, prints=0)
-        print(f"Paper speed set to {v:g} mm/s at darkness {_darkness_name(e)}; other levels are "
-              f"scaled from it, and later prints keep refining them.")
+        api.set_debug_speed(v)
+        print(f"Debug: time estimates now assume {v:g} mm/s at every darkness "
+              f"(nominal: {protocol.NOMINAL_MM_PER_S:g}; undo with: ipreent settings paper-speed reset).")
 
 
 # ---- bench: how fast the printer really is, per darkness, on little paper ----------------------
@@ -495,7 +492,8 @@ async def cmd_bench(args):
         (e0, s0), (e1, s1) = min(timed), max(timed)
         print(f"\nSeconds per mm at {_darkness_name(e1)} vs {_darkness_name(e0)}: x{s1 / s0:.2f} "
               f"(x{e1 / e0:.2f} if print time grew in proportion to the heat, x1.00 if heat didn't matter).")
-    print(f"Learnt; estimates now use: {_speed_table()} mm/s (* = timed).")
+    print(f"Estimates still use {api.known_speed():g} mm/s; to use a measured speed instead: "
+          "ipreent settings paper-speed MM_PER_S (debug).")
 
 
 HOME = {
@@ -509,7 +507,7 @@ HOME = {
     "scan": ("ipreent scan", "find printers"),
     "feed": ("ipreent feed", "feed blank paper"),
     "settings": ("ipreent settings", "darkness and other defaults"),
-    "bench": ("ipreent bench", "time a few short strips to learn the speed"),
+    "bench": ("ipreent bench", "time a few short strips to measure the speed"),
     "forget": ("ipreent forget", "forget the remembered printer"),
 }
 
@@ -526,7 +524,7 @@ def home():
         printer = "none yet; found on the first print (or: ipreent scan)"
     print(f"  Printer   {printer}")
     print(f"  Settings  darkness {_darkness_name(_default_energy())}, "
-          f"{api.known_speed(_default_energy()):.0f} mm/s   (change: ipreent settings)")
+          f"estimates at {api.known_speed():g} mm/s   (change: ipreent settings)")
     print(f"  Queue     {busy.describe(info) if info else 'nothing printing'}\n")
     order = features.ranked(features.CLI, config.load_extra("usage"))
     print("Most used")
@@ -693,10 +691,11 @@ def main(argv=None):
     s.add_argument("value", nargs="?")
     s.set_defaults(fn=cmd_settings)
 
-    s = sub.add_parser("bench", help="time short strips at a few darkness levels to learn the real speed",
+    s = sub.add_parser("bench", help="time short strips at a few darkness levels to measure the real speed",
                        description="Prints one short strip per darkness level (about 3-4 cm each, "
-                                   "blank feed only after the last), times each, learns the speed "
-                                   "for that level and shows how much darkness slows the printer.")
+                                   "blank feed only after the last), times each and shows the measured speed "
+                                   "for that level and how much darkness slows the printer. Estimates keep using "
+                                   "the nominal 10 mm/s unless you set: ipreent settings paper-speed.")
     s.add_argument("--darkness", default="lightest,normal,darkest",
                    help="comma-separated levels or energies, or 'all' (default: lightest,normal,darkest)")
     s.add_argument("--mm", type=float, default=30, help="length of each strip's pattern, at least 20 (default 30)")

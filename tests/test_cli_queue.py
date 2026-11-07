@@ -88,21 +88,29 @@ def test_settings_darkness_is_the_default(printer, capsys):
     assert cli._default_energy() == 12000
     cli.main(["settings"])
     assert "darkness     darker" in capsys.readouterr().out
+    assert api.known_speed() == 10                          # the slowest nominal speed by default
     with pytest.raises(SystemExit):
         cli.main(["settings", "paper-speed", "900"])
     cli.main(["settings", "paper-speed", "25"])
-    assert api.known_speed(12000) == 25                     # at the default darkness (darker)
-    assert round(api.known_speed(17000), 3) == round(25 * 10 / 11.6129, 3)  # others follow the nominal curve
+    assert api.known_speed(12000) == api.known_speed(17000) == 25   # the same at every darkness
+    assert config.load_extra("timing")["debug_mm_per_s"] == 25
     cli.main(["settings", "paper-speed", "reset"])
-    assert api.learnt_speeds() == {} and api.known_speed(5000) == 15
+    assert api.debug_speed() is None and api.known_speed(5000) == 10
 
 
-def test_prints_learn_speed_for_their_darkness(printer):
+def test_prints_are_logged_but_dont_change_the_estimate(printer):
+    before = api.known_speed()
     cli.main(["text", "hello", "--energy", "darkest"])
     t = config.load_extra("timing")
     entry = t["log"][-1]
     assert entry["energy"] == 17000 and entry["lines"] > 0 and 0 <= entry["black"] <= 1
-    assert "mm_per_s" not in t
+    assert "mm_per_s" not in t and "speeds" not in t
+    assert api.known_speed() == before == 10
+
+
+def test_old_learnt_speeds_are_ignored(printer):
+    config.save_extra("timing", {"speeds": {"5000": 40.0}, "mm_per_s": 40.0})
+    assert api.known_speed(5000) == 10
 
 
 def test_bench_times_each_darkness(printer, capsys):

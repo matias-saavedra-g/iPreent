@@ -73,6 +73,7 @@ object Printers {
         table = JSONArray(app.assets.open("models.json").bufferedReader().readText())
         _darkness.value = Darkness.entries.getOrNull(prefs.getInt("darkness", Darkness.NORMAL.ordinal)) ?: Darkness.NORMAL
         _printerName.value = savedName
+        _debugSpeed.value = prefs.getFloat("debug_mm_per_s", 0f).toDouble().takeIf { it > 0 }
         loadHistory()
     }
 
@@ -93,29 +94,33 @@ object Printers {
     /** Paper width for layout, before we are connected. */
     val width get() = model().width
 
-    // ---- print time: starts at the listing's speed, learns from each timed print --------------
+    // ---- print time: the slowest nominal speed, or the debug setting ---------------------------
+    // Timed prints no longer change the estimate (they weren't reliable); the last one's measured speed is kept
+    // only to show in the debug settings. Old learnt "speeds" / "mm_per_s" are ignored and dropped.
+    private val _debugSpeed = MutableStateFlow<Double?>(null)    // loaded in init
+    /** The debug paper speed in mm/s, or null when estimates use [Protocol.NOMINAL_MM_PER_S]. */
+    val debugSpeed = _debugSpeed.asStateFlow()
+    fun setDebugSpeed(mmPerS: Double?) {
+        val v = mmPerS?.takeIf { it > 0 && kotlin.math.abs(it - Protocol.NOMINAL_MM_PER_S) > 1e-9 }?.let { Protocol.speedFor(it) }
+        prefs.edit().apply { if (v == null) remove("debug_mm_per_s") else putFloat("debug_mm_per_s", v.toFloat()) }
+            .remove("speeds").remove("mm_per_s").apply()
+        _debugSpeed.value = v
+    }
+    var debugUnlocked: Boolean
+        get() = prefs.getBoolean("debug_unlocked", false)
+        set(v) { prefs.edit().putBoolean("debug_unlocked", v).apply() }
+    /** mm/s the last long-enough timed print showed (debug settings only), or null. */
+    val lastMeasuredSpeed: Double? get() = prefs.getFloat("last_measured_mm_per_s", 0f).toDouble().takeIf { it > 0 }
 
-    // Kept per energy, since darker prints slower: "speeds" = "5000=14.2;8000=9.1". (The old single
-    // "mm_per_s" mixed every darkness level and is ignored.)
-    val learntSpeeds: Map<Int, Double> get() = prefs.getString("speeds", "").orEmpty().split(";").mapNotNull {
-        val (e, v) = it.split("=").takeIf { p -> p.size == 2 } ?: return@mapNotNull null
-        val energy = e.toIntOrNull() ?: return@mapNotNull null
-        val speed = v.toDoubleOrNull() ?: return@mapNotNull null
-        energy to speed
-    }.toMap()
-    val timedPrints: Int get() = prefs.getInt("timed_prints", 0)
+    /** mm/s used for estimates (the same at every darkness). */
+    fun speed() = Protocol.speedFor(_debugSpeed.value)
 
-    /** mm/s at the chosen darkness (or [energy]). */
-    fun speed(energy: Int = darkness.value.energy) = Protocol.speedFor(energy, learntSpeeds)
-    fun isLearnt(energy: Int = darkness.value.energy) = energy in learntSpeeds
+    fun estimate(lines: Int, copies: Int = 1, connect: Boolean = true, mmPerS: Double = speed()) =
+        Protocol.estimateSeconds(lines, model().dpi, copies, mmPerS, connect = connect)
 
-    fun estimate(lines: Int, copies: Int = 1, connect: Boolean = true, energy: Int = darkness.value.energy) =
-        Protocol.estimateSeconds(lines, model().dpi, copies, speed(energy), connect = connect)
-
-    private fun learn(lines: Int, dpi: Int, copies: Int, seconds: Double, energy: Int) {
-        val v = Protocol.learnSpeeds(learntSpeeds, energy, lines, dpi, copies, seconds)
-        prefs.edit().putString("speeds", v.toSortedMap().entries.joinToString(";") { "${it.key}=${"%.2f".format(java.util.Locale.ROOT, it.value)}" })
-            .remove("mm_per_s").putInt("timed_prints", timedPrints + 1).apply()
+    private fun logTiming(lines: Int, dpi: Int, copies: Int, seconds: Double) {
+        val v = Protocol.measuredSpeed(lines, dpi, copies, seconds) ?: return
+        prefs.edit().putFloat("last_measured_mm_per_s", v.toFloat()).remove("speeds").remove("mm_per_s").apply()
     }
 
     val busy get() = queue.value.any { it.active }
@@ -165,7 +170,7 @@ object Printers {
                     withPrinter { p ->
                         val energy = darkness.value.energy
                         val bytes = Protocol.printJob(job.rows, p.model, energy, job.mode)
-                        val secs = Protocol.estimateSeconds(job.rows.size, p.model.dpi, job.copies, speed(energy), connect = false)
+                        val secs = Protocol.estimateSeconds(job.rows.size, p.model.dpi, job.copies, speed(), connect = false)
                         val t0 = System.currentTimeMillis()
                         update(id) { it.copy(state = JobState.PRINTING, seconds = secs, startedAt = t0) }
                         repeat(job.copies) { n ->
@@ -178,7 +183,7 @@ object Printers {
                             }
                             p.waitDone()
                         }
-                        learn(job.rows.size, p.model.dpi, job.copies, (System.currentTimeMillis() - t0) / 1000.0, energy)
+                        logTiming(job.rows.size, p.model.dpi, job.copies, (System.currentTimeMillis() - t0) / 1000.0)
                     }
                     status.value = "Done"
                 }

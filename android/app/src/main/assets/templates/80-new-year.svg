@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 380" width="384" height="380"
+     ip:name="New Year" ip:category="holidays" ip:season="12-15..01-06">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <path d="M84 66 L116 66 M82.1 73 L109.8 89 M77 78.1 L93 105.8 M70 80 L70 112 M63 78.1 L47 105.8 M57.9 73 L30.2 89 M56 66 L24 66 M57.9 59 L30.2 43 M63 53.9 L47 26.2 M70 52 L70 20 M77 53.9 L93 26.2 M82.1 59 L109.8 43" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <circle cx="103.6" cy="75" r="2.5" fill="#000"/>
+  <circle cx="94.6" cy="90.6" r="2.5" fill="#000"/>
+  <circle cx="79" cy="99.6" r="2.5" fill="#000"/>
+  <circle cx="61" cy="99.6" r="2.5" fill="#000"/>
+  <circle cx="45.4" cy="90.6" r="2.5" fill="#000"/>
+  <circle cx="36.4" cy="75" r="2.5" fill="#000"/>
+  <circle cx="36.4" cy="57" r="2.5" fill="#000"/>
+  <circle cx="45.4" cy="41.4" r="2.5" fill="#000"/>
+  <circle cx="61" cy="32.4" r="2.5" fill="#000"/>
+  <circle cx="79" cy="32.4" r="2.5" fill="#000"/>
+  <circle cx="94.6" cy="41.4" r="2.5" fill="#000"/>
+  <circle cx="103.6" cy="57" r="2.5" fill="#000"/>
+  <path d="M326 58 L354 58 M324.4 64 L348.6 78 M320 68.4 L334 92.6 M314 70 L314 98 M308 68.4 L294 92.6 M303.6 64 L279.4 78 M302 58 L274 58 M303.6 52 L279.4 38 M308 47.6 L294 23.4 M314 46 L314 18 M320 47.6 L334 23.4 M324.4 52 L348.6 38" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <circle cx="343.2" cy="65.8" r="2.5" fill="#000"/>
+  <circle cx="335.4" cy="79.4" r="2.5" fill="#000"/>
+  <circle cx="321.8" cy="87.2" r="2.5" fill="#000"/>
+  <circle cx="306.2" cy="87.2" r="2.5" fill="#000"/>
+  <circle cx="292.6" cy="79.4" r="2.5" fill="#000"/>
+  <circle cx="284.8" cy="65.8" r="2.5" fill="#000"/>
+  <circle cx="284.8" cy="50.2" r="2.5" fill="#000"/>
+  <circle cx="292.6" cy="36.6" r="2.5" fill="#000"/>
+  <circle cx="306.2" cy="28.8" r="2.5" fill="#000"/>
+  <circle cx="321.8" cy="28.8" r="2.5" fill="#000"/>
+  <circle cx="335.4" cy="36.6" r="2.5" fill="#000"/>
+  <circle cx="343.2" cy="50.2" r="2.5" fill="#000"/>
+  <path d="M208 34 L224 34 M206.5 38.7 L219.4 48.1 M202.5 41.6 L207.4 56.8 M197.5 41.6 L192.6 56.8 M193.5 38.7 L180.6 48.1 M192 34 L176 34 M193.5 29.3 L180.6 19.9 M197.5 26.4 L192.6 11.2 M202.5 26.4 L207.4 11.2 M206.5 29.3 L219.4 19.9" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <circle cx="217.5" cy="39.7" r="2.5" fill="#000"/>
+  <circle cx="210.8" cy="48.9" r="2.5" fill="#000"/>
+  <circle cx="200" cy="52.4" r="2.5" fill="#000"/>
+  <circle cx="189.2" cy="48.9" r="2.5" fill="#000"/>
+  <circle cx="182.5" cy="39.7" r="2.5" fill="#000"/>
+  <circle cx="182.5" cy="28.3" r="2.5" fill="#000"/>
+  <circle cx="189.2" cy="19.1" r="2.5" fill="#000"/>
+  <circle cx="200" cy="15.6" r="2.5" fill="#000"/>
+  <circle cx="210.8" cy="19.1" r="2.5" fill="#000"/>
+  <circle cx="217.5" cy="28.3" r="2.5" fill="#000"/>
+  <path d="M30 352 q11.6 -8 23.1 0 q11.6 8 23.1 0 q11.6 -8 23.1 0 q11.6 8 23.1 0 q11.6 -8 23.1 0 q11.6 8 23.1 0 q11.6 -8 23.1 0 q11.6 8 23.1 0 q11.6 -8 23.1 0 q11.6 8 23.1 0 q11.6 -8 23.1 0 q11.6 8 23.1 0 q11.6 -8 23.1 0 q11.6 8 23.1 0" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M120 91 Q122 98 129 100 Q122 102 120 109 Q118 102 111 100 Q118 98 120 91Z" fill="#000"/>
+  <path d="M270 95 Q272 102 279 104 Q272 106 270 113 Q268 106 261 104 Q268 102 270 95Z" fill="#000"/>
+  <circle cx="40" cy="130" r="4" fill="#000"/><circle cx="348" cy="128" r="4" fill="#000"/>
+  <rect ip:field="title" ip:label="Title" ip:default="Happy New Year" ip:font="script" ip:size="48" ip:min="20" ip:lines="1" x="16" y="108" width="352" height="72" fill="none"/>
+  <rect ip:field="year" ip:label="Year" ip:default="2027" ip:size="80" ip:min="30" ip:lines="1" x="40" y="180" width="304" height="96" fill="none"/>
+  <rect ip:field="message" ip:label="Message" ip:default="Cheers to a great year!" ip:size="28" ip:min="14" x="24" y="278" width="336" height="58" fill="none"/>
+</svg>

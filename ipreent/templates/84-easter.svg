@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 400" width="384" height="400"
+     ip:name="Easter egg" ip:category="holidays" ip:season="03-10..04-25">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <defs><clipPath id="egg"><path d="M192 62 C258 62 290 160 290 206 C290 264 248 294 192 294 C136 294 94 264 94 206 C94 160 126 62 192 62 Z"/></clipPath></defs>
+  <path d="M150 112 C120 40 136 6 156 10 C176 14 178 60 170 104" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <path d="M154 92 C140 50 148 26 156 28 C164 30 166 60 162 90" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <path d="M234 112 C264 40 248 6 228 10 C208 14 206 60 214 104" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <path d="M230 92 C244 50 236 26 228 28 C220 30 218 60 222 90" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <path d="M192 62 C258 62 290 160 290 206 C290 264 248 294 192 294 C136 294 94 264 94 206 C94 160 126 62 192 62 Z" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <g clip-path="url(#egg)"><path d="M80 150 l16 -16 l16 16 l16 -16 l16 16 l16 -16 l16 16 l16 -16 l16 16 l16 -16 l16 16 l16 -16 l16 16 l16 -16 l16 16" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/><path d="M80 236 q8 -10 16 0 q8 10 16 0 q8 -10 16 0 q8 10 16 0 q8 -10 16 0 q8 10 16 0 q8 -10 16 0 q8 10 16 0 q8 -10 16 0 q8 10 16 0 q8 -10 16 0 q8 10 16 0 q8 -10 16 0 q8 10 16 0" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/><circle cx="112" cy="194" r="7" fill="#000"/><circle cx="144" cy="194" r="7" fill="#000"/><circle cx="176" cy="194" r="7" fill="#000"/><circle cx="208" cy="194" r="7" fill="#000"/><circle cx="240" cy="194" r="7" fill="#000"/><circle cx="272" cy="194" r="7" fill="#000"/></g>
+  <path d="M52 108 Q54.6 117.4 64 120 Q54.6 122.6 52 132 Q49.4 122.6 40 120 Q49.4 117.4 52 108Z" fill="#000"/>
+  <path d="M334 140 Q336.2 147.8 344 150 Q336.2 152.2 334 160 Q331.8 152.2 324 150 Q331.8 147.8 334 140Z" fill="#000"/>
+  <circle cx="60" cy="250" r="4" fill="#000"/><circle cx="326" cy="60" r="4" fill="#000"/>
+  <rect ip:field="title" ip:label="Title" ip:default="Happy Easter" ip:font="script" ip:size="44" ip:min="20" ip:lines="1" x="16" y="304" width="352" height="62" fill="none"/>
+  <rect ip:field="message" ip:label="Message" ip:default="Hop hop hooray!" ip:size="26" ip:min="14" x="24" y="362" width="336" height="34" fill="none"/>
+</svg>

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 400" width="384" height="400"
+     ip:name="Valentine's Day" ip:category="holidays" ip:season="01-25..02-14">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <path d="M60 236 L326 72" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <path d="M60 236 l-22 -2 M60 236 l-2 22 M72 228 l-22 -2 M72 228 l-2 22" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M196 115.7 C181.8 65.3 101 60.6 101 122.4 C101 174.6 153.2 203.1 196 236.3 C238.8 203.1 291 174.6 291 122.4 C291 60.6 210.2 65.3 196 115.7Z" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="7"/>
+  <path d="M196 120.5 C183.8 77.5 115 73.5 115 126.1 C115 170.7 159.6 195 196 223.3 C232.4 195 277 170.7 277 126.1 C277 73.5 208.2 77.5 196 120.5Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" stroke-dasharray="2 8"/>
+  <path d="M286 96 L326 72" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <path d="M340 64 L314 66 L326 86 Z" fill="#000" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M46 54.9 C43.8 47 31 46.2 31 56 C31 64.2 39.2 68.7 46 74 C52.8 68.7 61 64.2 61 56 C61 46.2 48.2 47 46 54.9Z" fill="#000"/>
+  <path d="M340 195.9 C338.2 189.6 328 189 328 196.8 C328 203.4 334.6 207 340 211.2 C345.4 207 352 203.4 352 196.8 C352 189 341.8 189.6 340 195.9Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+  <path d="M70 107.3 C68.8 103 62 102.6 62 107.8 C62 112.2 66.4 114.6 70 117.4 C73.6 114.6 78 112.2 78 107.8 C78 102.6 71.2 103 70 107.3Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <path d="M318 242 Q320.2 249.8 328 252 Q320.2 254.2 318 262 Q315.8 254.2 308 252 Q315.8 249.8 318 242Z" fill="#000"/>
+  <rect ip:field="title" ip:label="Title" ip:default="Be my Valentine" ip:font="script" ip:size="46" ip:min="20" ip:lines="1" x="16" y="262" width="352" height="76" fill="none"/>
+  <rect ip:field="message" ip:label="Message" ip:default="Love, Matías" ip:size="28" ip:min="14" x="24" y="338" width="336" height="52" fill="none"/>
+</svg>

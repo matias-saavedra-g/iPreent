@@ -25,7 +25,7 @@ object Templates {
     const val NS = "urn:ipreent:template"
     private const val SVG_NS = "http://www.w3.org/2000/svg"
     val CATEGORIES = linkedMapOf("love" to "Love", "frames" to "Frames", "lists" to "Lists", "notes" to "Notes",
-        "party" to "Party", "labels" to "Labels", "mine" to "Mine")
+        "party" to "Party", "labels" to "Labels", "christmas" to "Christmas", "holidays" to "Holidays", "mine" to "Mine")
     val FONTS = listOf("round", "script", "sans", "bold")
     val LISTS = listOf("none", "check", "dot", "heart")
     const val LINE_HEIGHT = 1.25
@@ -47,9 +47,35 @@ object Templates {
     data class Template(
         val id: String, val name: String, val category: String,
         val width: Double, val height: Double, val stretch: Double?, val fields: List<Field>,
-        val svg: String,
+        val svg: String, val season: Season? = null,
     ) {
         fun defaults() = fields.associate { it.key to it.default }
+        /** True if [month]/[day] falls in the template's `ip:season`. */
+        fun inSeason(month: Int, day: Int) = season?.contains(month, day) ?: false
+    }
+
+    /** `ip:season="11-01..12-26"`: inclusive, and it may wrap past New Year (`12-15..01-06`). */
+    data class Season(val startMonth: Int, val startDay: Int, val endMonth: Int, val endDay: Int) {
+        fun contains(month: Int, day: Int): Boolean {
+            val d = month * 100 + day; val a = startMonth * 100 + startDay; val b = endMonth * 100 + endDay
+            return if (a <= b) d in a..b else d >= a || d <= b
+        }
+    }
+
+    private val SEASON = Regex("""\s*(\d{1,2})-(\d{1,2})\s*\.\.\s*(\d{1,2})-(\d{1,2})\s*""")
+    fun season(v: String?): Season? {
+        val (a, b, c, d) = SEASON.matchEntire(v ?: return null)?.destructured?.toList()?.map { it.toInt() } ?: return null
+        if (a !in 1..12 || c !in 1..12 || b !in 1..31 || d !in 1..31) return null
+        return Season(a, b, c, d)
+    }
+
+    /** Templates in season first, the rest in file order (same as templates.gallery_order). */
+    fun galleryOrder(items: List<Template>, month: Int, day: Int) = items.sortedBy { !it.inSeason(month, day) }
+
+    /** Category keys for the chips: those with a template in season first, then [CATEGORIES] order; only used ones. */
+    fun categoryOrder(items: List<Template>, month: Int, day: Int): List<String> {
+        val hot = items.filter { it.inSeason(month, day) }.map { it.category }.toSet()
+        return CATEGORIES.keys.filter { k -> items.any { it.category == k } }.sortedBy { it !in hot }
     }
 
     private fun halfUp(v: Double) = floor(v + 0.5).toInt()
@@ -105,7 +131,8 @@ object Templates {
         }
         val category = root.ip("category") ?: "mine"
         return Template(id, root.ip("name")?.takeIf { it.isNotEmpty() } ?: id.replace("-", " ").replaceFirstChar { it.uppercase() },
-            if (category in CATEGORIES) category else "mine", w, h, stretch, fields.filter { it.w > 0 && it.h > 0 }, svg)
+            if (category in CATEGORIES) category else "mine", w, h, stretch, fields.filter { it.w > 0 && it.h > 0 }, svg,
+            season(root.ip("season")))
     }
 
     // ---- layout: the same rules (and test cases) as templates.py ----

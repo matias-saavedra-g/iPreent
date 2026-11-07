@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 260" width="384" height="260"
+     ip:name="Christmas gift tag" ip:category="christmas" ip:season="11-01..12-26">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <path d="M84 18 L358 18 Q370 18 370 30 L370 230 Q370 242 358 242 L84 242 L18 130 Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <path d="M92 32 L356 32 L356 228 L92 228 L36 130 Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" stroke-dasharray="3 7"/>
+  <circle cx="62" cy="130" r="12" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <path d="M140 150 L330 150" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+  <path d="M314 72 L311.4 54.9 L302.3 53.8 L297 41.4 L285.1 42.8 L279 34.1 L262 42 L263.7 60.7 L274.3 61.6 L279 72.6 L292.4 71 L297.9 78.3Z" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M314 72 L267.2 45" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/>
+  <path d="M314 72 L330.1 78.3 L335.6 71 L349 72.6 L353.7 61.6 L364.3 60.7 L366 42 L349 34.1 L342.9 42.8 L331 41.4 L325.7 53.8 L316.6 54.9Z" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M314 72 L360.8 45" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"/>
+  <circle cx="306.2" cy="73.2" r="7.2" fill="#000"/>
+  <circle cx="321.8" cy="73.2" r="7.2" fill="#000"/>
+  <circle cx="314" cy="84" r="7.2" fill="#000"/>
+  <rect ip:field="to" ip:label="To" ip:default="For Yuliana" ip:font="script" ip:size="40" ip:min="18" x="92" y="54" width="200" height="92" fill="none"/>
+  <rect ip:field="from" ip:label="From" ip:default="From Santa" ip:size="28" ip:min="14" x="96" y="158" width="252" height="64" fill="none"/>
+</svg>

@@ -92,14 +92,12 @@ def default_feed(dpi):
 
 
 # ---- how long a print takes ------------------------------------------------------------------
-# The listing says "40 ppm", read at first as 40 mm/s, but real prints were far slower. The nominal
-# speeds are 15 mm/s at the lightest heat (energy 5000, the vendor app's own setting for the SC03h)
-# and 10 mm/s at the darkest (17000): more heat means a longer burn per line. In between, the
-# seconds per mm grow in a straight line with the energy (and keep growing past the darkest).
-# Each finished print is timed and learnt for the energy it used (learn_speeds).
-SPEC_MM_PER_S = 15.0         # at REF_ENERGY (lightest)
-SPEC_DARK_MM_PER_S = 10.0    # at DARK_ENERGY (darkest)
-REF_ENERGY, DARK_ENERGY = 5000, 17000
+# The listing says "40 ppm", read at first as 40 mm/s, but real prints were far slower, and the
+# timings taken from prints (when the printer says it's done) weren't reliable either. Estimates
+# therefore assume the slowest nominal speed, 10 mm/s, at every darkness, so a queued print is never
+# promised earlier than it really comes out. A debug setting can replace it (speed_for's override).
+NOMINAL_MM_PER_S = 10.0  # the slowest nominal speed (darkest heat); used for every darkness
+REF_ENERGY = 5000        # what "0 / printer default" means in the timing log
 CONNECT_S = 3.0          # Bluetooth connect + service discovery, once per job
 COPY_OVERHEAD_S = 1.0    # waiting for the printer to report it has finished, per copy
 MIN_MM_PER_S, MAX_MM_PER_S = 2.0, 100.0
@@ -113,36 +111,16 @@ def _clamp_speed(v):
     return min(MAX_MM_PER_S, max(MIN_MM_PER_S, v))
 
 
-def nominal_speed(energy):
-    """15 mm/s at the lightest energy, 10 mm/s at the darkest; never faster than the lightest."""
-    f = (max(energy or REF_ENERGY, REF_ENERGY) - REF_ENERGY) / (DARK_ENERGY - REF_ENERGY)
-    return _clamp_speed(1 / ((1 - f) / SPEC_MM_PER_S + f / SPEC_DARK_MM_PER_S))
+def speed_for(override=None):
+    """Paper speed in mm/s used for time estimates: the debug override (clamped to 2-100 mm/s) when
+    one is set, else the slowest nominal speed. Darkness doesn't change it."""
+    try:
+        return _clamp_speed(float(override)) if override else NOMINAL_MM_PER_S
+    except (TypeError, ValueError):
+        return NOMINAL_MM_PER_S
 
 
-def speed_for(energy, learnt=None):
-    """Paper speed in mm/s at `energy` (0/None = the printer's own default, taken as REF_ENERGY).
-
-    learnt: {energy: mm/s} from timed prints. An energy with its own figure uses it; one between
-    two learnt energies interpolates their seconds per mm; any other follows the nominal curve
-    from the closest learnt energy (ties: the lower one); with nothing learnt, the nominal speed.
-    """
-    energy = energy or REF_ENERGY
-    learnt = learnt or {}
-    if energy in learnt:
-        return learnt[energy]
-    below = [e for e in learnt if e < energy]
-    above = [e for e in learnt if e > energy]
-    if below and above:
-        lo, hi = max(below), min(above)
-        f = (energy - lo) / (hi - lo)
-        return _clamp_speed(1 / ((1 - f) / learnt[lo] + f / learnt[hi]))
-    if learnt:
-        e0 = min(learnt, key=lambda e: (abs(e - energy), e))
-        return _clamp_speed(learnt[e0] * nominal_speed(energy) / nominal_speed(e0))
-    return nominal_speed(energy)
-
-
-def estimate_seconds(lines, dpi=200, copies=1, mm_per_s=SPEC_MM_PER_S, feed=None, connect=True):
+def estimate_seconds(lines, dpi=200, copies=1, mm_per_s=NOMINAL_MM_PER_S, feed=None, connect=True):
     """Seconds from pressing Print to the paper coming out, for `lines` rows of dots."""
     feed = default_feed(dpi) if feed is None else feed
     per_copy = paper_mm(lines + feed, dpi) / mm_per_s + COPY_OVERHEAD_S
@@ -152,7 +130,8 @@ def estimate_seconds(lines, dpi=200, copies=1, mm_per_s=SPEC_MM_PER_S, feed=None
 def measured_speed(lines, dpi, copies, seconds, feed=None):
     """mm/s shown by one timed print (connection excluded), or None if it can't tell.
 
-    Short prints are mostly fixed overhead, so anything under 20 mm of paper is ignored.
+    Only shown (bench, debug settings), never used for estimates. Short prints are mostly fixed
+    overhead, so anything under 20 mm of paper is ignored.
     """
     feed = default_feed(dpi) if feed is None else feed
     mm = max(1, copies) * paper_mm(lines + feed, dpi)
@@ -160,26 +139,6 @@ def measured_speed(lines, dpi, copies, seconds, feed=None):
     if mm < 20 or moving <= 0:
         return None
     return _clamp_speed(mm / moving)
-
-
-def learn_speed(old, lines, dpi, copies, seconds, feed=None, alpha=0.3):
-    """Blend one timed print (connection excluded) into the known speed in mm/s."""
-    measured = measured_speed(lines, dpi, copies, seconds, feed)
-    return old if measured is None else old + alpha * (measured - old)
-
-
-def learn_speeds(learnt, energy, lines, dpi, copies, seconds, feed=None):
-    """New {energy: mm/s} after one timed print at `energy`.
-
-    The first timed print at an energy replaces the guess; later ones are blended in (30 %).
-    """
-    energy = energy or REF_ENERGY
-    learnt = dict(learnt or {})
-    measured = measured_speed(lines, dpi, copies, seconds, feed)
-    if measured is not None:
-        old = learnt.get(energy)
-        learnt[energy] = measured if old is None else old + 0.3 * (measured - old)
-    return learnt
 
 
 def format_eta(seconds):
