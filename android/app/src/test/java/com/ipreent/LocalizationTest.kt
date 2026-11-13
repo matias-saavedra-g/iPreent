@@ -8,7 +8,7 @@ import org.w3c.dom.Element
 import java.io.File
 import javax.xml.parsers.DocumentBuilderFactory
 
-/** The Spanish translation is complete and says the same things (no Python twin: the Windows app is English only). */
+/** The Spanish translation says the same things as the English (no Python twin: the Windows app is English only). */
 class LocalizationTest {
     private val ARG = Regex("%(\\d+\\$)?[sd]")
 
@@ -30,25 +30,26 @@ class LocalizationTest {
 
     private fun args(s: String) = ARG.findAll(s).map { it.value.replace(Regex("^%\\d+\\$"), "%") }.sorted().toList()
 
-    @Test fun spanishHasEveryStringWithTheSameArguments() {
+    /** A string missing in Spanish is fine (Android falls back to English); one that exists must say the same thing. */
+    @Test fun spanishStringsAreKnownAndHaveTheSameArguments() {
         val (en, enPlurals) = read("src/main/res/values/strings.xml")
         val (es, esPlurals) = read("src/main/res/values-es/strings.xml")
-        assertEquals("missing or extra strings in values-es", en.keys, es.keys)
-        assertEquals("missing or extra plurals in values-es", enPlurals.keys, esPlurals.keys)
-        for ((name, text) in en) assertEquals(name, args(text), args(es.getValue(name)))
-        for ((name, items) in enPlurals) for (item in esPlurals.getValue(name)) assertEquals(name, args(items[0]), args(item))
+        assertTrue("strings only in values-es: ${es.keys - en.keys}", en.keys.containsAll(es.keys))
+        assertTrue("plurals only in values-es: ${esPlurals.keys - enPlurals.keys}", enPlurals.keys.containsAll(esPlurals.keys))
+        for ((name, text) in es) assertEquals(name, args(en.getValue(name)), args(text))
+        for ((name, items) in esPlurals) for (item in items) assertEquals(name, args(enPlurals.getValue(name)[0]), args(item))
         for ((name, text) in es) assertTrue("$name is empty", text.isNotBlank())
     }
 
-    @Test fun spanishTemplatesCoverEveryBuiltInTemplate() {
+    /** Templates or boxes missing from the JSON keep their English text; the JSON must not name unknown ones. */
+    @Test fun spanishTemplatesNameOnlyRealTemplatesAndBoxes() {
         val tr = JSONObject(File("src/main/assets/i18n/templates.es.json").readText())
         val files = File("src/main/assets/templates").listFiles { f -> f.name.endsWith(".svg") }!!
         val all = files.map { Templates.parse(it.readText(), Templates.idOf(it.name)) }
-        assertEquals(all.map { it.id }.toSet(), tr.keys().asSequence().toSet())
+        assertTrue(all.map { it.id }.containsAll(tr.keys().asSequence().toList()))
         for (t in all) {
-            val fields = tr.getJSONObject(t.id).getJSONObject("fields")
-            assertEquals(t.id, t.fields.map { it.key }.toSet(), fields.keys().asSequence().toSet())
-            for (f in t.fields) assertTrue("${t.id}/${f.key} has no label", fields.getJSONObject(f.key).optString("label").isNotEmpty())
+            val fields = tr.optJSONObject(t.id)?.optJSONObject("fields") ?: continue
+            assertTrue(t.id, t.fields.map { it.key }.containsAll(fields.keys().asSequence().toList()))
         }
     }
 

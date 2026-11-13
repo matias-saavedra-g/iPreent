@@ -484,3 +484,9 @@ Robolectric test (home, busy home, tool screen, printer sheet, busy dialog, queu
 ### Open
 - [ ] Look at the Spanish screens on a phone (or Robolectric PNGs) for clipped text.
 - [ ] Windows app and CLI are still English only.
+
+### Untranslated text falls back to English
+- User asked for it. Android already does this for strings (`values/` is the default), but release lint made a missing
+  translation a build error and `LocalizationTest` demanded full coverage; both relaxed (`lint { disable += "MissingTranslation" }`,
+  test checks only that existing translations are known and keep the same `%` arguments). Template JSON entries may be
+  partial. Checked by deleting two Spanish strings: tests and `assembleRelease` still pass.

@@ -88,7 +88,9 @@ fails if the copies differ.
   `Lang.str(ctx, id, …)`. Pure code that must stay JVM-testable throws `UserError`/`TemplateError` (English `message`
   for tests, string `res` + `args` for the UI; `Lang.text` picks). Template names, box labels and example texts for
   Spanish are in `assets/i18n/templates.es.json` (`Templates.localize`); the SVGs themselves stay shared with Python.
-  `LocalizationTest` checks both string files match (names, plurals, `%` arguments) and every template is translated.
+  Anything not translated falls back to English: Android uses `values/` for a string missing from `values-es/` (lint's
+  `MissingTranslation` is off so that is not a build error), and a template or box missing from the JSON keeps its English
+  text. `LocalizationTest` only checks that what exists matches (no unknown names, same `%` arguments).
   Add a language = a `values-xx/strings.xml`, an optional `templates.xx.json`, and an entry in `Lang.CHOICES`.
   The Windows app and the CLI are English only. Receipts always print in Spanish (BOLETA).
 - `Printers.kt`: app-wide state: model table, remembered printer (`printerName` flow), darkness, the queue

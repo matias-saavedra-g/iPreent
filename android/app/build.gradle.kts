@@ -38,6 +38,8 @@ android {
     }
     kotlinOptions { jvmTarget = "17" }
     buildFeatures { compose = true }
+    // A string missing from values-es/ is not an error: Android falls back to the English one in values/.
+    lint { disable += "MissingTranslation" }
 }
 
 dependencies {
