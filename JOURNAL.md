@@ -459,3 +459,28 @@ Robolectric test (home, busy home, tool screen, printer sheet, busy dialog, queu
 - [ ] Print the new templates on the SC03h (thin snowflake arms at 3 units, the wreath's many leaves, the hatched flag).
 - [ ] Time a few real prints against a stopwatch; if 10 mm/s is far off, change the nominal value (one constant per
       app) instead of using the debug setting.
+
+## 2026-11-13
+
+### Android app in Spanish, with a language override in the debug settings
+- User: translate the whole app to Spanish, follow the system language, and let the debug settings override it.
+- Everything was hard-coded English in Kotlin, so all of it moved to `strings.xml` (+ `values-es`); Android picks the
+  language itself. Override: `Lang.kt` wraps the activity's context with the chosen locale (`attachBaseContext`) and
+  sets `Locale.getDefault` so numbers and dates follow; changing it recreates the activity (the printer sheet is
+  `rememberSaveable` so it reopens). System language is read from `Resources.getSystem()`, not `Locale.getDefault`,
+  because the latter is ours once overridden. A system language other than es falls back to English.
+- Pure code (`Receipt`, `Templates`, `Protocol.describeState`) keeps English messages for the tests and the Python twin;
+  errors carry a string resource too (`UserError`, `TemplateError`) and `Lang.text` translates them in the UI.
+- Templates: 37 names + box labels + example texts in `assets/i18n/templates.es.json` instead of editing the SVGs,
+  which are shared byte for byte with the Python package. Typed template text is now stored only when it differs
+  from the example text, so untouched boxes follow the language.
+- History file names kept only `A-Za-z0-9`, which would have turned "código" into "cdigo"; they now keep any letter.
+- Spanish choices: «tú», Chilean wording (Agregar, Boleta, Fiestas Patrias kept), tool *Banner* → *Letrero*, *Darkness*
+  → *Intensidad*, category *Mine* → *Mis diseños*. Say if any should change.
+- Checked: unit tests (new `LocalizationTest`), `assembleRelease`, and a temporary Robolectric test (removed) that
+  system es/en/fr and both overrides pick the right strings, plural forms and translated errors. Not looked at on a
+  device or with screenshots: long Spanish labels (e.g. "Ancho de impresión", the home tiles) may wrap or clip.
+
+### Open
+- [ ] Look at the Spanish screens on a phone (or Robolectric PNGs) for clipped text.
+- [ ] Windows app and CLI are still English only.

@@ -21,7 +21,7 @@ object Clp {
         val t = text.trim()
         val neg = '-' in t.takeWhile { !it.isDigit() }
         val body = t.filter { it.isDigit() || it == '.' || it == ',' }
-        require(body.any { it.isDigit() }) { "not a price: \"$text\"" }
+        if (!body.any { it.isDigit() }) fail(R.string.err_not_price, "not a price: \"$text\"", text)
         val cents = Regex("[.,](\\d{1,2})$").find(body)
         val whole = (if (cents != null) body.substring(0, cents.range.first) else body).filter { it.isDigit() }.ifEmpty { "0" }
         var amount = BigDecimal(whole)
@@ -32,8 +32,8 @@ object Clp {
     /** "2", "1,5", "1.5", "x3", "" (= 1) → quantity above zero. */
     fun parseQty(text: String): BigDecimal {
         val t = text.lowercase().filterNot { it == 'x' || it == '×' || it.isWhitespace() }.replace(',', '.')
-        val q = if (t.isEmpty()) BigDecimal.ONE else t.toBigDecimalOrNull() ?: throw IllegalArgumentException("not a quantity: \"$text\"")
-        require(q.signum() > 0) { "quantity must be more than zero" }
+        val q = if (t.isEmpty()) BigDecimal.ONE else t.toBigDecimalOrNull() ?: fail(R.string.err_not_qty, "not a quantity: \"$text\"", text)
+        if (q.signum() <= 0) fail(R.string.err_qty_positive, "quantity must be more than zero")
         return q
     }
 
@@ -74,14 +74,14 @@ class Receipt(
         fun fromRows(business: String, address: String, url: String, footer: String, rows: List<Triple<String, String, String>>): Receipt {
             val items = rows.filter { (n, _, p) -> n.isNotBlank() || p.isNotBlank() }.mapIndexed { i, (name, qty, price) ->
                 try {
-                    require(name.isNotBlank()) { "no product name" }
-                    require(price.isNotBlank()) { "no price" }
+                    if (name.isBlank()) fail(R.string.err_no_name, "no product name")
+                    if (price.isBlank()) fail(R.string.err_no_price, "no price")
                     ReceiptItem(name.trim(), Clp.parsePrice(price), Clp.parseQty(qty))
                 } catch (e: IllegalArgumentException) {
-                    throw IllegalArgumentException("Row ${i + 1}: ${e.message}")
+                    throw UserError(R.string.err_row, listOf(i + 1, e), "Row ${i + 1}: ${e.message}")
                 }
             }
-            require(items.isNotEmpty()) { "Add products with their quantity and price." }
+            if (items.isEmpty()) fail(R.string.err_no_products, "Add products with their quantity and price.")
             return Receipt(business, address, url, items, footer)
         }
     }
@@ -206,7 +206,7 @@ object ReceiptArt {
         s.y += px(14f)
         val mods = BooleanArray(10) + Code128Writer().encode(r.number) + BooleanArray(10)   // quiet zones
         val scale = width / mods.size
-        require(scale > 0) { "receipt number too long for a barcode on this paper" }
+        if (scale <= 0) fail(R.string.err_barcode_long, "receipt number too long for a barcode on this paper")
         val left = ((width - mods.size * scale) / 2).toFloat()
         val barH = px(64f)
         mods.forEachIndexed { i, on -> if (on) s.rect(left + i * scale, s.y, left + (i + 1) * scale, s.y + barH) }

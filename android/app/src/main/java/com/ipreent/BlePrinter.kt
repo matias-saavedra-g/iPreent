@@ -28,7 +28,7 @@ class BlePrinter private constructor(private val gatt: BluetoothGatt, val model:
     companion object {
         /** Devices whose name matches a known model or that advertise a printer service. */
         suspend fun scan(ctx: Context, isKnown: (String) -> Boolean, millis: Long = 6000): List<Found> {
-            val scanner = adapter(ctx).bluetoothLeScanner ?: throw IllegalStateException("Bluetooth is off")
+            val scanner = adapter(ctx).bluetoothLeScanner ?: fail(R.string.err_bt_off, "Bluetooth is off")
             val found = linkedMapOf<String, Found>()
             val cb = object : ScanCallback() {
                 override fun onScanResult(type: Int, r: ScanResult) {
@@ -63,7 +63,7 @@ class BlePrinter private constructor(private val gatt: BluetoothGatt, val model:
 
         private fun adapter(ctx: Context) =
             (ctx.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager).adapter
-                ?: throw IllegalStateException("No Bluetooth on this device")
+                ?: fail(R.string.err_no_bt, "No Bluetooth on this device")
     }
 
     class Callback : BluetoothGattCallback() {
@@ -77,7 +77,7 @@ class BlePrinter private constructor(private val gatt: BluetoothGatt, val model:
         override fun onConnectionStateChange(g: BluetoothGatt, status: Int, state: Int) {
             if (state == BluetoothProfile.STATE_CONNECTED) connected.complete(Unit)
             else {
-                val e = IllegalStateException("Disconnected (status $status)")
+                val e = UserError(R.string.err_disconnected, listOf(status), "Disconnected (status $status)")
                 connected.completeExceptionally(e); discovered.completeExceptionally(e)
                 writes.close(e)
             }
@@ -107,7 +107,7 @@ class BlePrinter private constructor(private val gatt: BluetoothGatt, val model:
     private suspend fun setup() {
         val chars = gatt.services.flatMap { it.characteristics }
         writeChar = chars.firstOrNull { it.uuid.matches(WRITE_CHARS) }
-            ?: throw IllegalStateException("No known write characteristic; is this a supported printer?")
+            ?: fail(R.string.err_no_write_char, "No known write characteristic; is this a supported printer?")
         for (c in chars.filter { it.uuid.matches(NOTIFY_CHARS) && it.properties and BluetoothGattCharacteristic.PROPERTY_NOTIFY != 0 }) {
             gatt.setCharacteristicNotification(c, true)
             val d = c.getDescriptor(CCCD) ?: continue
@@ -127,7 +127,7 @@ class BlePrinter private constructor(private val gatt: BluetoothGatt, val model:
             if (ok) { withTimeoutOrNull(1000) { cb.writes.receive() }; return }
             delay(10)
         }
-        throw IllegalStateException("Bluetooth write failed")
+        fail(R.string.err_bt_write, "Bluetooth write failed")
     }
 
     suspend fun send(data: ByteArray, progress: (Float) -> Unit = {}) {

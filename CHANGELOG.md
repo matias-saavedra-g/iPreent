@@ -2,6 +2,12 @@
 
 Each `## vX.Y.Z` section becomes the notes of that GitHub Release.
 
+## Unreleased
+**Android app in Spanish.** Every screen, message, template name and example text now comes in Spanish, and the app
+follows the system language (Spanish → Spanish, anything else → English). The debug settings (tap the printer's
+name 7 times) have a new **Language** setting to force English or Spanish while testing. The Windows app and the
+command line are still English only.
+
 ## v0.7.0
 **Downloads**
 - `iPreent-v0.7.0.apk`: Android app (Android 8+). Installs over v0.6.0. Also available through Obtainium (see README).

@@ -165,9 +165,11 @@ object Protocol {
         return frames
     }
 
-    fun describeState(payload: ByteArray?): String {
-        if (payload == null || payload.isEmpty()) return "unknown"
+    /** The printer's state in words. [word] turns each English word ("out of paper", "ready", "unknown") into the
+     *  user's language; the default keeps English (tests, logs). */
+    fun describeState(payload: ByteArray?, word: (String) -> String = { it }): String {
+        if (payload == null || payload.isEmpty()) return word("unknown")
         val b = payload[0].toInt() and 0xFF
-        return STATE_BITS.filter { (bit, _) -> b shr bit and 1 == 1 }.values.joinToString(", ").ifEmpty { "ready" }
+        return STATE_BITS.filter { (bit, _) -> b shr bit and 1 == 1 }.values.joinToString(", ") { word(it) }.ifEmpty { word("ready") }
     }
 }

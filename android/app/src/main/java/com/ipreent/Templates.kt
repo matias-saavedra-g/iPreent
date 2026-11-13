@@ -32,7 +32,8 @@ object Templates {
     const val CAP = 0.7
     const val MIN_PX = 8
 
-    class TemplateError(message: String) : Exception(message)
+    class TemplateError(message: String, override val res: Int = 0, override val args: List<Any> = emptyList()) :
+        Exception(message), LocalizedError
 
     data class Field(
         val key: String, val label: String, val default: String,
@@ -69,6 +70,18 @@ object Templates {
         return Season(a, b, c, d)
     }
 
+    /** Another language's texts for a built-in template (assets/i18n/templates.<lang>.json): only what differs. */
+    class Translation(val name: String? = null, val fields: Map<String, Pair<String?, String?>> = emptyMap())
+
+    /** [t] with its name, box labels and example texts replaced by [tr]; the art and the layout rules are untouched. */
+    fun localize(t: Template, tr: Translation?): Template {
+        if (tr == null) return t
+        return t.copy(name = tr.name ?: t.name, fields = t.fields.map { f ->
+            val (label, default) = tr.fields[f.key] ?: return@map f
+            f.copy(label = label ?: f.label, default = default ?: f.default)
+        })
+    }
+
     /** Templates in season first, the rest in file order (same as templates.gallery_order). */
     fun galleryOrder(items: List<Template>, month: Int, day: Int) = items.sortedBy { !it.inSeason(month, day) }
 
@@ -97,16 +110,16 @@ object Templates {
         val root = try {
             f.newDocumentBuilder().parse(InputSource(StringReader(svg))).documentElement
         } catch (e: Exception) {
-            throw TemplateError("not a valid SVG file (${e.message})")
+            throw TemplateError("not a valid SVG file (${e.message})", R.string.err_tpl_invalid, listOf(e.message ?: ""))
         }
-        if (root.localName != "svg" || (root.namespaceURI != null && root.namespaceURI != SVG_NS)) throw TemplateError("not an SVG file")
+        if (root.localName != "svg" || (root.namespaceURI != null && root.namespaceURI != SVG_NS)) throw TemplateError("not an SVG file", R.string.err_tpl_not_svg)
         val vb = (root.attr("viewBox") ?: "").replace(",", " ").trim().split(Regex("\\s+")).filter { it.isNotEmpty() }
         val ox: Double; val oy: Double; val w: Double; val h: Double
         if (vb.size == 4 && num(vb[2]) > 0 && num(vb[3]) > 0) {
             ox = num(vb[0]); oy = num(vb[1]); w = num(vb[2]); h = num(vb[3])
         } else {
             ox = 0.0; oy = 0.0; w = num(root.attr("width"), 384.0); h = num(root.attr("height"), 384.0)
-            if (w <= 0 || h <= 0) throw TemplateError("the SVG has no size (viewBox or width/height)")
+            if (w <= 0 || h <= 0) throw TemplateError("the SVG has no size (viewBox or width/height)", R.string.err_tpl_no_size)
         }
         val stretch = root.ip("stretch")?.let { num(it) - oy }?.takeIf { it > 0 && it < h }
         val fields = mutableListOf<Field>()

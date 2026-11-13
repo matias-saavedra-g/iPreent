@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Español (neutro, con «tú»). Mismos nombres y mismos argumentos que values/strings.xml: lo comprueba StringsTest. -->
+<resources>
+    <string name="share_label">Imprimir con iPreent</string>
+
+    <!-- Herramientas (pantalla de inicio y barra superior) -->
+    <string name="tool_photo">Foto</string>
+    <string name="tool_photo_blurb">De tu galería</string>
+    <string name="tool_document">Documento</string>
+    <string name="tool_document_blurb">PDF y texto nítido</string>
+    <string name="tool_text">Texto</string>
+    <string name="tool_text_blurb">Notas y mensajes</string>
+    <string name="tool_receipt">Boleta</string>
+    <string name="tool_receipt_blurb">Boleta con total y código de barras</string>
+    <string name="tool_template">Plantillas</string>
+    <string name="tool_template_blurb">Corazones, marcos, listas y etiquetas</string>
+    <string name="tool_list">Lista de tareas</string>
+    <string name="tool_list_blurb">Listas de pendientes con casillas</string>
+    <string name="tool_code">QR y código de barras</string>
+    <string name="tool_code_blurb">Enlaces, etiquetas y códigos de producto</string>
+    <string name="tool_banner">Letrero</string>
+    <string name="tool_banner_blurb">Texto grande a lo largo del papel</string>
+
+    <!-- Navegación -->
+    <string name="nav_create">Crear</string>
+    <string name="nav_queue">Cola</string>
+    <string name="nav_history">Historial</string>
+    <string name="back_to_tools">Volver a todas las herramientas</string>
+    <string name="printer_settings">Ajustes de la impresora</string>
+
+    <!-- Común -->
+    <string name="action_print">Imprimir</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="action_close">Cerrar</string>
+    <string name="one_item_per_line">Un elemento por línea</string>
+
+    <!-- Avisos -->
+    <string name="snack_printed">Se imprimió “%1$s”</string>
+    <string name="snack_removed">Se quitó “%1$s” de la cola</string>
+    <string name="snack_print_failed">Error al imprimir</string>
+    <string name="shared_open_failed">No se pudo abrir el archivo compartido: %1$s</string>
+
+    <!-- Tiempo restante -->
+    <string name="left_about">faltan unos %1$s</string>
+    <string name="left_short">faltan %1$s</string>
+    <string name="left_finishing">terminando</string>
+
+    <!-- Diálogo de impresora ocupada -->
+    <string name="busy_free_title">La impresora ya está libre</string>
+    <string name="busy_free_text">¿Imprimir “%1$s”?</string>
+    <string name="busy_title">La impresora está ocupada</string>
+    <string name="busy_printing_left">“%1$s” se está imprimiendo: faltan unos %2$s.</string>
+    <string name="busy_printing_almost">“%1$s” se está imprimiendo: casi termina.</string>
+    <plurals name="busy_more_waiting">
+        <item quantity="one">%d más en espera.</item>
+        <item quantity="many">%d más en espera.</item>
+        <item quantity="other">%d más en espera.</item>
+    </plurals>
+    <string name="busy_add_question">¿Agregar “%1$s” a la cola? Debería empezar en unos %2$s y tardar unos %3$s.</string>
+    <string name="busy_add">Agregar a la cola</string>
+
+    <!-- Botón y hoja de la impresora -->
+    <string name="printer_setup">Configurar impresora</string>
+    <string name="sheet_no_printer">Aún no hay impresora</string>
+    <string name="sheet_no_printer_hint">Enciéndela; se encuentra al imprimir por primera vez, o usa Buscar impresoras.</string>
+    <string name="sheet_printer_info">%1$s · Bluetooth LE · %2$s</string>
+    <string name="sheet_darkness">Intensidad</string>
+    <string name="sheet_lighter">Más clara</string>
+    <string name="sheet_darker">Más oscura (imprime más lento)</string>
+    <string name="sheet_estimates">Las estimaciones de tiempo suponen %1$s mm/s con cualquier intensidad, la velocidad nominal más lenta de la impresora.</string>
+    <string name="sheet_estimates_debug">Las estimaciones de tiempo suponen %1$s mm/s con cualquier intensidad (ajuste de depuración).</string>
+    <string name="sheet_details">Detalles de la impresora</string>
+    <string name="sheet_check_status">Ver estado y batería</string>
+    <string name="sheet_scanning">Buscando impresoras…</string>
+    <string name="sheet_find">Buscar impresoras</string>
+    <string name="sheet_forget">Olvidar esta impresora</string>
+    <string name="sheet_scan_failed">Falló la búsqueda</string>
+    <string name="sheet_error">error</string>
+    <string name="sheet_none_found">No se encontraron impresoras</string>
+    <string name="sheet_none_found_hint">¿Está encendida y sin conectar a otra aplicación?</string>
+    <string name="sheet_pick">Elige una impresora</string>
+    <string name="sheet_debug_open">Los ajustes de depuración ya están abiertos, más abajo</string>
+    <string name="sheet_debug_unlocked">Ajustes de depuración desbloqueados</string>
+    <plurals name="sheet_debug_taps">
+        <item quantity="one">Falta %d toque para abrir los ajustes de depuración</item>
+        <item quantity="many">Faltan %d de toques para abrir los ajustes de depuración</item>
+        <item quantity="other">Faltan %d toques para abrir los ajustes de depuración</item>
+    </plurals>
+
+    <!-- Niveles de intensidad -->
+    <string name="darkness_lightest">Muy clara</string>
+    <string name="darkness_lighter">Clara</string>
+    <string name="darkness_normal">Normal</string>
+    <string name="darkness_darker">Oscura</string>
+    <string name="darkness_darkest">Muy oscura</string>
+
+    <!-- Detalles de la impresora -->
+    <string name="detail_paper">Papel</string>
+    <string name="detail_labels">Etiquetas</string>
+    <string name="detail_print_width">Ancho de impresión</string>
+    <string name="detail_resolution">Resolución</string>
+    <string name="detail_labels_value">admite etiquetas troqueladas</string>
+    <string name="detail_width_value">%1$s mm (%2$d puntos)</string>
+    <string name="detail_resolution_value">%1$d dpi (%2$s puntos por mm)</string>
+    <string name="paper_unknown">papel térmico más ancho que el área de impresión</string>
+    <string name="paper_1">cinta de etiquetas angosta (unos 15 mm)</string>
+    <string name="paper_2">rollo térmico de 57 mm (se vende como de 57 o 58 mm)</string>
+    <string name="paper_3">rollo térmico de 80 mm</string>
+    <string name="paper_4">etiquetas o rollo térmico de 4 pulgadas (unos 110 mm)</string>
+    <string name="paper_8">papel térmico A4</string>
+
+    <!-- Ajustes de depuración -->
+    <string name="debug_title">Ajustes de depuración</string>
+    <string name="debug_speed_info">Las estimaciones de tiempo suponen la velocidad nominal más lenta de la impresora, %1$s mm/s, porque los tiempos medidos aún no son fiables. Cámbiala solo para probar otra cifra.</string>
+    <string name="debug_paper_speed">Velocidad del papel</string>
+    <string name="debug_last_measured">La última impresión cronometrada fue de unos %1$s mm/s (no se usa).</string>
+    <string name="debug_back_to">Volver a %1$s mm/s</string>
+    <string name="debug_hide">Ocultar</string>
+    <string name="debug_language">Idioma</string>
+    <string name="debug_language_hint">Reemplaza el idioma del sistema; sirve para probar las traducciones.</string>
+    <string name="language_system">Sistema</string>
+
+    <!-- Cola -->
+    <string name="now_waiting">%1$d en espera</string>
+    <string name="state_waiting">En espera:</string>
+    <string name="state_connecting">Conectando:</string>
+    <string name="state_printing">Imprimiendo</string>
+    <string name="state_printing_copy">Imprimiendo %1$d/%2$d:</string>
+    <string name="queue_empty_title">No hay nada en la cola</string>
+    <string name="queue_empty_text">Las impresiones aparecen aquí con el tiempo que les queda.</string>
+    <string name="queue_all_done">Todo listo en unos %1$s</string>
+    <string name="queue_starts_in">Empieza en unos %1$s · tarda %2$s</string>
+    <string name="queue_connecting">Conectando… %1$s</string>
+    <string name="queue_remove">Quitar de la cola</string>
+    <string name="queue_finished">Terminadas</string>
+    <string name="queue_clear">Limpiar</string>
+    <string name="queue_printed_at">Impreso a las %1$s</string>
+    <string name="queue_removed_at">Quitado a las %1$s</string>
+    <string name="queue_failed">Falló: %1$s</string>
+
+    <!-- Inicio e historial -->
+    <string name="home_title">¿Qué quieres imprimir?</string>
+    <string name="home_more">Más herramientas</string>
+    <string name="history_empty">Las impresiones aparecen aquí para que puedas volver a imprimirlas.</string>
+    <string name="history_reprint">Reimprimir</string>
+    <string name="history_delete">Eliminar</string>
+
+    <!-- Pantallas de cada herramienta -->
+    <string name="preview_empty">Aún no hay nada que imprimir</string>
+    <string name="copies_fewer">Menos copias</string>
+    <string name="copies_more">Más copias</string>
+    <string name="print_estimate">unos %1$s</string>
+    <string name="image_pick_file">Elegir PDF o archivo</string>
+    <string name="image_pick_photo">Elegir foto</string>
+    <plurals name="pages">
+        <item quantity="one">%d página</item>
+        <item quantity="many">%d de páginas</item>
+        <item quantity="other">%d páginas</item>
+    </plurals>
+    <string name="image_cant_open">No se pudo abrir: %1$s</string>
+    <string name="image_brightness">Brillo</string>
+    <string name="image_contrast">Contraste</string>
+    <string name="dither_threshold">Umbral</string>
+    <string name="text_note">Nota</string>
+    <string name="text_bold">Negrita</string>
+    <string name="list_default_title">Por hacer</string>
+    <string name="list_title">Título</string>
+    <string name="banner_text">Texto del letrero</string>
+    <string name="job_banner">letrero %1$s</string>
+    <string name="code_barcode">Código de barras</string>
+    <string name="code_content">Enlace o texto</string>
+    <string name="code_caption">Leyenda (opcional)</string>
+    <string name="job_code">código</string>
+
+    <!-- Boleta -->
+    <string name="receipt_business_details">Datos del negocio</string>
+    <string name="receipt_business_name">Nombre del negocio</string>
+    <string name="receipt_address">Dirección</string>
+    <string name="receipt_website">Sitio web</string>
+    <string name="receipt_footer">Mensaje al pie</string>
+    <string name="receipt_products">Productos</string>
+    <string name="receipt_product_n">Producto %1$d</string>
+    <string name="receipt_qty">Cant.</string>
+    <string name="receipt_price">Precio (CLP)</string>
+    <string name="receipt_remove">Quitar</string>
+    <string name="receipt_add">Agregar producto</string>
+    <string name="receipt_total">Total %1$s</string>
+    <string name="receipt_cant">No se pudo crear la boleta</string>
+    <string name="job_receipt">Boleta %1$s</string>
+
+    <!-- Plantillas -->
+    <string name="templates_all">Todas</string>
+    <string name="category_love">Amor</string>
+    <string name="category_frames">Marcos</string>
+    <string name="category_lists">Listas</string>
+    <string name="category_notes">Notas</string>
+    <string name="category_party">Fiesta</string>
+    <string name="category_labels">Etiquetas</string>
+    <string name="category_christmas">Navidad</string>
+    <string name="category_holidays">Fechas especiales</string>
+    <string name="category_mine">Mis diseños</string>
+    <string name="templates_own_svg">Tu propio SVG</string>
+    <string name="templates_own_svg_hint">Cualquier archivo SVG; docs/TEMPLATES.md explica cómo agregar cuadros de texto</string>
+    <string name="templates_cant_use">No se pudo usar ese archivo: %1$s</string>
+    <string name="templates_cant_draw">No se pudo dibujar esta plantilla: %1$s</string>
+    <string name="templates_example">Texto de ejemplo</string>
+    <string name="templates_remove">Quitar de Mis diseños</string>
+    <string name="templates_grows">Crece según el texto</string>
+
+    <!-- Estado de la impresora (byte de estado) -->
+    <string name="printer_state_out_of_paper">sin papel</string>
+    <string name="printer_state_cover_open">tapa abierta</string>
+    <string name="printer_state_overheated">sobrecalentada</string>
+    <string name="printer_state_low_battery">batería baja</string>
+    <string name="printer_state_charging">cargando</string>
+    <string name="printer_state_printing">imprimiendo</string>
+    <string name="printer_state_ready">lista</string>
+    <string name="printer_state_unknown">desconocido</string>
+
+    <!-- Línea de estado y errores -->
+    <string name="status_idle">Inactiva</string>
+    <string name="status_scanning">Buscando…</string>
+    <string name="status_connecting">Conectando con %1$s…</string>
+    <string name="status_printing">Imprimiendo %1$s</string>
+    <string name="status_printing_copies">Imprimiendo %1$s (%2$d/%3$d)</string>
+    <string name="status_done">Listo</string>
+    <string name="status_error">Error: %1$s</string>
+    <string name="status_battery">%1$s: %2$s · batería %3$d%%</string>
+    <string name="status_state">%1$s: %2$s</string>
+    <string name="err_failed">falló</string>
+    <string name="err_no_printer">No se encontró ninguna impresora. ¿Está encendida y sin conectar a otra aplicación?</string>
+    <string name="err_bt_off">El Bluetooth está apagado</string>
+    <string name="err_no_bt">Este dispositivo no tiene Bluetooth</string>
+    <string name="err_disconnected">Desconectada (estado %1$d)</string>
+    <string name="err_no_write_char">No se encontró una característica de escritura conocida; ¿es una impresora compatible?</string>
+    <string name="err_bt_write">Falló la escritura por Bluetooth</string>
+    <string name="err_not_price">no es un precio: “%1$s”</string>
+    <string name="err_not_qty">no es una cantidad: “%1$s”</string>
+    <string name="err_qty_positive">la cantidad debe ser mayor que cero</string>
+    <string name="err_no_name">falta el nombre del producto</string>
+    <string name="err_no_price">falta el precio</string>
+    <string name="err_row">Fila %1$d: %2$s</string>
+    <string name="err_no_products">Agrega productos con su cantidad y precio.</string>
+    <string name="err_barcode_long">el número de la boleta es muy largo para un código de barras en este papel</string>
+    <string name="err_tpl_unreadable">no se puede leer el archivo</string>
+    <string name="err_tpl_draw">no se puede dibujar este SVG (%1$s)</string>
+    <string name="err_tpl_invalid">no es un archivo SVG válido (%1$s)</string>
+    <string name="err_tpl_not_svg">no es un archivo SVG</string>
+    <string name="err_tpl_no_size">el SVG no tiene tamaño (viewBox o ancho/alto)</string>
+
+    <!-- Servicio de impresión de Android -->
+    <string name="print_service_name">Impresora iPreent</string>
+    <string name="print_service_roll">Rollo de 58 mm</string>
+    <string name="err_no_document">sin documento</string>
+</resources>
