@@ -4,6 +4,7 @@ from pathlib import Path
 from PIL import Image
 
 from . import imaging
+from .i18n import tr
 
 IMAGE_EXT = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".tif", ".tiff", ".ico"}
 TEXT_EXT = {".txt", ".md", ".log", ".csv", ".json", ".py", ".ini", ".cfg", ".yaml", ".yml"}
@@ -34,14 +35,14 @@ def kind(path):
         head.decode("utf-8")
         return "text"
     except UnicodeDecodeError:
-        raise Unsupported(f"don't know how to print {path}")
+        raise Unsupported(tr("don't know how to print {0}", path))
 
 
 def pdf_pages(path, width, pages=None):
     try:
         import pypdfium2 as pdfium
     except ImportError:
-        raise Unsupported("PDF support needs: pip install pypdfium2")
+        raise Unsupported(tr("PDF support needs: pip install pypdfium2"))
     doc = pdfium.PdfDocument(str(path))
     for i in range(len(doc)):
         if pages and (i + 1) not in pages:

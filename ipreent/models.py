@@ -3,6 +3,8 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
+from .i18n import tr
+
 _TABLE = None
 
 
@@ -26,8 +28,8 @@ class Model:
 # The vendor's "size" codes, named from the print widths each one has in models.json:
 # 1 = 96 dots (12 mm), 2 = 384/576 dots (48 mm), 3 = 576 dots at 200 dpi (72 mm),
 # 4 = 800-1280 dots (100-110 mm), 8 = 1664-2592 dots (A4 width).
-PAPER = {1: "narrow label tape (about 15 mm)", 2: "57 mm thermal roll (sold as 57 or 58 mm)",
-         3: "80 mm thermal roll", 4: "4-inch thermal labels or roll (about 110 mm)", 8: "A4 thermal paper"}
+PAPER = {1: tr("narrow label tape (about 15 mm)"), 2: tr("57 mm thermal roll (sold as 57 or 58 mm)"),
+         3: tr("80 mm thermal roll"), 4: tr("4-inch thermal labels or roll (about 110 mm)"), 8: tr("A4 thermal paper")}
 
 
 def details(model):
@@ -39,12 +41,12 @@ def details(model):
     energy numbers, and the vendor's internal flags (device id, retract length, sensor values).
     """
     mm = model.width * 25.4 / model.dpi
-    paper = PAPER.get(model.paper, "thermal paper wider than the print width")
-    out = [("Paper", paper)]
+    paper = PAPER.get(model.paper, tr("thermal paper wider than the print width"))
+    out = [(tr("Paper"), paper)]
     if model.labels:
-        out.append(("Labels", "die-cut labels supported"))
-    return out + [("Print width", f"{mm:.1f} mm ({model.width} dots)"),
-                  ("Resolution", f"{model.dpi} dpi ({model.dpi / 25.4:.0f} dots per mm)")]
+        out.append((tr("Labels"), tr("die-cut labels supported")))
+    return out + [(tr("Print width"), tr("{0:.1f} mm ({1} dots)", mm, model.width)),
+                  (tr("Resolution"), tr("{0} dpi ({1:.0f} dots per mm)", model.dpi, model.dpi / 25.4))]
 
 
 def _table():

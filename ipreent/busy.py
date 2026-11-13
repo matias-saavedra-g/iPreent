@@ -12,6 +12,7 @@ import sys
 import time
 
 from . import config, protocol
+from .i18n import tr, trn
 
 
 def _dir():
@@ -111,7 +112,7 @@ def current():
     try:
         return json.loads(_busy_file().read_text(encoding="utf-8"))
     except (OSError, ValueError):       # holder hasn't written it yet
-        return {"label": "a print", "app": "another program", "started": time.time(), "seconds": 0,
+        return {"label": tr("a print"), "app": tr("another program"), "started": time.time(), "seconds": 0,
                 "after": 0, "waiting": 0}
 
 
@@ -129,7 +130,8 @@ def queue_remaining(info, now=None):
 def describe(info, now=None):
     """'Windows app is printing "photo.jpg" (about 0:12 left, 2 more waiting)'."""
     left = remaining(info, now)
-    extra = [f"about {protocol.format_eta(left)} left" if left else "finishing"]
+    extra = [tr("about {0} left", protocol.format_eta(left)) if left else tr("finishing")]
     if info.get("waiting"):
-        extra.append(f"{info['waiting']} more waiting")
-    return f'{info.get("app", "another program")} is printing "{info.get("label", "a print")}" ({", ".join(extra)})'
+        extra.append(tr("{0} more waiting", info['waiting']))
+    return tr('{0} is printing "{1}" ({2})', info.get("app", tr("another program")), info.get("label", tr("a print")),
+              ", ".join(extra))

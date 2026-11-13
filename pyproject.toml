@@ -1,6 +1,6 @@
 [project]
 name = "ipreent"
-version = "0.8.0"
+version = "0.8.1"
 license = {text = "MIT"}
 description = "Offline, account-free driver for iPrint / cat-style BLE thermal mini printers"
 requires-python = ">=3.10"
@@ -19,7 +19,7 @@ ipreent-desktop = "ipreent.desktop.app:main"
 packages = ["ipreent", "ipreent.desktop"]
 
 [tool.setuptools.package-data]
-ipreent = ["models.json", "templates/*.svg", "fonts/*.ttf", "fonts/*.txt"]
+ipreent = ["models.json", "templates/*.svg", "fonts/*.ttf", "fonts/*.txt", "locales/*.json"]
 "ipreent.desktop" = ["icons/*.svg"]
 
 [build-system]

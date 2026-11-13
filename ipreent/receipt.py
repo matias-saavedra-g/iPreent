@@ -18,6 +18,7 @@ from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from PIL import Image, ImageDraw
 
 from . import imaging
+from .i18n import tr
 
 DEFAULT_FOOTER = "¡Gracias por su compra!"
 
@@ -31,14 +32,14 @@ def parse_price(value):
     only one or two digits at the end ('12990.50') is read as decimals and rounded.
     """
     if isinstance(value, bool):
-        raise ValueError(f"not a price: {value!r}")
+        raise ValueError(tr("not a price: {0!r}", value))
     if isinstance(value, (int, float, Decimal)):
         return _round(Decimal(str(value)))
     text = str(value).strip()
     neg = "-" in re.match(r"\D*", text).group()
     body = re.sub(r"[^\d.,]", "", text)
     if not re.search(r"\d", body):
-        raise ValueError(f"not a price: {value!r}")
+        raise ValueError(tr("not a price: {0!r}", value))
     cents = re.search(r"[.,](\d{1,2})$", body)
     whole = re.sub(r"\D", "", body[:cents.start()] if cents else body) or "0"
     amount = Decimal(whole) + (Decimal("0." + cents.group(1)) if cents else 0)
@@ -54,9 +55,9 @@ def parse_qty(value):
         try:
             q = Decimal(text) if text else Decimal(1)
         except InvalidOperation:
-            raise ValueError(f"not a quantity: {value!r}") from None
+            raise ValueError(tr("not a quantity: {0!r}", value)) from None
     if not q.is_finite() or q <= 0:
-        raise ValueError(f"quantity must be more than zero: {value!r}")
+        raise ValueError(tr("quantity must be more than zero: {0!r}", value))
     return q
 
 
@@ -131,16 +132,16 @@ class Receipt:
             elif isinstance(raw, (list, tuple)) and 2 <= len(raw) <= 3:
                 name, price, qty = raw[0], raw[1], raw[2] if len(raw) > 2 else 1
             else:
-                raise ValueError(f"bad item {raw!r}: use {{\"name\", \"price\", \"qty\"}}")
+                raise ValueError(tr("bad item {0!r}: use {{\"name\", \"price\", \"qty\"}}", raw))
             if price is None:
-                raise ValueError(f"item {name!r} has no price")
+                raise ValueError(tr("item {0!r} has no price", name))
             items.append(Item(name, price, qty))
         r = cls(business=str(data.get("business") or ""), address=str(data.get("address") or ""),
                 url=str(data.get("url") or ""), items=items,
                 footer=str(data["footer"]) if data.get("footer") is not None else DEFAULT_FOOTER,
                 number=str(data.get("number") or ""))
         if not r.items:
-            raise ValueError("a receipt needs at least one product")
+            raise ValueError(tr("a receipt needs at least one product"))
         imaging.code128(r.number)        # fails early on a number the barcode can't hold
         return r
 
@@ -282,7 +283,7 @@ def render(r, width):
     mods = [0] * 10 + imaging.code128(r.number) + [0] * 10      # quiet zones
     scale = width // len(mods)
     if not scale:
-        raise ValueError(f"receipt number too long for a barcode on this paper: {r.number}")
+        raise ValueError(tr("receipt number too long for a barcode on this paper: {0}", r.number))
     left = (width - len(mods) * scale) // 2
     bar_h = px(64)
     for i, on in enumerate(mods):

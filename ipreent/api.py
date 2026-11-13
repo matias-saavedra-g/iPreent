@@ -15,6 +15,7 @@ from PIL import Image
 
 from . import ble, config, convert, imaging, protocol, spp
 from .models import Model, lookup
+from .i18n import tr
 
 
 # Serial (useSPP) models confirmed on hardware to also print over BLE. BLE needs no pairing,
@@ -61,20 +62,20 @@ def _transport(t, m, log):
         return spp.SppPrinter(m, port=t.port), {"port": t.port}
     if t.ble or not m.use_spp or (m.name in BLE_VERIFIED and t.address and not t.rfcomm):
         if not t.address:
-            raise PrinterNotFound("no BLE address")
+            raise PrinterNotFound(tr("no BLE address"))
         return ble.Printer(t.address, m), {"address": t.address, "transport": "ble"}
     if t.rfcomm:
         return spp.SppPrinter(m, mac=t.rfcomm), {"rfcomm": t.rfcomm}
     ports = spp.find_serial_ports(t.name)
     if ports:
-        log(f"{m.name} prints over Bluetooth serial: using {ports[0]}")
+        log(tr("{0} prints over Bluetooth serial: using {1}", m.name, ports[0]))
         return spp.SppPrinter(m, port=ports[0]), {"port": ports[0]}
     if t.address and ":" in t.address and hasattr(__import__("socket"), "AF_BLUETOOTH"):
-        log(f"{m.name} prints over Bluetooth serial: RFCOMM to {t.address}")
+        log(tr("{0} prints over Bluetooth serial: RFCOMM to {1}", m.name, t.address))
         return spp.SppPrinter(m, mac=t.address), {"rfcomm": t.address}
     raise PrinterNotFound(
-        f"{m.name} needs a Bluetooth serial link. Pair it in your Bluetooth settings first "
-        "(Windows then creates a COM port), or pass --port / --rfcomm.")
+        tr(("{0} needs a Bluetooth serial link. Pair it in your Bluetooth settings first "
+             "(Windows then creates a COM port), or pass --port / --rfcomm."), m.name))
 
 
 @contextlib.asynccontextmanager
@@ -94,12 +95,12 @@ async def connect(target=None, remember=True, log=_log):
     last_err = None
     for att in attempts:
         if att is None:
-            log("Scanning for printers...")
+            log(tr("Scanning for printers..."))
             found = await discover()
             if not found:
                 break
             name, addr, _ = found[0]
-            log(f"Found {name} [{addr}]")
+            log(tr("Found {0} [{1}]", name, addr))
             att = Target(name=name, address=addr, model=t.model, ble=t.ble, overrides=t.overrides)
         elif not (att.port or att.rfcomm or att.address):
             continue
@@ -113,7 +114,7 @@ async def connect(target=None, remember=True, log=_log):
             continue
         except Exception as e:   # connection failures: try the next option
             last_err = e
-            log(f"Could not connect ({type(e).__name__}: {e})")
+            log(tr("Could not connect ({0}: {1})", type(e).__name__, e))
             continue
         if remember:
             config.forget()
@@ -122,7 +123,7 @@ async def connect(target=None, remember=True, log=_log):
             yield p
         return
     raise PrinterNotFound(str(last_err) if last_err else
-                          "No printer found. Is it on and not connected to the phone app?")
+                          tr("No printer found. Is it on and not connected to the phone app?"))
 
 
 # ---- building jobs -------------------------------------------------------------------------

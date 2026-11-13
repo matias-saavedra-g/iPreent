@@ -11,6 +11,7 @@ import threading
 import time
 
 from . import protocol
+from .i18n import tr
 
 
 def find_serial_ports(name_hint=""):
@@ -47,7 +48,7 @@ class _SerialLink:
 class _SocketLink:
     def __init__(self, mac, channel=1):
         if not hasattr(socket, "AF_BLUETOOTH"):
-            raise RuntimeError("This Python has no RFCOMM sockets (macOS?). Pair it and use --port.")
+            raise RuntimeError(tr("This Python has no RFCOMM sockets (macOS?). Pair it and use --port."))
         self.s = socket.socket(socket.AF_BLUETOOTH, socket.SOCK_STREAM, socket.BTPROTO_RFCOMM)
         self.s.connect((mac, channel))
         self.s.settimeout(0.2)

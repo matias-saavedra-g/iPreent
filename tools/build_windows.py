@@ -48,6 +48,7 @@ def main():
         "--add-data", f"{ROOT / 'ipreent' / 'desktop' / 'icons'}{';'}ipreent/desktop/icons",
         "--add-data", f"{ROOT / 'ipreent' / 'templates'}{';'}ipreent/templates",
         "--add-data", f"{ROOT / 'ipreent' / 'fonts'}{';'}ipreent/fonts",
+        "--add-data", f"{ROOT / 'ipreent' / 'locales'}{';'}ipreent/locales",
         "--hidden-import", "resvg_py", "--collect-binaries", "resvg_py",   # draws the template SVGs
         "--collect-submodules", "bleak", "--collect-submodules", "winrt",
         # Qt modules the app doesn't use: keeps the exe smaller.

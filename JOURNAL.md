@@ -483,10 +483,34 @@ Robolectric test (home, busy home, tool screen, printer sheet, busy dialog, queu
 
 ### Open
 - [ ] Look at the Spanish screens on a phone (or Robolectric PNGs) for clipped text.
-- [ ] Windows app and CLI are still English only.
 
 ### Untranslated text falls back to English
 - User asked for it. Android already does this for strings (`values/` is the default), but release lint made a missing
   translation a build error and `LocalizationTest` demanded full coverage; both relaxed (`lint { disable += "MissingTranslation" }`,
   test checks only that existing translations are known and keep the same `%` arguments). Template JSON entries may be
   partial. Checked by deleting two Spanish strings: tests and `assembleRelease` still pass.
+
+### Windows app and command line in Spanish (v0.8.1)
+- User: translate everything, same behaviour (system language, debug override), English fallback always.
+- Python has no resource system, so `ipreent/i18n.py`: the English text is the key (`tr("Found {0}", x)`), the catalog is
+  `locales/es.json`, and anything missing, empty or with wrong placeholders falls back to English (tested). f-strings
+  became numbered placeholders so Spanish can reorder; singular/plural pairs use `trn`. A scratch script (not
+  committed) did the first wrapping of ~330 strings by AST; a few (plurals, nested conditionals, state words) by hand.
+- System language: `GetUserDefaultLocaleName` on Windows, `LC_ALL`/`LC_MESSAGES`/`LANGUAGE`/`LANG` elsewhere. The
+  debug choice is `language.json` in the config dir, shared by the CLI and the Windows app like `timing.json`;
+  `IPREENT_LANG` beats it (tests set it to `en` before anything is imported).
+- Windows: the widgets are built with their texts, so a language change **restarts the app** (single-instance
+  socket released first, API stopped, no restart while a print is open: then it applies on the next start). Qt's own
+  buttons come from `qtbase_es.qm` (PySide ships it; OK → Aceptar checked offscreen).
+- argparse: `argparse._ = tr` so "usage:", "options" and errors are Spanish too; the main docstring is one catalog key.
+- Template names, labels and example texts: `locales/templates.es.json` is the same file as Android's
+  `assets/i18n/templates.es.json` (a test compares them). `CATEGORIES` keeps English names; `category_name()` translates.
+- Kept English on purpose: HTTP API messages (programs read them), command names, flags and settings keys
+  (`darkness`, `paper-speed`, `language`), receipt text (already Spanish).
+- Checked: pytest (new `tests/test_i18n.py`), the CLI in Spanish (`--help`, overview, settings, template list and
+  `--fields`, errors), the Windows window and debug dialog rendered offscreen in Spanish (all nine modes).
+  Not checked on Windows itself: the restart after changing the language, the Windows system-language detection.
+
+### Open
+- [ ] On Windows: change the language in the debug dialog and see the app restart in the other language.
+- [ ] Look at the Spanish Android screens on a phone for clipped text.

@@ -190,7 +190,9 @@ def parse_notification(data):
 
 
 def describe_state(payload):
+    """The printer's state in words, in the app's language (STATE_BITS stays English for the code)."""
+    from .i18n import tr
     if not payload:
-        return "unknown"
-    flags = [name for bit, name in STATE_BITS.items() if payload[0] >> bit & 1]
-    return ", ".join(flags) or "ready"
+        return tr("unknown")
+    flags = [tr(name) for bit, name in STATE_BITS.items() if payload[0] >> bit & 1]
+    return ", ".join(flags) or tr("ready")

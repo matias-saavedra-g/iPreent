@@ -13,8 +13,9 @@ import threading
 from PySide6.QtCore import QObject, Signal
 
 from .. import api, busy, config, protocol
+from ..i18n import tr
 
-APP = "Windows app"
+APP = tr("Windows app")
 
 
 class Worker(QObject):
@@ -48,8 +49,8 @@ class Worker(QObject):
             if not self.lock.held:
                 def blocked(info, jid=jid):
                     if info:
-                        self.blocked.emit(jid, f"waiting for {info.get('app', 'another program')} · "
-                                               f"about {protocol.format_eta(busy.queue_remaining(info))}")
+                        self.blocked.emit(jid, tr("waiting for {0} · about {1}", info.get("app", tr("another program")),
+                                                  protocol.format_eta(busy.queue_remaining(info))))
                 await self.lock.wait(on_wait=blocked)
             self.jobs[jid]["state"] = "printing"
             self.started.emit(jid)
@@ -97,7 +98,7 @@ class Worker(QObject):
             async with api.connect(self.target(energy), log=lambda *a: None) as p:
                 rows, mode = build(p.model.width)
                 if not rows:
-                    raise ValueError("nothing to print")
+                    raise ValueError(tr("nothing to print"))
                 seconds = api.estimate(len(rows), p.model, copies, connect=False)
                 self.jobs[jid]["seconds"] = round(seconds, 1)
                 self.estimate.emit(jid, seconds)
@@ -114,13 +115,13 @@ class Worker(QObject):
         async def run(jid):
             async with api.connect(log=lambda *a: None) as p:
                 await p.send(protocol.frame(protocol.CMD_FEED, protocol.u16(lines), p.model.new_format))
-        return self.submit("Feed paper", run)
+        return self.submit(tr("Feed paper"), run)
 
     def refresh(self):
         async def run(jid):
             async with api.connect(log=lambda *a: None) as p:
                 await self._emit_status(p)
-        return self.submit("Check printer", run)
+        return self.submit(tr("Check printer"), run)
 
     async def _emit_status(self, p):
         st = await api.status_async(p)

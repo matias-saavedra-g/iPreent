@@ -29,6 +29,7 @@ notification. Everything prints by turning content into a list of rows (0/1 per 
 | `convert.py` | File type detection, PDF pages (pypdfium2), text files → images | `Sources.kt` (Android loading) |
 | `features.py` | Tool weights + decayed usage → home-screen order (`DESKTOP`, `CLI` tables) | `Features.kt` (`ANDROID` table) |
 | `busy.py` | One print at a time across programs on a PC: OS lock on `print.lock` + `busy.json` (label, start, estimate, queue behind) | none (Android is one app) |
+| `i18n.py` + `locales/*.json` | Language of the CLI and Windows app: system language, or the debug choice (`language.json` in the config dir, env `IPREENT_LANG` wins); `tr("English text {0}", value)` looks the exact English text up in `locales/<lang>.json` and falls back to English for anything missing or broken, `trn` for singular/plural; `locales/templates.<lang>.json` = template names, labels and example texts | `Lang.kt` + `res/values-es` (the template JSON is shared, byte for byte, with `assets/i18n`) |
 | `config.py` | Config dir: `%APPDATA%\ipreent` (Windows), `~/Library/Application Support/ipreent` (macOS), `~/.config/ipreent` | SharedPreferences |
 | `api.py` | `connect()` (explicit target → remembered printer → scan), `rows_for`, `print_rows` (times each print and calls `log_print`), `estimate`, `known_speed` / `debug_speed` / `set_debug_speed`, sync helpers `print_text/print_file/status` | `Printers.kt` |
 | `ble.py` / `spp.py` | Bluetooth LE (bleak) and Bluetooth serial (pyserial / RFCOMM socket) transports | `BlePrinter.kt` (BLE only) |
@@ -59,7 +60,10 @@ fails if the copies differ.
   (tray menu, Ctrl+Alt+P hotkey, single instance via `QLocalServer`, HTTP API, print-dialog bridge, autostart).
   Modes are keys: `photo, document, text, receipt, template, list, qr, banner, barcode` (saved as `mode_key`).
   Printer menu: holding Shift while opening it adds *Debug settings…* (paper speed for estimates, shared with
-  the CLI through `timing.json`; stays listed afterwards, QSettings `debug_unlocked`).
+  the CLI through `timing.json`, and the *Language* override, shared through `language.json`; stays listed
+  afterwards, QSettings `debug_unlocked`). Changing the language restarts the app (the windows are built with their
+  texts), unless a print is in progress. Qt's own texts (OK, Cancel, file dialogs) come from `qtbase_<lang>.qm`.
+  The HTTP API (`server.py`) keeps its messages in English on purpose: programs read them.
   Templates mode: filter chips (scroll sideways; in-season category first) + a horizontal strip of thumbnails (made the first time the mode opens) above the
   chosen template's text boxes; *Add SVG…*/dropped `.svg` files are copied to `<config dir>/templates` (Mine).
   Print → `confirm_busy` (asks if a job is open here or another program holds the lock) → paper-slip animation →
@@ -92,7 +96,8 @@ fails if the copies differ.
   `MissingTranslation` is off so that is not a build error), and a template or box missing from the JSON keeps its English
   text. `LocalizationTest` only checks that what exists matches (no unknown names, same `%` arguments).
   Add a language = a `values-xx/strings.xml`, an optional `templates.xx.json`, and an entry in `Lang.CHOICES`.
-  The Windows app and the CLI are English only. Receipts always print in Spanish (BOLETA).
+  The Windows app and the CLI have their own, equivalent system in `ipreent/i18n.py` (above): same fallback, same
+  debug override. Receipts always print in Spanish (BOLETA).
 - `Printers.kt`: app-wide state: model table, remembered printer (`printerName` flow), darkness, the queue
   (`QueueEntry`: waiting/connecting/printing/done/failed/cancelled, thumbnail, estimate, progress; cancel waiting
   jobs), estimate speed (nominal 10 mm/s or `debugSpeed`), history (each print saved as its exact 1-bit PNG, last 50).
@@ -104,7 +109,8 @@ fails if the copies differ.
 ## Where each app keeps state
 | App | Where | What |
 |---|---|---|
-| CLI + Windows (shared) | config dir: `config.json` | remembered printer (name, address/port, transport, model) |
+| CLI + Windows (shared) | config dir: `language.json` | `language`: `es` or `en` when forced in the debug settings (absent = follow the system) |
+| | `config.json` | remembered printer (name, address/port, transport, model) |
 | | `timing.json` | `debug_mm_per_s` (debug speed for estimates; absent = 10 mm/s), number of timed prints, `log` of the last 100 timed prints (energy, lines, seconds, black share, whether the printer said "printing"); older files' learnt `speeds` are ignored and dropped |
 | | `print.lock`, `busy.json` | cross-program lock and the job holding it |
 | CLI | `receipt.json`, `settings.json`, `usage.json` | receipt header; default darkness; command usage |

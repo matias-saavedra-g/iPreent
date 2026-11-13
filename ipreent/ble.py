@@ -4,6 +4,7 @@ import asyncio
 from bleak import BleakClient, BleakScanner
 
 from . import protocol
+from .i18n import tr
 
 SERVICES = ["0000ae00", "0000ff00", "0000ab00", "0000ae80", "49535343"]
 WRITE_CHARS = ["0000ae01", "0000ff02", "0000ab01", "0000ae81", "49535343-8841"]
@@ -47,7 +48,7 @@ class Printer:
                 if _match(ch.uuid, NOTIFY_CHARS) and "notify" in ch.properties:
                     await self.client.start_notify(ch, self._on_notify)
         if self.write_char is None:
-            raise RuntimeError("No known write characteristic; is this a supported printer?")
+            raise RuntimeError(tr("No known write characteristic; is this a supported printer?"))
         return self
 
     async def __aexit__(self, *exc):

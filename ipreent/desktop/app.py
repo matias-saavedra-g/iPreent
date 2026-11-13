@@ -14,8 +14,8 @@ from pathlib import Path
 
 from PIL import Image
 from PySide6.QtCore import (QAbstractAnimation, QAbstractNativeEventFilter, QBuffer, QEasingCurve,
-                            QIODevice, QPoint, QPointF, QRectF, QSettings, QSize, Qt, QTimer, QUrl,
-                            QVariantAnimation)
+                            QIODevice, QLibraryInfo, QPoint, QPointF, QProcess, QRectF, QSettings, QSize, Qt, QTimer,
+                            QTranslator, QUrl, QVariantAnimation)
 from PySide6.QtGui import (QAction, QActionGroup, QBrush, QColor, QDesktopServices, QFont, QFontDatabase,
                            QGuiApplication, QIcon, QImage, QKeySequence, QPainter, QPixmap, QShortcut)
 from PySide6.QtNetwork import QLocalServer, QLocalSocket
@@ -30,6 +30,8 @@ from PySide6.QtWidgets import (QAbstractItemView, QApplication, QButtonGroup, QC
 from .. import api, busy, config, convert, features, imaging, protocol, receipt, templates
 from ..cli import ENERGY_PRESETS
 from ..models import details, lookup
+from .. import i18n
+from ..i18n import tr, trn
 from . import spool
 from .server import Server
 from .worker import Worker
@@ -37,11 +39,11 @@ from .worker import Worker
 APP = "iPreent"
 HERE = Path(__file__).parent
 DARKNESS = list(ENERGY_PRESETS.values())          # slider 1..5
-DARKNESS_NAMES = ["Lightest", "Lighter", "Normal", "Darker", "Darkest"]
+DARKNESS_NAMES = [tr("Lightest"), tr("Lighter"), tr("Normal"), tr("Darker"), tr("Darkest")]
 # key: (label, Segoe Fluent / MDL2 icon glyph). The nav order comes from features.DESKTOP.
-MODES = {"photo": ("Photo", "\uE91B"), "document": ("Document", "\uE8A5"), "text": ("Text", "\uE8D2"),
-         "receipt": ("Receipt", "\uE719"), "list": ("Checklist", "\uE9D5"), "qr": ("QR code", "\uED14"),
-         "banner": ("Banner", "\uE7C1"), "barcode": ("Barcode", "\uE8EC"), "template": ("Templates", "\uEB52")}
+MODES = {"photo": (tr("Photo"), "\uE91B"), "document": (tr("Document"), "\uE8A5"), "text": (tr("Text"), "\uE8D2"),
+         "receipt": (tr("Receipt"), "\uE719"), "list": (tr("Checklist"), "\uE9D5"), "qr": (tr("QR code"), "\uED14"),
+         "banner": (tr("Banner"), "\uE7C1"), "barcode": (tr("Barcode"), "\uE8EC"), "template": (tr("Templates"), "\uEB52")}
 OLD_MODES = ["photo", "text", "list", "banner", "qr", "barcode", "receipt"]   # saved as a row number before 0.5
 GLYPH_SETTINGS, GLYPH_PRINTER = "\uE713", "\uE749"
 ICON_FONTS = ("Segoe Fluent Icons", "Segoe MDL2 Assets")
@@ -233,12 +235,12 @@ class HotkeyFilter(QAbstractNativeEventFilter):
 class PrinterDialog(QDialog):
     def __init__(self, worker, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Choose printer")
+        self.setWindowTitle(tr("Choose printer"))
         self.worker = worker
         self.list = QListWidget()
-        self.info = QLabel("Turn the printer on and close the phone app, then scan.")
+        self.info = QLabel(tr("Turn the printer on and close the phone app, then scan."))
         self.info.setWordWrap(True)
-        scan = QPushButton("Scan")
+        scan = QPushButton(tr("Scan"))
         scan.clicked.connect(self.scan)
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         buttons.accepted.connect(self.accept)
@@ -253,7 +255,7 @@ class PrinterDialog(QDialog):
 
     def scan(self):
         self.list.clear()
-        self.info.setText("Scanning…")
+        self.info.setText(tr("Scanning…"))
         self.worker.scan()
 
     def show_found(self, found):
@@ -262,8 +264,8 @@ class PrinterDialog(QDialog):
             it = QListWidgetItem(f"{name or '(no name)'}   ·   {model}   ·   {addr}")
             it.setData(Qt.UserRole, (name, addr))
             self.list.addItem(it)
-        self.info.setText(f"Found {len(found)} printer(s)." if found else
-                          "No printers found. Is it on, and not connected to the phone?")
+        self.info.setText(tr("Found {0} printer(s).", len(found)) if found else
+                          tr("No printers found. Is it on, and not connected to the phone?"))
         if found:
             self.list.setCurrentRow(0)
 
@@ -333,13 +335,13 @@ class MainWindow(QMainWindow):
         # Printer card: the whole card and its gear open the printer settings (darkness, status,
         # change, feed, forget), so it reads as something you can click.
         card = ClickFrame(self.printer_menu, objectName="card")
-        card.setToolTip("Printer settings")
+        card.setToolTip(tr("Printer settings"))
         cl = QVBoxLayout(card)
         top = QHBoxLayout()
         self.p_icon = QLabel()
         self.p_name = QLabel()
         self.p_name.setStyleSheet("font-weight: 600; font-size: 14px")
-        self.gear = QToolButton(objectName="gear", toolTip="Printer settings", cursor=Qt.PointingHandCursor)
+        self.gear = QToolButton(objectName="gear", toolTip=tr("Printer settings"), cursor=Qt.PointingHandCursor)
         if icon_font():
             self.gear.setIcon(glyph_icon(GLYPH_SETTINGS, 18))
             self.gear.setIconSize(QSize(18, 18))
@@ -352,7 +354,7 @@ class MainWindow(QMainWindow):
         top.addWidget(self.gear)
         self.p_state = QLabel(wordWrap=True)
         self.p_dark = QLabel(objectName="subtle")
-        self.pick = QPushButton("Choose printer…")
+        self.pick = QPushButton(tr("Choose printer…"))
         self.pick.clicked.connect(self.choose_printer)
         cl.addLayout(top)
         cl.addWidget(self.p_state)
@@ -362,7 +364,7 @@ class MainWindow(QMainWindow):
 
         # Tools, most likely first. The order is worked out once at start-up (features.py) so
         # nothing moves while you're using it.
-        lay.addWidget(self._section("Create"))
+        lay.addWidget(self._section(tr("Create")))
         self.nav = QListWidget(objectName="nav")
         self.order = features.ranked(features.DESKTOP, self.usage)
         self.nav.setIconSize(QSize(18, 18))
@@ -376,7 +378,7 @@ class MainWindow(QMainWindow):
         lay.addWidget(self.nav)
 
         head = QHBoxLayout()
-        head.addWidget(self._section("Queue"))
+        head.addWidget(self._section(tr("Queue")))
         head.addStretch(1)
         self.queue_summary = QLabel(objectName="subtle")
         self.queue_summary.setStyleSheet("padding-top: 8px")
@@ -388,7 +390,7 @@ class MainWindow(QMainWindow):
 
     def printer_menu(self):
         m = QMenu(self)
-        dark = m.addMenu("Darkness")
+        dark = m.addMenu(tr("Darkness"))
         group = QActionGroup(dark)
         for i, name in enumerate(DARKNESS_NAMES, 1):
             a = dark.addAction(name)
@@ -396,18 +398,18 @@ class MainWindow(QMainWindow):
             a.setChecked(self.dark.value() == i)
             a.triggered.connect(lambda _=False, i=i: self.dark.setValue(i))
             group.addAction(a)
-        m.addAction("Check status and battery", self.worker.refresh)
-        details = m.addAction("Printer details…", self.show_details)
+        m.addAction(tr("Check status and battery"), self.worker.refresh)
+        details = m.addAction(tr("Printer details…"), self.show_details)
         details.setEnabled(bool(config.load().get("name")))
-        m.addAction("Change printer…", self.choose_printer)
-        m.addAction("Feed paper", self.worker.feed)
+        m.addAction(tr("Change printer…"), self.choose_printer)
+        m.addAction(tr("Feed paper"), self.worker.feed)
         # Hidden debug settings: hold Shift while opening this menu (they stay listed afterwards).
         if (QApplication.keyboardModifiers() & Qt.ShiftModifier
                 or self.settings.value("debug_unlocked", False, bool)):
             self.settings.setValue("debug_unlocked", True)
-            m.addAction("Debug settings…", self.debug_settings)
+            m.addAction(tr("Debug settings…"), self.debug_settings)
         m.addSeparator()
-        forget = m.addAction("Forget this printer", self.forget_printer)
+        forget = m.addAction(tr("Forget this printer"), self.forget_printer)
         forget.setEnabled(bool(config.load().get("name")))
         m.popup(self.gear.mapToGlobal(QPoint(0, self.gear.height())))
         return m
@@ -418,30 +420,38 @@ class MainWindow(QMainWindow):
         m = self.model()
         rows = "".join(f"<tr><td style='padding-right:12px'><b>{label}</b></td><td>{value}</td></tr>"
                        for label, value in details(m))
-        QMessageBox.information(self, "Printer details",
-                                f"<p>{cfg.get('name', m.name)} ({m.name} profile)</p><table>{rows}</table>")
+        QMessageBox.information(self, tr("Printer details"),
+                                tr("<p>{0} ({1} profile)</p><table>{2}</table>", cfg.get('name', m.name), m.name, rows))
 
     def debug_settings(self):
-        """Paper speed used for time estimates (shared with `ipreent settings paper-speed`)."""
+        """Paper speed used for time estimates (shared with `ipreent settings paper-speed`) and the language
+        override (shared with `ipreent settings language`); the language applies after the app restarts."""
         d = QDialog(self)
-        d.setWindowTitle("Debug settings")
+        d.setWindowTitle(tr("Debug settings"))
         lay = QVBoxLayout(d)
-        note = (f"Time estimates assume the printer's slowest nominal speed, "
-                f"{protocol.NOMINAL_MM_PER_S:g} mm/s, at every darkness. Change it only to test "
-                f"another figure; it's shared with the command line.")
+        note = (tr(("Time estimates assume the printer's slowest nominal speed, {0:g} mm/s, at every "
+                     "darkness. Change it only to test another figure; it's shared with the command "
+                     "line."), protocol.NOMINAL_MM_PER_S))
         seen = api.last_measured_speed()
         if seen:
-            note += f"<br><br>The last timed print looked like about {seen:.1f} mm/s (not used: not reliable yet)."
+            note += tr(("<br><br>The last timed print looked like about {0:.1f} mm/s (not used: not "
+                         "reliable yet)."), seen)
         info = QLabel(note, wordWrap=True)
         lay.addWidget(info)
         form = QFormLayout()
         spin = QDoubleSpinBox(decimals=1, singleStep=0.5, suffix=" mm/s")
         spin.setRange(protocol.MIN_MM_PER_S, protocol.MAX_MM_PER_S)
         spin.setValue(api.known_speed())
-        form.addRow("Paper speed", spin)
+        form.addRow(tr("Paper speed"), spin)
+        lang = QComboBox()
+        for c in i18n.CHOICES:
+            lang.addItem(i18n.language_name(c), c)
+        lang.setCurrentIndex(max(0, lang.findData(i18n.choice())))
+        lang.setToolTip(tr("Overrides the system language; for testing translations. The app restarts to apply it."))
+        form.addRow(tr("Language"), lang)
         lay.addLayout(form)
         box = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel | QDialogButtonBox.Reset)
-        box.button(QDialogButtonBox.Reset).setText(f"Nominal ({protocol.NOMINAL_MM_PER_S:g} mm/s)")
+        box.button(QDialogButtonBox.Reset).setText(tr("Nominal ({0:g} mm/s)", protocol.NOMINAL_MM_PER_S))
         box.button(QDialogButtonBox.Reset).clicked.connect(lambda: spin.setValue(protocol.NOMINAL_MM_PER_S))
         box.accepted.connect(d.accept)
         box.rejected.connect(d.reject)
@@ -451,6 +461,9 @@ class MainWindow(QMainWindow):
         v = spin.value()
         api.set_debug_speed(None if abs(v - protocol.NOMINAL_MM_PER_S) < 1e-9 else v)
         self.update_length()
+        if lang.currentData() != i18n.choice():
+            i18n.set_choice(lang.currentData())
+            QApplication.instance().restart_to_apply_language()
         return v
 
     def forget_printer(self):
@@ -470,18 +483,18 @@ class MainWindow(QMainWindow):
 
         # Photo and Document: the two most used, each with its own file list and defaults
         self.files_label = {}
-        add("photo", self._files_editor("photo", "Drop photos or pictures here, or paste one with Ctrl+V"))
-        add("document", self._files_editor("document", "Drop PDFs or text files here, or print from any app\n"
-                                                       "with File › Print › iPreent"))
+        add("photo", self._files_editor("photo", tr("Drop photos or pictures here, or paste one with Ctrl+V")))
+        add("document", self._files_editor("document", tr("Drop PDFs or text files here, or print from any app\n"
+                                                       "with File › Print › iPreent")))
 
         # Text
-        self.text = QPlainTextEdit(placeholderText="Type something to print…")
+        self.text = QPlainTextEdit(placeholderText=tr("Type something to print…"))
         self.text_size = QSpinBox(minimum=12, maximum=120, value=28, suffix=" px")
-        add("text", self._editor(self.text, ("Size", self.text_size)))
+        add("text", self._editor(self.text, (tr("Size"), self.text_size)))
 
         # Checklist
-        self.list_title = QLineEdit(placeholderText="Title (optional)")
-        self.list_items = QPlainTextEdit(placeholderText="One item per line")
+        self.list_title = QLineEdit(placeholderText=tr("Title (optional)"))
+        self.list_items = QPlainTextEdit(placeholderText=tr("One item per line"))
         cw = QWidget()
         cl = QVBoxLayout(cw)
         cl.setContentsMargins(0, 0, 0, 0)
@@ -490,13 +503,13 @@ class MainWindow(QMainWindow):
         add("list", cw)
 
         # Banner, QR
-        self.banner = QLineEdit(placeholderText="Banner text (prints along the paper)")
-        self.qr = QLineEdit(placeholderText="Link or text for the QR code")
+        self.banner = QLineEdit(placeholderText=tr("Banner text (prints along the paper)"))
+        self.qr = QLineEdit(placeholderText=tr("Link or text for the QR code"))
         add("banner", self._editor(self.banner))
         add("qr", self._editor(self.qr))
 
         # Barcode
-        self.barcode = QLineEdit(placeholderText="Product code, order number… (Code 128)")
+        self.barcode = QLineEdit(placeholderText=tr("Product code, order number… (Code 128)"))
         self.barcode_error = QLabel()
         self.barcode_error.setStyleSheet("color: palette(placeholder-text)")
         bw = self._editor(self.barcode)
@@ -535,9 +548,9 @@ class MainWindow(QMainWindow):
         drop = QLabel(hint, objectName="drop", alignment=Qt.AlignCenter)
         fr = QHBoxLayout()
         self.files_label[kind] = QLabel(wordWrap=True)
-        openb = QPushButton("Open…")
+        openb = QPushButton(tr("Open…"))
         openb.clicked.connect(self.open_files)
-        clear = QPushButton("Clear")
+        clear = QPushButton(tr("Clear"))
         clear.clicked.connect(lambda: (self.sources[kind].clear(), self.schedule()))
         fr.addWidget(self.files_label[kind], 1)
         fr.addWidget(openb)
@@ -553,15 +566,15 @@ class MainWindow(QMainWindow):
         lay = QHBoxLayout(w)
         lay.setContentsMargins(0, 0, 0, 0)
         form = QFormLayout()
-        self.r_business = QLineEdit(s.value("receipt_business", ""), placeholderText="Business name")
-        self.r_address = QLineEdit(s.value("receipt_address", ""), placeholderText="Street, city")
+        self.r_business = QLineEdit(s.value("receipt_business", ""), placeholderText=tr("Business name"))
+        self.r_address = QLineEdit(s.value("receipt_address", ""), placeholderText=tr("Street, city"))
         self.r_url = QLineEdit(s.value("receipt_url", ""), placeholderText="example.cl")
         self.r_footer = QLineEdit(s.value("receipt_footer", receipt.DEFAULT_FOOTER),
-                                  placeholderText="Message at the bottom")
-        form.addRow("Business", self.r_business)
-        form.addRow("Address", self.r_address)
-        form.addRow("Website", self.r_url)
-        form.addRow("Footer", self.r_footer)
+                                  placeholderText=tr("Message at the bottom"))
+        form.addRow(tr("Business"), self.r_business)
+        form.addRow(tr("Address"), self.r_address)
+        form.addRow(tr("Website"), self.r_url)
+        form.addRow(tr("Footer"), self.r_footer)
         self.r_total = QLabel()
         self.r_total.setStyleSheet("font-weight: 700; font-size: 18px")
         self.r_error = QLabel(wordWrap=True)
@@ -572,7 +585,7 @@ class MainWindow(QMainWindow):
 
         side = QVBoxLayout()
         self.r_items = QTableWidget(0, 3)
-        self.r_items.setHorizontalHeaderLabels(["Product", "Qty", "Price (CLP)"])
+        self.r_items.setHorizontalHeaderLabels([tr("Product"), tr("Qty"), tr("Price (CLP)")])
         head = self.r_items.horizontalHeader()
         head.setSectionResizeMode(0, QHeaderView.Stretch)
         for col, width in ((1, 56), (2, 100)):
@@ -589,9 +602,9 @@ class MainWindow(QMainWindow):
             self.add_receipt_row(name, qty, price, focus=False)
         self.r_items.itemChanged.connect(self.schedule)
         buttons = QHBoxLayout()
-        add = QPushButton("Add product")
+        add = QPushButton(tr("Add product"))
         add.clicked.connect(lambda: self.add_receipt_row())
-        remove = QPushButton("Remove")
+        remove = QPushButton(tr("Remove"))
         remove.clicked.connect(self.remove_receipt_rows)
         buttons.addWidget(add)
         buttons.addWidget(remove)
@@ -647,18 +660,18 @@ class MainWindow(QMainWindow):
         for n, (name, qty, price) in enumerate(self.receipt_rows(), 1):
             try:
                 if not name:
-                    raise ValueError("no product name")
+                    raise ValueError(tr("no product name"))
                 if not price:
-                    raise ValueError("no price")
+                    raise ValueError(tr("no price"))
                 items.append(receipt.Item(name, price, qty or 1))
             except ValueError as e:
-                self.r_error.setText(f"Row {n}: {e}")
+                self.r_error.setText(tr("Row {0}: {1}", n, e))
                 return None
         r = receipt.Receipt(self.r_business.text(), self.r_address.text(), self.r_url.text(), items,
                             self.r_footer.text())
-        self.r_total.setText(f"Total {receipt.clp(r.total)}" if items else "")
+        self.r_total.setText(tr("Total {0}", receipt.clp(r.total)) if items else "")
         if not items:
-            self.r_error.setText("Add products with their quantity and price.")
+            self.r_error.setText(tr("Add products with their quantity and price."))
             return None
         return r
 
@@ -684,7 +697,7 @@ class MainWindow(QMainWindow):
         today = time.localtime()
         order = templates.category_order(templates.builtin(), today.tm_mon, today.tm_mday)
         for key in ["all", *order, *(k for k in templates.CATEGORIES if k not in order)]:
-            label = "All" if key == "all" else templates.CATEGORIES[key]
+            label = tr("All") if key == "all" else templates.category_name(key)
             b = QPushButton(label, objectName="chip", checkable=True, cursor=Qt.PointingHandCursor)
             b.setProperty("category", key)
             b.setChecked(key == "all")
@@ -698,9 +711,9 @@ class MainWindow(QMainWindow):
         chip_scroll.setFixedHeight(chip_box.sizeHint().height() + chip_scroll.horizontalScrollBar().sizeHint().height() + 2)
         top = QHBoxLayout()
         top.addWidget(chip_scroll, 1)
-        add = QPushButton("Add SVG…", toolTip="Use your own SVG file as a template (it goes to Mine)")
+        add = QPushButton(tr("Add SVG…"), toolTip=tr("Use your own SVG file as a template (it goes to Mine)"))
         add.clicked.connect(self.add_template_files)
-        folder = QPushButton("Folder", toolTip="Open the folder with your own templates")
+        folder = QPushButton(tr("Folder"), toolTip=tr("Open the folder with your own templates"))
         folder.clicked.connect(self.open_template_folder)
         top.addWidget(add, 0, Qt.AlignTop)
         top.addWidget(folder, 0, Qt.AlignTop)
@@ -719,7 +732,7 @@ class MainWindow(QMainWindow):
         v.addWidget(self.tpl_form_box)
         bottom = QHBoxLayout()
         self.tpl_note = QLabel(objectName="subtle", wordWrap=True)
-        reset = QPushButton("Example text", toolTip="Put the template's example text back")
+        reset = QPushButton(tr("Example text"), toolTip=tr("Put the template's example text back"))
         reset.clicked.connect(self.reset_template_text)
         bottom.addWidget(self.tpl_note, 1)
         bottom.addWidget(reset)
@@ -742,7 +755,7 @@ class MainWindow(QMainWindow):
                     continue
                 it = QListWidgetItem(QIcon(pix), t.name)
                 it.setData(Qt.UserRole, t)
-                it.setToolTip(f"{t.name} · {templates.CATEGORIES[t.category]}")
+                it.setToolTip(f"{t.name} · {templates.category_name(t.category)}")
                 self.gallery.addItem(it)
                 if pick is None or t.id == want:
                     pick = it
@@ -798,12 +811,12 @@ class MainWindow(QMainWindow):
             self.tpl_form.addRow(f.label, e)
         notes = []
         if not t.fields:
-            notes.append("No text boxes: prints the picture as it is.")
+            notes.append(tr("No text boxes: prints the picture as it is."))
         if any(f.list != "none" for f in t.fields):
-            notes.append("One item per line.")
+            notes.append(tr("One item per line."))
         if t.stretch is not None:
-            notes.append("Grows longer when the text needs room.")
-        self.tpl_note.setText(" ".join(notes) or "Text shrinks to fit the design.")
+            notes.append(tr("Grows longer when the text needs room."))
+        self.tpl_note.setText(" ".join(notes) or tr("Text shrinks to fit the design."))
         self.schedule()
 
     def template_text(self, key, text):
@@ -823,7 +836,7 @@ class MainWindow(QMainWindow):
 
     def add_template_files(self, paths=None):
         if not paths:
-            paths, _ = QFileDialog.getOpenFileNames(self, "Add SVG templates", "", "SVG pictures (*.svg)")
+            paths, _ = QFileDialog.getOpenFileNames(self, tr("Add SVG templates"), "", tr("SVG pictures (*.svg)"))
         added = None
         for p in paths:
             try:
@@ -834,7 +847,7 @@ class MainWindow(QMainWindow):
                 shutil.copyfile(p, d / Path(p).name)
                 added = t.id
             except (OSError, UnicodeDecodeError, templates.TemplateError) as e:
-                QMessageBox.warning(self, APP, f"Can't use {Path(p).name} as a template:\n{e}")
+                QMessageBox.warning(self, APP, tr("Can't use {0} as a template:\n{1}", Path(p).name, e))
         if added:
             self.set_mode("template")
             mine = next(b for b in self.tpl_chips.buttons() if b.property("category") == "mine")
@@ -862,7 +875,7 @@ class MainWindow(QMainWindow):
         w.setFixedWidth(300)
         lay = QVBoxLayout(w)
         lay.setContentsMargins(16, 16, 16, 16)
-        title = QLabel("Print settings")
+        title = QLabel(tr("Print settings"))
         title.setStyleSheet("font-weight: 700; font-size: 16px")
         lay.addWidget(title)
         form = QFormLayout()
@@ -876,32 +889,32 @@ class MainWindow(QMainWindow):
         self.dark_label = QLabel()
         self.bright = QSlider(Qt.Horizontal, minimum=-50, maximum=50, value=int(s.value("brightness", 0)))
         self.contrast = QSlider(Qt.Horizontal, minimum=50, maximum=200, value=int(s.value("contrast", 100)))
-        self.pages = QLineEdit(placeholderText="All pages (e.g. 1-2,5)")
-        self.rotate = QCheckBox("Rotate wide pictures to fit")
+        self.pages = QLineEdit(placeholderText=tr("All pages (e.g. 1-2,5)"))
+        self.rotate = QCheckBox(tr("Rotate wide pictures to fit"))
         self.rotate.setChecked(s.value("rotate", "true") == "true")
-        self.trim = QCheckBox("Trim white margins of PDF pages")
+        self.trim = QCheckBox(tr("Trim white margins of PDF pages"))
         self.trim.setChecked(s.value("trim", "true") == "true")
         self.doc_look = QComboBox()
-        self.doc_look.addItem("Sharp (text, line art)", "threshold")
-        self.doc_look.addItem("Dithered (pictures)", "dither")
+        self.doc_look.addItem(tr("Sharp (text, line art)"), "threshold")
+        self.doc_look.addItem(tr("Dithered (pictures)"), "dither")
         self.doc_look.setCurrentIndex(max(0, self.doc_look.findData(s.value("doc_look", "threshold"))))
         self.copies = QSpinBox(minimum=1, maximum=50, value=1)
         self.dialog_quality = QComboBox()
-        self.dialog_quality.addItem("Sharp (text, receipts)", "threshold")
-        self.dialog_quality.addItem("Photo (dithered)", "atkinson")
+        self.dialog_quality.addItem(tr("Sharp (text, receipts)"), "threshold")
+        self.dialog_quality.addItem(tr("Photo (dithered)"), "atkinson")
         self.dialog_quality.setCurrentIndex(max(0, self.dialog_quality.findData(
             s.value("dialog_quality", "threshold"))))
 
-        form.addRow("Look", self.doc_look)
-        form.addRow("Dithering", self.dither)
+        form.addRow(tr("Look"), self.doc_look)
+        form.addRow(tr("Dithering"), self.dither)
         form.addRow(self.dark_label, self.dark)
-        form.addRow("Brightness", self.bright)
-        form.addRow("Contrast", self.contrast)
-        form.addRow("Pages", self.pages)
+        form.addRow(tr("Brightness"), self.bright)
+        form.addRow(tr("Contrast"), self.contrast)
+        form.addRow(tr("Pages"), self.pages)
         form.addRow(self.rotate)
         form.addRow(self.trim)
-        form.addRow("Copies", self.copies)
-        form.addRow("Jobs from the Windows print dialog", self.dialog_quality)
+        form.addRow(tr("Copies"), self.copies)
+        form.addRow(tr("Jobs from the Windows print dialog"), self.dialog_quality)
         lay.addLayout(form)
         self.form = form
         # Rows that only mean something for some modes; hidden elsewhere to keep the pane short.
@@ -911,14 +924,14 @@ class MainWindow(QMainWindow):
         lay.addStretch(1)
         self.length = QLabel()
         lay.addWidget(self.length)
-        self.print_btn = QPushButton("Print", objectName="print")
+        self.print_btn = QPushButton(tr("Print"), objectName="print")
         self.print_btn.clicked.connect(self.print_now)
         lay.addWidget(self.print_btn)
         self.api_label = QLabel()
         self.api_label.setStyleSheet("color: palette(placeholder-text); font-size: 11px")
         self.api_label.setWordWrap(True)
         self.api_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        api = QPushButton("API settings…", flat=True)
+        api = QPushButton(tr("API settings…"), flat=True)
         api.clicked.connect(lambda: QApplication.instance().api_dialog())
         lay.addWidget(self.api_label)
         lay.addWidget(api)
@@ -987,9 +1000,9 @@ class MainWindow(QMainWindow):
         self.debounce.start()
 
     def update_labels(self, *_):
-        self.dark_label.setText(f"Darkness: {DARKNESS_NAMES[self.dark.value() - 1]}")
+        self.dark_label.setText(tr("Darkness: {0}", DARKNESS_NAMES[self.dark.value() - 1]))
         n = self.copies.value()
-        self.print_btn.setText("Print" if n == 1 else f"Print {n} copies")
+        self.print_btn.setText(tr("Print") if n == 1 else tr("Print {0} copies", n))
         self.print_btn.setEnabled(bool(self.rows))
         self.update_length()
 
@@ -1001,7 +1014,7 @@ class MainWindow(QMainWindow):
         n = self.copies.value()
         mm = len(self.rows) * 25.4 / m.dpi * n
         secs = api.estimate(len(self.rows), m, n, energy=self.energy())
-        self.length.setText(f"About {mm:.0f} mm of paper, {protocol.format_eta(secs)} to print")
+        self.length.setText(tr("About {0:.0f} mm of paper, {1} to print", mm, protocol.format_eta(secs)))
 
     # -- content --
 
@@ -1030,7 +1043,7 @@ class MainWindow(QMainWindow):
                     else:
                         out += [(im, t or sharp) for im, t in convert.to_images(src, width)]
                 except Exception as e:
-                    QMessageBox.warning(self, APP, f"Can't open {label}:\n{e}")
+                    QMessageBox.warning(self, APP, tr("Can't open {0}:\n{1}", label, e))
             self._cache[kind] = (key, out)
         return self._cache[kind][1]
 
@@ -1063,7 +1076,7 @@ class MainWindow(QMainWindow):
             try:
                 return [(templates.render(t, self.tpl_values.get(t.id, {}), width), True)]
             except templates.TemplateError as e:
-                self.tpl_note.setText(f"Can't draw this template: {e}")
+                self.tpl_note.setText(tr("Can't draw this template: {0}", e))
                 return []
         t = self.barcode.text().strip()
         self.barcode_error.setText("")
@@ -1072,7 +1085,7 @@ class MainWindow(QMainWindow):
         try:
             return [(imaging.barcode_image(t, width), True)]
         except ValueError as e:
-            self.barcode_error.setText(f"Can't make this barcode: {e}")
+            self.barcode_error.setText(tr("Can't make this barcode: {0}", e))
             return []
 
     def snapshot(self, method=None):
@@ -1101,16 +1114,16 @@ class MainWindow(QMainWindow):
             QApplication.restoreOverrideCursor()
         for kind, label in self.files_label.items():
             names = [l for l, _ in self.sources[kind]]
-            label.setText(", ".join(names) if names else "Nothing added yet.")
+            label.setText(", ".join(names) if names else tr("Nothing added yet."))
         if self.rows:
             self.paper.setPixmap(QPixmap.fromImage(qimage_from_rows(self.rows, m.width)))
             mm = len(self.rows) * 25.4 / m.dpi
-            self.caption.setText(f"{m.width} × {len(self.rows)} dots · {m.width * 25.4 / m.dpi:.0f} × {mm:.0f} mm")
+            self.caption.setText(tr("{0} × {1} dots · {2:.0f} × {3:.0f} mm", m.width, len(self.rows), m.width * 25.4 / m.dpi, mm))
             self._preview_model = m
             self.update_length()
         else:
             self.paper.setPixmap(QPixmap())
-            self.paper.setText("Preview appears here")
+            self.paper.setText(tr("Preview appears here"))
             self.caption.setText("")
             self.length.setText("")
         self.update_labels()
@@ -1130,7 +1143,7 @@ class MainWindow(QMainWindow):
             self.sources[k].append((Path(p).name, str(p)))
             first = first or k
         for img in images:
-            self.sources[kind or "photo"].append(("Pasted picture", img))
+            self.sources[kind or "photo"].append((tr("Pasted picture"), img))
             first = first or kind or "photo"
         if first:
             self.set_mode(first)
@@ -1138,10 +1151,10 @@ class MainWindow(QMainWindow):
 
     def open_files(self):
         kind = self.mode() if self.mode() in ("photo", "document") else None
-        filters = {"photo": "Pictures (*.png *.jpg *.jpeg *.gif *.bmp *.webp *.tif *.tiff);;All files (*)",
-                   "document": "PDFs and text (*.pdf *.txt *.md);;All files (*)"}
-        paths, _ = QFileDialog.getOpenFileNames(self, "Open", "", filters.get(kind, "Images, PDFs, text (*.png "
-                                                "*.jpg *.jpeg *.gif *.bmp *.webp *.tif *.tiff *.pdf *.txt *.md);;All files (*)"))
+        filters = {"photo": tr("Pictures (*.png *.jpg *.jpeg *.gif *.bmp *.webp *.tif *.tiff);;All files (*)"),
+                   "document": tr("PDFs and text (*.pdf *.txt *.md);;All files (*)")}
+        paths, _ = QFileDialog.getOpenFileNames(self, tr("Open"), "", filters.get(kind, tr("Images, PDFs, text (*.png "
+                                                "*.jpg *.jpeg *.gif *.bmp *.webp *.tif *.tiff *.pdf *.txt *.md);;All files (*)")))
         if paths:
             self.add_sources(paths, kind=kind)
 
@@ -1182,7 +1195,7 @@ class MainWindow(QMainWindow):
         if src:
             label = src[0][0] + (f" +{len(src) - 1}" if len(src) > 1 else "")
         if mode == "receipt":
-            label = self.r_total.text().replace("Total", "Receipt")
+            label = self.r_total.text().replace(tr("Total"), tr("Receipt"))
         if mode == "template" and self.tpl_current is not None:
             label = self.tpl_current.name
         if not self.confirm_busy(label):
@@ -1220,17 +1233,17 @@ class MainWindow(QMainWindow):
         if mine:
             cur = next((j for j in mine if j["state"] == "printing"), mine[0])
             left = self.job_left(cur)
-            what = f"“{cur['label']}” is printing: " + (f"about {protocol.format_eta(left)} left." if left
-                                                        else "almost done.")
+            what = tr("“{0}” is printing: ", cur['label']) + (tr("about {0} left.", protocol.format_eta(left)) if left
+                                                        else tr("almost done."))
             if len(mine) > 1:
-                what += f" {len(mine) - 1} more waiting."
+                what += tr(" {0} more waiting.", len(mine) - 1)
             start = self.queue_left()
         else:
             what = busy.describe(other) + "."
             start = busy.queue_remaining(other)
-        return self.ask("The printer is busy", what,
-                        f"Add “{label}” to the queue? It should start in about {protocol.format_eta(start)}.",
-                        "Add to queue")
+        return self.ask(tr("The printer is busy"), what,
+                        tr("Add “{0}” to the queue? It should start in about {1}.", label, protocol.format_eta(start)),
+                        tr("Add to queue"))
 
     def ask(self, title, text, info, yes):
         box = QMessageBox(QMessageBox.Question, title, text, parent=self)
@@ -1291,21 +1304,21 @@ class MainWindow(QMainWindow):
     def update_printer(self, st, keep_state=False):
         cfg = config.load()
         name = st.get("name") or cfg.get("name")
-        self.p_name.setText(name or "No printer yet")
+        self.p_name.setText(name or tr("No printer yet"))
         self.pick.setVisible(not name)
-        self.p_dark.setText(f"Darkness: {DARKNESS_NAMES[self.dark.value() - 1]}")
+        self.p_dark.setText(tr("Darkness: {0}", DARKNESS_NAMES[self.dark.value() - 1]))
         if keep_state:
             return
         if st:
             parts = [st.get("state") or "connected"]
             if st.get("battery") is not None:
-                parts.append(f"{st['battery']}% battery")
+                parts.append(tr("{0}% battery", st['battery']))
             self.p_state.setText(" · ".join(parts).capitalize())
         elif name:
             how = cfg.get("port") or ("Bluetooth LE" if cfg.get("transport") == "ble" else "Bluetooth")
             self.p_state.setText(f"{self.model().name} · {how}")
         else:
-            self.p_state.setText("Found automatically on first print, or pick one.")
+            self.p_state.setText(tr("Found automatically on first print, or pick one."))
 
     def job_queued(self, jid, label):
         it = QListWidgetItem()
@@ -1327,7 +1340,7 @@ class MainWindow(QMainWindow):
             self.refresh_queue()
 
     def job_started(self, jid):
-        self._job(jid, state="printing", t0=time.monotonic(), note="connecting…")
+        self._job(jid, state="printing", t0=time.monotonic(), note=tr("connecting…"))
 
     def job_estimate(self, jid, seconds):
         self._job(jid, est=seconds, t0=time.monotonic(), note="")      # countdown restarts once laid out
@@ -1346,20 +1359,20 @@ class MainWindow(QMainWindow):
         ahead = 0.0
         for j in sorted(self.jobs.values(), key=lambda j: -self.queue.row(j["item"])):   # oldest first
             if j["state"] == "waiting":
-                status = j["note"] or f"waiting · starts in about {protocol.format_eta(ahead)}"
+                status = j["note"] or tr("waiting · starts in about {0}", protocol.format_eta(ahead))
             elif j["state"] == "printing":
                 left = self.job_left(j, now)
-                status = j["note"] or (f"printing {j['pct']}% · about {protocol.format_eta(left)} left"
-                                       if left else f"printing {j['pct']}% · finishing")
+                status = j["note"] or (tr("printing {0}% · about {1} left", j['pct'], protocol.format_eta(left))
+                                       if left else tr("printing {0}% · finishing", j['pct']))
             elif j["state"] == "done":
-                status = f"printed at {j['end']}"
+                status = tr("printed at {0}", j['end'])
             else:
-                status = f"failed: {j['error']}"
+                status = tr("failed: {0}", j['error'])
             if j["state"] in ("waiting", "printing"):
                 ahead += self.job_left(j, now)
             j["item"].setText(f"{j['label']}\n{status}")
         n = len(self.active_jobs())
-        self.queue_summary.setText(f"{n} · done in about {protocol.format_eta(ahead)}" if n else "")
+        self.queue_summary.setText(tr("{0} · done in about {1}", n, protocol.format_eta(ahead)) if n else "")
 
     def showEvent(self, e):
         super().showEvent(e)
@@ -1397,7 +1410,7 @@ class MainWindow(QMainWindow):
         if not self.settings.value("told_tray"):
             self.settings.setValue("told_tray", 1)
             QApplication.instance().tray.showMessage(
-                APP, "Still running in the tray, so “iPreent” keeps working in print dialogs.", icon(), 4000)
+                APP, tr("Still running in the tray, so “iPreent” keeps working in print dialogs."), icon(), 4000)
 
 
 # ---- tray + app ------------------------------------------------------------------------------
@@ -1439,7 +1452,12 @@ class App(QApplication):
     def __init__(self, argv):
         super().__init__(argv)
         self.setApplicationName(APP)
+        self.qt_translator = QTranslator()      # Qt's own texts (OK, Cancel, file dialogs); English if not shipped
+        if i18n.language() != i18n.DEFAULT and self.qt_translator.load(
+                "qtbase_" + i18n.language(), QLibraryInfo.path(QLibraryInfo.TranslationsPath)):
+            self.installTranslator(self.qt_translator)
         self.setQuitOnLastWindowClosed(False)
+        self.local_server = None            # the single-instance socket, set by main()
         self.setWindowIcon(icon())
         self.setStyle("windows11")
         f = QFont("Segoe UI Variable Text")
@@ -1463,26 +1481,26 @@ class App(QApplication):
         self.tray = QSystemTrayIcon(icon(), self)
         self.tray.setToolTip(APP)
         menu = QMenu()
-        self.status_action = menu.addAction("Printer: not checked yet")
+        self.status_action = menu.addAction(tr("Printer: not checked yet"))
         self.status_action.setEnabled(False)
         menu.addSeparator()
-        menu.addAction("Print clipboard\tCtrl+Alt+P", self.print_clipboard)
-        menu.addAction("Print file…", self.print_file_dialog)
-        menu.addAction("Quick note…", self.quick_note)
-        menu.addAction("Feed paper", self.worker.feed)
+        menu.addAction(tr("Print clipboard\tCtrl+Alt+P"), self.print_clipboard)
+        menu.addAction(tr("Print file…"), self.print_file_dialog)
+        menu.addAction(tr("Quick note…"), self.quick_note)
+        menu.addAction(tr("Feed paper"), self.worker.feed)
         menu.addSeparator()
-        self.dialog_action = menu.addAction("Add “iPreent” to print dialogs", self.toggle_printer)
-        self.autostart_action = QAction("Start with Windows", menu, checkable=True)
+        self.dialog_action = menu.addAction(tr("Add “iPreent” to print dialogs"), self.toggle_printer)
+        self.autostart_action = QAction(tr("Start with Windows"), menu, checkable=True)
         self.autostart_action.setChecked(autostart())
         self.autostart_action.toggled.connect(lambda on: autostart(on))
         menu.addAction(self.autostart_action)
         menu.addSeparator()
-        self.api_action = QAction("HTTP API", menu, checkable=True)
+        self.api_action = QAction(tr("HTTP API"), menu, checkable=True)
         self.api_action.toggled.connect(self.toggle_api)
         menu.addAction(self.api_action)
-        menu.addAction("API settings…", self.api_dialog)
-        menu.addAction(f"Open {APP}", self.show_window)
-        menu.addAction("Quit", self.quit)
+        menu.addAction(tr("API settings…"), self.api_dialog)
+        menu.addAction(tr("Open {0}", APP), self.show_window)
+        menu.addAction(tr("Quit"), self.quit)
         menu.aboutToShow.connect(self.refresh_menu)
         self.tray.setContextMenu(menu)
         self.tray.activated.connect(lambda r: self.show_window() if r == QSystemTrayIcon.Trigger else None)
@@ -1518,24 +1536,24 @@ class App(QApplication):
         self.api_action.blockSignals(False)
         if self._printer_installed is None:
             self._printer_installed = spool.installed()
-        self.dialog_action.setText("Remove “iPreent” from print dialogs" if self._printer_installed
-                                   else "Add “iPreent” to print dialogs")
+        self.dialog_action.setText(tr("Remove “iPreent” from print dialogs") if self._printer_installed
+                                   else tr("Add “iPreent” to print dialogs"))
 
     def toggle_printer(self):
         on = spool.installed()
         ok = spool.uninstall() if on else spool.install()
         self._printer_installed = spool.installed()
         if not ok:
-            self.tray.showMessage(APP, "That didn't work (admin permission is needed once).",
+            self.tray.showMessage(APP, tr("That didn't work (admin permission is needed once)."),
                                   QSystemTrayIcon.Warning, 5000)
         elif not on:
-            self.tray.showMessage(APP, "Done. Choose “iPreent” in any app's Print dialog. "
-                                  "Keep this app running in the tray.", icon(), 6000)
+            self.tray.showMessage(APP, tr("Done. Choose “iPreent” in any app's Print dialog. "
+                                  "Keep this app running in the tray."), icon(), 6000)
 
     def job_finished(self, jid, err):
         self.win.job_finished(jid, err)
         if err:
-            self.tray.showMessage(APP, f"Print failed: {err}", QSystemTrayIcon.Warning, 5000)
+            self.tray.showMessage(APP, tr("Print failed: {0}", err), QSystemTrayIcon.Warning, 5000)
 
     def status(self, st):
         self.win.update_printer(st)
@@ -1555,16 +1573,16 @@ class App(QApplication):
         md = cb.mimeData()
         if md.hasImage():
             img = pil_from_qimage(cb.image())
-            self.print_items("Clipboard picture", lambda w: [(img, False)])
+            self.print_items(tr("Clipboard picture"), lambda w: [(img, False)])
         elif md.hasUrls():
             for u in md.urls():
                 if u.isLocalFile():
                     self.print_path(u.toLocalFile())
         elif md.hasText() and md.text().strip():
             text = md.text()
-            self.print_items("Clipboard text", lambda w: [(imaging.text_image(text, w), True)])
+            self.print_items(tr("Clipboard text"), lambda w: [(imaging.text_image(text, w), True)])
         else:
-            self.tray.showMessage(APP, "The clipboard is empty.", icon(), 3000)
+            self.tray.showMessage(APP, tr("The clipboard is empty."), icon(), 3000)
 
     def print_path(self, path, on_done=None, method=None, trim=None):
         trim = self.win.trim.isChecked() if trim is None else trim
@@ -1579,21 +1597,21 @@ class App(QApplication):
                               self.win.energy(), on_done=on_done)
 
     def print_file_dialog(self):
-        paths, _ = QFileDialog.getOpenFileNames(None, "Print file", "")
+        paths, _ = QFileDialog.getOpenFileNames(None, tr("Print file"), "")
         for p in paths:
             self.print_path(p)
 
     def quick_note(self):
-        text, ok = QInputDialog.getMultiLineText(None, "Quick note", "Text to print:")
+        text, ok = QInputDialog.getMultiLineText(None, tr("Quick note"), tr("Text to print:"))
         if ok and text.strip():
-            self.print_items("Quick note", lambda w: [(imaging.text_image(text, w), True)])
+            self.print_items(tr("Quick note"), lambda w: [(imaging.text_image(text, w), True)])
 
     # -- print dialog bridge --
 
     def poll_spool(self):
         job = spool.take_job()
         if job:
-            self.tray.showMessage(APP, "Printing from the print dialog…", icon(), 2000)
+            self.tray.showMessage(APP, tr("Printing from the print dialog…"), icon(), 2000)
             self.print_spooled(job)
 
     def print_spooled(self, path):
@@ -1628,7 +1646,7 @@ class App(QApplication):
         self.settings.setValue("api_enabled", "true" if on else "false")
         self.start_api()
         if on and not self.server.running:
-            self.tray.showMessage(APP, f"The API couldn't start: {self.server.error}", QSystemTrayIcon.Warning, 5000)
+            self.tray.showMessage(APP, tr("The API couldn't start: {0}", self.server.error), QSystemTrayIcon.Warning, 5000)
 
     def start_api(self):
         on, port, lan, token = self.api_settings()
@@ -1640,21 +1658,21 @@ class App(QApplication):
     def api_summary(self):
         on, port, lan, _ = self.api_settings()
         if not on:
-            return "API off"
+            return tr("API off")
         if not self.server.running:
-            return f"API not running ({self.server.error})"
+            return tr("API not running ({0})", self.server.error)
         host = local_ip() if lan else "127.0.0.1"
-        return f"API on http://{host}:{port}" + (" (token needed)" if lan else "")
+        return tr("API on http://{0}:{1}", host, port) + (tr(" (token needed)") if lan else "")
 
     def api_dialog(self):
         on, port, lan, token = self.api_settings()
         d = QDialog(self.win if self.win.isVisible() else None)
-        d.setWindowTitle("API settings")
-        enabled = QCheckBox("Accept print jobs from other programs", checked=on)
+        d.setWindowTitle(tr("API settings"))
+        enabled = QCheckBox(tr("Accept print jobs from other programs"), checked=on)
         port_box = QSpinBox(minimum=1024, maximum=65535, value=port)
-        lan_box = QCheckBox("Allow other devices on my network (needs the token)", checked=lan)
+        lan_box = QCheckBox(tr("Allow other devices on my network (needs the token)"), checked=lan)
         tok = QLineEdit(token, readOnly=True)
-        new = QPushButton("New token")
+        new = QPushButton(tr("New token"))
         new.clicked.connect(lambda: tok.setText(secrets.token_urlsafe(18)))
         help_ = QLabel()
         help_.setTextInteractionFlags(Qt.TextSelectableByMouse)
@@ -1672,12 +1690,12 @@ class App(QApplication):
         update_help()
         form = QFormLayout(d)
         form.addRow(enabled)
-        form.addRow("Port", port_box)
+        form.addRow(tr("Port"), port_box)
         form.addRow(lan_box)
         row = QHBoxLayout()
         row.addWidget(tok, 1)
         row.addWidget(new)
-        form.addRow("Token", row)
+        form.addRow(tr("Token"), row)
         form.addRow(help_)
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         buttons.accepted.connect(d.accept)
@@ -1691,7 +1709,25 @@ class App(QApplication):
             s.setValue("api_token", tok.text())
             self.start_api()
             if enabled.isChecked() and not self.server.running:
-                QMessageBox.warning(None, APP, f"The API couldn't start: {self.server.error}")
+                QMessageBox.warning(None, APP, tr("The API couldn't start: {0}", self.server.error))
+
+    def restart_to_apply_language(self):
+        """The windows are built with their texts, so a new language needs a new process (a print in progress
+        is never interrupted: then the language applies the next time the app starts)."""
+        if self.win.active_jobs():
+            QMessageBox.information(self.win, APP, tr("The language changes the next time the app starts "
+                                                      "(a print is in progress)."))
+            return
+        if self.local_server is not None:               # let the new process become the one that is running
+            self.local_server.close()
+            QLocalServer.removeServer("ipreent-desktop")
+        self.server.stop()
+        self.tray.hide()
+        args = [] if getattr(sys, "frozen", False) else ["-m", "ipreent.desktop"]
+        if QProcess.startDetached(sys.executable, args):
+            self.quit()
+        else:
+            QMessageBox.information(self.win, APP, tr("The language changes the next time the app starts."))
 
     # -- other instances hand their arguments to us --
 
@@ -1718,6 +1754,7 @@ def main(argv=None):
     server = QLocalServer()
     QLocalServer.removeServer("ipreent-desktop")
     server.listen("ipreent-desktop")
+    app.local_server = server
 
     def incoming():
         c = server.nextPendingConnection()
