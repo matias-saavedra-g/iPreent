@@ -4,6 +4,8 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
+from .i18n import tr
+
 FONTS = Path(__file__).parent / "fonts"      # bundled, SIL Open Font License (see the OFL-*.txt there)
 
 
@@ -142,7 +144,7 @@ def text_image(text, width, size=28, margin=4):
 
 # ---- desktop app extras (same options as the Android app) ------------------------------------
 
-DITHERS = {"floyd": "Floyd–Steinberg", "atkinson": "Atkinson", "threshold": "Threshold (sharp)"}
+DITHERS = {"floyd": "Floyd–Steinberg", "atkinson": "Atkinson", "threshold": tr("Threshold (sharp)")}
 
 
 def gray(img, width, auto_rotate=True, brightness=0.0, contrast=1.0):
@@ -267,9 +269,9 @@ _C128_STOP = "2331112"
 def code128(data):
     """Module pattern (list of 0/1, 1 = bar) for data in Code 128 (set C for digits, else set B)."""
     if not data:
-        raise ValueError("nothing to encode")
+        raise ValueError(tr("nothing to encode"))
     if any(not 32 <= ord(c) < 127 for c in data):
-        raise ValueError("barcodes can only hold plain ASCII letters, digits and symbols")
+        raise ValueError(tr("barcodes can only hold plain ASCII letters, digits and symbols"))
     if data.isdigit() and len(data) % 2 == 0:
         values = [105] + [int(data[i:i + 2]) for i in range(0, len(data), 2)]
     else:
@@ -287,7 +289,7 @@ def barcode_image(data, width, height=96, size=24):
     mods = [0] * 10 + code128(data) + [0] * 10           # quiet zones
     scale = width // len(mods)
     if scale < 1:
-        raise ValueError(f"too long for this paper ({len(data)} characters)")
+        raise ValueError(tr("too long for this paper ({0} characters)", len(data)))
     left = (width - len(mods) * scale) // 2
     label = text_image(data, width, size=size)
     img = Image.new("L", (width, height + label.height + 16), 255)

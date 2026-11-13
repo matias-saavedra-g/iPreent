@@ -9,6 +9,10 @@ versioned, signed, installed and updated). `SECURITY.md` has the threat model an
 change makes any of these wrong, fix the doc in the same commit.
 
 ## Conventions
+- **Languages** (English + Spanish): Android strings are in `res/values*/strings.xml`; the CLI and Windows app wrap
+  every text people read in `tr("English text {0}", value)` (`ipreent/i18n.py`) and translate it in
+  `ipreent/locales/es.json`. Anything untranslated must stay working in English. New texts: add the Spanish too,
+  keep `%`/`{0}` placeholders the same (tests check). HTTP API messages stay English. `IPREENT_LANG=es` tries it.
 - **JOURNAL.md** is the project log: add findings, decisions and open questions under today's date (newest at the
   bottom). Old entries say `freeprint`; that's history.
 - The Android app is a port of the Python code: `protocol.py` ↔ `Protocol.kt`, `imaging.py` ↔ `Imaging.kt`,

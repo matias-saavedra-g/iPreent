@@ -32,6 +32,8 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 from . import config, imaging
+from . import i18n
+from .i18n import tr
 
 NS = "urn:ipreent:template"
 SVG_NS = "http://www.w3.org/2000/svg"
@@ -40,6 +42,11 @@ HERE = Path(__file__).parent / "templates"
 # Gallery categories, in the order the filter chips show them. "mine" = the user's own SVG files.
 CATEGORIES = {"love": "Love", "frames": "Frames", "lists": "Lists", "notes": "Notes", "party": "Party",
               "labels": "Labels", "christmas": "Christmas", "holidays": "Holidays", "mine": "Mine"}
+
+
+def category_name(key):
+    """A category's name in the current language (CATEGORIES keeps the English names)."""
+    return tr(CATEGORIES[key])
 FONTS = ("round", "script", "sans", "bold")
 LISTS = ("none", "check", "dot", "heart")
 LINE_HEIGHT = 1.25        # line pitch, in font sizes
@@ -130,9 +137,9 @@ def parse(svg, id="template", path=""):
     try:
         root = ET.fromstring(svg)
     except ET.ParseError as e:
-        raise TemplateError(f"not a valid SVG file ({e})") from None
+        raise TemplateError(tr("not a valid SVG file ({0})", e)) from None
     if root.tag not in (f"{{{SVG_NS}}}svg", "svg"):
-        raise TemplateError("not an SVG file")
+        raise TemplateError(tr("not an SVG file"))
     vb = (root.get("viewBox") or "").replace(",", " ").split()
     if len(vb) == 4 and _num(vb[2]) > 0 and _num(vb[3]) > 0:
         ox, oy, w, h = (_num(v) for v in vb)
@@ -140,7 +147,7 @@ def parse(svg, id="template", path=""):
         ox = oy = 0.0
         w, h = _num(root.get("width"), 384), _num(root.get("height"), 384)
         if w <= 0 or h <= 0:
-            raise TemplateError("the SVG has no size (viewBox or width/height)")
+            raise TemplateError(tr("the SVG has no size (viewBox or width/height)"))
     stretch = _ip(root, "stretch")
     stretch = _num(stretch) - oy if stretch is not None else None
     if stretch is not None and not 0 < stretch < h:
@@ -175,9 +182,23 @@ def _id(path):
     return re.sub(r"^\d+-", "", Path(path).stem)
 
 
+def localize(t):
+    """A built-in template with its name, box labels and example texts in the current language (locales/templates.<lang>.json;
+    anything not translated stays English). The art and layout rules are untouched."""
+    texts = i18n.template_texts(t.id)
+    if not texts:
+        return t
+    boxes = texts.get("fields") if isinstance(texts.get("fields"), dict) else {}
+
+    def field(f):
+        tf = boxes.get(f.key) if isinstance(boxes.get(f.key), dict) else {}
+        return replace(f, label=tf.get("label") or f.label, default=tf["default"] if isinstance(tf.get("default"), str) else f.default)
+    return replace(t, name=texts.get("name") or t.name, fields=tuple(field(f) for f in t.fields))
+
+
 @lru_cache(maxsize=1)
 def builtin():
-    return tuple(parse(p.read_text(encoding="utf-8"), _id(p), str(p)) for p in sorted(HERE.glob("*.svg")))
+    return tuple(localize(parse(p.read_text(encoding="utf-8"), _id(p), str(p))) for p in sorted(HERE.glob("*.svg")))
 
 
 def user_dir():
@@ -225,8 +246,8 @@ def find(name, files=True):
         if t.id == name.lower():
             return t
     close = [t.id for t in items if name.lower() in t.id]
-    hint = f" Did you mean {', '.join(close[:3])}?" if close else ""
-    raise TemplateError(f"no template called {name!r}.{hint} See the list with: ipreent template")
+    hint = tr(" Did you mean {0}?", ', '.join(close[:3])) if close else ""
+    raise TemplateError(tr("no template called {0!r}.{1} See the list with: ipreent template", name, hint))
 
 
 # ---- layout: the same rules (and test cases) as Templates.kt -----------------------------------
@@ -385,12 +406,12 @@ def svg_image(svg, width, height):
     try:
         import resvg_py
     except ImportError:
-        raise TemplateError("templates need the resvg_py package: pip install resvg_py") from None
+        raise TemplateError(tr("templates need the resvg_py package: pip install resvg_py")) from None
     try:
         png = resvg_py.svg_to_bytes(svg_string=svg, width=width, height=height,
                                     skip_system_fonts="<text" not in svg)   # loading fonts is slow
     except ValueError as e:
-        raise TemplateError(f"can't draw this SVG ({e})") from None
+        raise TemplateError(tr("can't draw this SVG ({0})", e)) from None
     img = Image.open(io.BytesIO(png)).convert("RGBA")
     if img.size != (width, height):
         img = img.resize((width, height))

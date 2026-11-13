@@ -37,6 +37,15 @@ English and Spanish, following the system language (the debug settings can force
   fit; lists grow longer), print. *Your own SVG* adds any SVG file. See [docs/TEMPLATES.md](docs/TEMPLATES.md).
 - Share a photo, PDF or text to iPreent from any app, or print from Chrome/Files with the iPreent print service.
 
+## Languages
+Everything is in English and Spanish (Android, Windows app and command line), following the system language; any
+other language shows English, and so does any text that has no Spanish translation. The debug settings can force
+one for testing: on Android and Windows the *Language* setting next to the paper speed (the Windows app restarts to
+apply it); on the command line `ipreent settings language es` (`en`, or `system` to go back; the variable
+`IPREENT_LANG` overrides it for one run). To add a language: Android `res/values-xx/strings.xml`, PC
+`ipreent/i18n.py` `CHOICES` + `ipreent/locales/xx.json` ({"English text": "translation"}) and, for template names,
+`templates.xx.json`.
+
 ## Printing while the printer is busy
 These printers don't show that they're working unless you look at the paper slot, so every version tells you:
 - Pressing **Print** sends a little paper slip flying into the queue, and the queue shows a countdown.

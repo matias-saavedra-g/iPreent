@@ -1,0 +1,102 @@
+{
+  "big-heart": {"name": "Corazón grande", "fields": {"message": {"label": "Mensaje", "default": "Haces sonreír a mi corazón"}}},
+  "love-letter": {"name": "Carta de amor", "fields": {
+    "to": {"label": "Para", "default": "Para ti"},
+    "message": {"label": "Mensaje", "default": "Cada día contigo\nes mi día favorito"}}},
+  "heart-garland": {"name": "Guirnalda de corazones", "fields": {"message": {"label": "Mensaje", "default": "¡Feliz\naniversario!"}}},
+  "scalloped-frame": {"name": "Marco festoneado", "fields": {
+    "title": {"label": "Título", "default": "¡Hola!"},
+    "message": {"label": "Mensaje", "default": "Que tengas un lindo día"}}},
+  "starry-frame": {"name": "Marco de estrellas", "fields": {
+    "title": {"label": "Título", "default": "Eres una estrella"},
+    "message": {"label": "Mensaje", "default": "Gracias por ser\ntan increíble"}}},
+  "ribbon": {"name": "Cinta", "fields": {
+    "title": {"label": "Título", "default": "¡Felicitaciones!"},
+    "message": {"label": "Mensaje", "default": "Estoy muy orgulloso de ti"}}},
+  "cloud": {"name": "Nube", "fields": {"message": {"label": "Mensaje", "default": "Sueña en grande"}}},
+  "speech-bubble": {"name": "Globo de diálogo", "fields": {"message": {"label": "Mensaje", "default": "Psst… ¡eres genial!"}}},
+  "to-do": {"name": "Lista de tareas", "fields": {
+    "title": {"label": "Título", "default": "Por hacer"},
+    "items": {"label": "Elementos (uno por línea)", "default": "Regar las plantas\nLlamar a la abuela\nComprar estampillas"}}},
+  "shopping-list": {"name": "Lista de compras", "fields": {
+    "title": {"label": "Título", "default": "Compras"},
+    "items": {"label": "Elementos (uno por línea)", "default": "Leche\nPan\nPaltas\nCafé"}}},
+  "things-i-love": {"name": "Cosas que amo", "fields": {
+    "title": {"label": "Título", "default": "Cosas que amo"},
+    "items": {"label": "Elementos (uno por línea)", "default": "Mañanas de sol\nTu risa\nLos gatos"}}},
+  "sticky-note": {"name": "Nota adhesiva", "fields": {"message": {"label": "Nota", "default": "No olvides\nsonreír hoy :)"}}},
+  "reminder": {"name": "Recordatorio", "fields": {
+    "title": {"label": "Título", "default": "¡No lo olvides!"},
+    "message": {"label": "Recordatorio", "default": "Dentista a las 16:00"}}},
+  "good-morning": {"name": "Sol", "fields": {
+    "title": {"label": "Título", "default": "¡Buenos días!"},
+    "message": {"label": "Mensaje", "default": "Que tengas un día soleado"}}},
+  "birthday": {"name": "Torta de cumpleaños", "fields": {
+    "title": {"label": "Título", "default": "Feliz cumpleaños"},
+    "name": {"label": "Nombre", "default": "Yuliana"}}},
+  "thank-you": {"name": "Gracias", "fields": {
+    "title": {"label": "Título", "default": "Gracias"},
+    "message": {"label": "Mensaje", "default": "por tu compra.\nEsperamos que te encante."}}},
+  "gift-tag": {"name": "Etiqueta de regalo", "fields": {
+    "to": {"label": "Para", "default": "Para: Yuliana"},
+    "from": {"label": "De", "default": "Con cariño, Matías"}}},
+  "congrats": {"name": "Confeti", "fields": {
+    "title": {"label": "Título", "default": "¡Yupi!"},
+    "message": {"label": "Mensaje", "default": "Lo lograste"}}},
+  "jar-label": {"name": "Etiqueta de frasco", "fields": {
+    "name": {"label": "Nombre", "default": "Mermelada de frutilla"},
+    "date": {"label": "Fecha o nota", "default": "Noviembre 2026"}}},
+  "name-tag": {"name": "Credencial con nombre", "fields": {
+    "hello": {"label": "Línea superior", "default": "HOLA, mi nombre es"},
+    "name": {"label": "Nombre", "default": "Matías"}}},
+  "christmas-tree": {"name": "Árbol de Navidad", "fields": {
+    "title": {"label": "Título", "default": "Feliz Navidad"},
+    "message": {"label": "Mensaje", "default": "Con cariño, Matías"}}},
+  "christmas-tag": {"name": "Etiqueta de regalo navideña", "fields": {
+    "to": {"label": "Para", "default": "Para Yuliana"},
+    "from": {"label": "De", "default": "De parte del Viejito Pascuero"}}},
+  "ornament": {"name": "Adorno navideño", "fields": {
+    "name": {"label": "Nombre", "default": "Yuliana"},
+    "year": {"label": "Año o nota", "default": "2026"}}},
+  "letter-to-santa": {"name": "Carta al Viejito Pascuero", "fields": {
+    "title": {"label": "Título"},
+    "items": {"label": "Deseos (uno por línea)"},
+    "from": {"label": "De"}}},
+  "snowflake-frame": {"name": "Marco de copos de nieve", "fields": {
+    "title": {"label": "Título", "default": "Felices fiestas"},
+    "message": {"label": "Mensaje", "default": "Te deseamos unas fiestas\ntranquilas y acogedoras"}}},
+  "christmas-countdown": {"name": "Cuenta regresiva de Navidad", "fields": {
+    "title": {"label": "Título", "default": "Días para Navidad"},
+    "days": {"label": "Número", "default": "24"},
+    "message": {"label": "Mensaje", "default": "¡Jo, jo, jo!"}}},
+  "stocking": {"name": "Calcetín navideño", "fields": {"name": {"label": "Nombre", "default": "Matías"}}},
+  "wreath": {"name": "Corona navideña", "fields": {"message": {"label": "Mensaje", "default": "Feliz Navidad\ny próspero año nuevo"}}},
+  "new-year": {"name": "Año Nuevo", "fields": {
+    "title": {"label": "Título", "default": "Feliz Año Nuevo"},
+    "year": {"label": "Año", "default": "2027"},
+    "message": {"label": "Mensaje", "default": "¡Salud por un gran año!"}}},
+  "fiestas-patrias": {"name": "Fiestas Patrias", "fields": {
+    "title": {"label": "Título"},
+    "message": {"label": "Mensaje"}}},
+  "halloween": {"name": "Halloween", "fields": {
+    "title": {"label": "Título", "default": "¿Dulce o truco?"},
+    "message": {"label": "Mensaje", "default": "Feliz Halloween"}}},
+  "valentines": {"name": "San Valentín", "fields": {
+    "title": {"label": "Título", "default": "Sé mi San Valentín"},
+    "message": {"label": "Mensaje", "default": "Con cariño, Matías"}}},
+  "easter": {"name": "Huevo de Pascua", "fields": {
+    "title": {"label": "Título", "default": "Feliz Pascua"},
+    "message": {"label": "Mensaje", "default": "¡Salta que salta, hurra!"}}},
+  "mothers-day": {"name": "Día de la Madre", "fields": {
+    "title": {"label": "Título", "default": "Feliz Día de la Madre"},
+    "message": {"label": "Mensaje", "default": "Te quiero, mamá"}}},
+  "fathers-day": {"name": "Día del Padre", "fields": {
+    "title": {"label": "Título", "default": "Feliz Día del Padre"},
+    "message": {"label": "Mensaje", "default": "El mejor papá del mundo"}}},
+  "childrens-day": {"name": "Día del Niño", "fields": {
+    "title": {"label": "Título", "default": "Feliz Día del Niño"},
+    "name": {"label": "Nombre", "default": "Yuliana"}}},
+  "teachers-day": {"name": "Día del Profesor", "fields": {
+    "title": {"label": "Título", "default": "¡Gracias, profe!"},
+    "message": {"label": "Mensaje", "default": "Por todo lo que me\nenseñaste este año"}}}
+}

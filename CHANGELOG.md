@@ -2,6 +2,18 @@
 
 Each `## vX.Y.Z` section becomes the notes of that GitHub Release.
 
+## v0.8.1
+**Downloads**
+- `iPreent-v0.8.1.apk`: Android app (Android 8+). Installs over v0.8.0. Also available through Obtainium (see README).
+- `iPreent-v0.8.1-portable.exe`: Windows app. One file, no install, no Python.
+- `ipreent-cli-v0.8.1.zip`: command line for Windows, Linux and macOS. Needs Python 3.10+; see `INSTALL.txt`.
+
+**The Windows app and the command line in Spanish.** Every screen, message, option help, template name and
+example text, following the system language like the Android app (Spanish → Spanish, anything else → English; any
+text without a translation shows in English). The debug settings have a *Language* setting to force English or
+Spanish: in the Windows app (printer menu › Debug settings, hold Shift; the app restarts to apply it) and on the
+command line (`ipreent settings language es|en|system`). The HTTP API keeps its messages in English.
+
 ## v0.8.0
 **Downloads**
 - `iPreent-v0.8.0.apk`: Android app (Android 8+). Installs over v0.7.0. Also available through Obtainium (see README).
