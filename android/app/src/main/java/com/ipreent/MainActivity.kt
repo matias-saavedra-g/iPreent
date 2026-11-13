@@ -1,7 +1,9 @@
 package com.ipreent
 
 import android.Manifest
+import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -14,6 +16,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.StringRes
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
@@ -58,6 +61,8 @@ import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
@@ -100,6 +105,9 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    /** Applies the language chosen in the debug settings (otherwise the system's). */
+    override fun attachBaseContext(base: Context) { super.attachBaseContext(Lang.wrap(base)) }
+
     override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); handle(intent) }
 
     private fun handle(intent: Intent?) {
@@ -110,7 +118,7 @@ class MainActivity : ComponentActivity() {
         Thread {
             shared.value = try {
                 if (uri != null) Sources.load(this, uri, Printers.width) else text?.let { Sources.Loaded.Text(it) }
-            } catch (e: Exception) { Sources.Loaded.Text("Could not open shared file: ${e.message}") }
+            } catch (e: Exception) { Sources.Loaded.Text(getString(R.string.shared_open_failed, Lang.text(this, e))) }
         }.start()
     }
 }
@@ -120,22 +128,22 @@ private val PERMS = if (Build.VERSION.SDK_INT >= 31)
 else arrayOf(Manifest.permission.ACCESS_FINE_LOCATION)
 
 /** Everything the app can print. Order on the home screen comes from [Features.ANDROID] weights + usage. */
-private enum class Tool(val key: String, val label: String, val blurb: String, val icon: ImageVector) {
-    PHOTO("photo", "Photo", "From your gallery", Icons.Default.Image),
-    DOCUMENT("document", "Document", "PDFs, sharp text", Icons.Default.Description),
-    TEXT("text", "Text", "Notes and messages", Icons.Default.TextFields),
-    RECEIPT("receipt", "Receipt", "Boleta with total and barcode", Icons.Default.Receipt),
-    TEMPLATE("template", "Templates", "Hearts, frames, lists, tags", Icons.Default.AutoAwesome),
-    LIST("list", "Checklist", "To-do lists with boxes", Icons.Default.Checklist),
-    CODE("code", "QR & barcode", "Links, labels, product codes", Icons.Default.QrCode2),
-    BANNER("banner", "Banner", "Big text along the paper", Icons.Default.ViewDay);
+private enum class Tool(val key: String, @StringRes val label: Int, @StringRes val blurb: Int, val icon: ImageVector) {
+    PHOTO("photo", R.string.tool_photo, R.string.tool_photo_blurb, Icons.Default.Image),
+    DOCUMENT("document", R.string.tool_document, R.string.tool_document_blurb, Icons.Default.Description),
+    TEXT("text", R.string.tool_text, R.string.tool_text_blurb, Icons.Default.TextFields),
+    RECEIPT("receipt", R.string.tool_receipt, R.string.tool_receipt_blurb, Icons.Default.Receipt),
+    TEMPLATE("template", R.string.tool_template, R.string.tool_template_blurb, Icons.Default.AutoAwesome),
+    LIST("list", R.string.tool_list, R.string.tool_list_blurb, Icons.Default.Checklist),
+    CODE("code", R.string.tool_code, R.string.tool_code_blurb, Icons.Default.QrCode2),
+    BANNER("banner", R.string.tool_banner, R.string.tool_banner_blurb, Icons.Default.ViewDay);
 
     companion object { fun of(key: String) = entries.first { it.key == key } }
 }
 
 /** The three top-level destinations: Material 3 asks for 3-5 in a navigation bar. */
-private enum class Dest(val label: String, val icon: ImageVector) {
-    CREATE("Create", Icons.Default.Apps), QUEUE("Queue", Icons.Default.Print), HISTORY("History", Icons.Default.History)
+private enum class Dest(@StringRes val label: Int, val icon: ImageVector) {
+    CREATE(R.string.nav_create, Icons.Default.Apps), QUEUE(R.string.nav_queue, Icons.Default.Print), HISTORY(R.string.nav_history, Icons.Default.History)
 }
 
 /** How often each tool is used (decayed counts), and the home-screen order worked out once per run. */
@@ -185,8 +193,10 @@ private fun rememberNow(): Long {
 
 private fun eta(seconds: Double) = Protocol.formatEta(seconds)
 
-/** "about 0:12 left", or "finishing" once the estimate has run out but the printer hasn't said it's done. */
-private fun left(e: QueueEntry, now: Long) = e.remaining(now).let { if (it > 0) "about ${eta(it)} left" else "finishing" }
+/** "about 0:12 left" (or "0:12 left" with [about] false), or "finishing" once the estimate has run out but the printer hasn't said it's done. */
+private fun left(ctx: Context, e: QueueEntry, now: Long, about: Boolean = true) = e.remaining(now).let {
+    if (it > 0) ctx.getString(if (about) R.string.left_about else R.string.left_short, eta(it)) else ctx.getString(R.string.left_finishing)
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -199,7 +209,7 @@ private fun App(shared: MutableState<Sources.Loaded?>) {
     var docs by remember { mutableStateOf<List<Bitmap>>(emptyList()) }
     var text by remember { mutableStateOf("") }
     var pending by remember { mutableStateOf<Pair<Job, Boolean>?>(null) }     // job, save to history
-    var sheet by remember { mutableStateOf(false) }
+    var sheet by rememberSaveable { mutableStateOf(false) }      // saved, so it survives a language change
     val snack = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     val fly = remember { Fly() }
@@ -224,9 +234,9 @@ private fun App(shared: MutableState<Sources.Loaded?>) {
         if (save) tool?.let { Usage.record(ctx, it) }
         scope.launch { fly.go() }
         scope.launch {
-            try { Printers.enqueue(job, saveToHistory = save).await(); snack.showSnackbar("Printed “${job.title}”") }
-            catch (e: CancellationException) { if (isActive) snack.showSnackbar("Removed “${job.title}” from the queue") else throw e }
-            catch (e: Throwable) { snack.showSnackbar(e.message ?: "Print failed") }
+            try { Printers.enqueue(job, saveToHistory = save).await(); snack.showSnackbar(ctx.getString(R.string.snack_printed, job.title)) }
+            catch (e: CancellationException) { if (isActive) snack.showSnackbar(ctx.getString(R.string.snack_removed, job.title)) else throw e }
+            catch (e: Throwable) { snack.showSnackbar(e.message?.let { Lang.text(ctx, e) } ?: ctx.getString(R.string.snack_print_failed)) }
         }
     }
     // Something already printing? Ask first: the printer's own progress is easy to miss.
@@ -248,9 +258,11 @@ private fun App(shared: MutableState<Sources.Loaded?>) {
                 topBar = {
                     val t = tool.takeIf { dest == Dest.CREATE }
                     TopAppBar(
-                        title = { Text(t?.label ?: if (dest == Dest.CREATE) "iPreent" else dest.label, fontWeight = FontWeight.Bold) },
+                        title = {
+                            Text(stringResource(t?.label ?: if (dest == Dest.CREATE) R.string.app_name else dest.label), fontWeight = FontWeight.Bold)
+                        },
                         navigationIcon = {
-                            if (t != null) IconButton({ tool = null }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back to all tools") }
+                            if (t != null) IconButton({ tool = null }) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.back_to_tools)) }
                         },
                         actions = { PrinterChip(active > 0) { sheet = true } },
                     )
@@ -262,7 +274,7 @@ private fun App(shared: MutableState<Sources.Loaded?>) {
                                 selected = dest == d,
                                 onClick = { if (d == Dest.CREATE && dest == Dest.CREATE) tool = null; dest = d },
                                 icon = { if (d == Dest.QUEUE) QueueIcon(active) else Icon(d.icon, null) },
-                                label = { Text(d.label) },
+                                label = { Text(stringResource(d.label)) },
                             )
                         }
                     }
@@ -342,26 +354,24 @@ private fun BusyDialog(job: Job, onAdd: () -> Unit, onCancel: () -> Unit) {
     val cur = active.firstOrNull { it.state != JobState.WAITING } ?: active.firstOrNull()
     if (cur == null) {      // it finished while we were asking
         AlertDialog(onDismissRequest = onCancel, icon = { Icon(Icons.Default.Print, null) },
-            title = { Text("The printer is free now") }, text = { Text("Print “${job.title}”?") },
-            confirmButton = { TextButton(onAdd) { Text("Print") } }, dismissButton = { TextButton(onCancel) { Text("Cancel") } })
+            title = { Text(stringResource(R.string.busy_free_title)) }, text = { Text(stringResource(R.string.busy_free_text, job.title)) },
+            confirmButton = { TextButton(onAdd) { Text(stringResource(R.string.action_print)) } },
+            dismissButton = { TextButton(onCancel) { Text(stringResource(R.string.action_cancel)) } })
         return
     }
     val left = cur.remaining(now)
+    val head = if (left > 0) stringResource(R.string.busy_printing_left, cur.title, eta(left))
+               else stringResource(R.string.busy_printing_almost, cur.title)
+    val more = if (active.size > 1) " " + pluralStringResource(R.plurals.busy_more_waiting, active.size - 1, active.size - 1) else ""
+    val ask = stringResource(R.string.busy_add_question, job.title, eta(Printers.queueRemaining(now)),
+        eta(Printers.estimate(job.rows.size, job.copies)))
     AlertDialog(
         onDismissRequest = onCancel,
         icon = { Icon(Icons.Default.HourglassTop, null) },
-        title = { Text("The printer is busy") },
-        text = {
-            Text(buildString {
-                append("“${cur.title}” is printing: ")
-                append(if (left > 0) "about ${eta(left)} left." else "almost done.")
-                if (active.size > 1) append(" ${active.size - 1} more waiting.")
-                append("\n\nAdd “${job.title}” to the queue? It should start in about ${eta(Printers.queueRemaining(now))}")
-                append(" and take about ${eta(Printers.estimate(job.rows.size, job.copies))}.")
-            })
-        },
-        confirmButton = { TextButton(onAdd) { Text("Add to queue") } },
-        dismissButton = { TextButton(onCancel) { Text("Cancel") } },
+        title = { Text(stringResource(R.string.busy_title)) },
+        text = { Text("$head$more\n\n$ask") },
+        confirmButton = { TextButton(onAdd) { Text(stringResource(R.string.busy_add)) } },
+        dismissButton = { TextButton(onCancel) { Text(stringResource(R.string.action_cancel)) } },
     )
 }
 
@@ -371,48 +381,76 @@ private fun PrinterChip(printing: Boolean, onClick: () -> Unit) {
     val name by Printers.printerName.collectAsState()
     AssistChip(
         onClick = onClick,
-        label = { Text(name ?: "Set up printer", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        label = { Text(name ?: stringResource(R.string.printer_setup), maxLines = 1, overflow = TextOverflow.Ellipsis) },
         leadingIcon = {
             if (printing) CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
             else Icon(Icons.Default.Print, null, Modifier.size(18.dp))
         },
-        trailingIcon = { Icon(Icons.Outlined.Settings, "Printer settings", Modifier.size(18.dp)) },
+        trailingIcon = { Icon(Icons.Outlined.Settings, stringResource(R.string.printer_settings), Modifier.size(18.dp)) },
         colors = if (name == null) AssistChipDefaults.assistChipColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
                  else AssistChipDefaults.assistChipColors(),
         modifier = Modifier.padding(end = 8.dp).widthIn(max = 200.dp),
     )
 }
 
-/** Paper speed for time estimates (opened by tapping the printer's name 7 times in [PrinterSheet]). */
+/** Paper speed for time estimates and the language override (opened by tapping the printer's name 7 times in [PrinterSheet]). */
 @Composable
 private fun DebugSettings(debugSpeed: Double?, onHide: () -> Unit) {
+    val ctx = LocalContext.current
     val nominal = Protocol.NOMINAL_MM_PER_S.toFloat()
     var value by remember(debugSpeed) { mutableFloatStateOf((debugSpeed ?: Protocol.NOMINAL_MM_PER_S).toFloat().coerceIn(2f, 30f)) }
     HorizontalDivider(Modifier.padding(vertical = 12.dp))
-    Text("Debug settings", style = MaterialTheme.typography.titleSmall)
+    Text(stringResource(R.string.debug_title), style = MaterialTheme.typography.titleSmall)
     Spacer(Modifier.height(4.dp))
-    Text("Time estimates assume the printer's slowest nominal speed, ${"%.0f".format(nominal)} mm/s, because measured " +
-            "times aren't reliable yet. Change it only to test another figure.",
+    Text(stringResource(R.string.debug_speed_info, "%.0f".format(nominal)),
         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     Spacer(Modifier.height(8.dp))
     Row {
-        Text("Paper speed", style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-        Text("${"%.1f".format(value)} mm/s", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+        Text(stringResource(R.string.debug_paper_speed), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+        Text(stringResource(R.string.debug_speed_value, "%.1f".format(value)), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
     }
     // 2 to 30 mm/s, snapped to 0.5 (no tick marks: 56 of them would just be noise).
     Slider(value, { value = (it * 2).roundToInt() / 2f }, valueRange = 2f..30f,
         onValueChangeFinished = { Printers.setDebugSpeed(value.toDouble()) })
     Printers.lastMeasuredSpeed?.let {
-        Text("The last timed print looked like about ${"%.1f".format(it)} mm/s (not used).",
+        Text(stringResource(R.string.debug_last_measured, "%.1f".format(it)),
             style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
     Row {
         TextButton({ value = nominal; Printers.setDebugSpeed(null) }, enabled = debugSpeed != null) {
-            Text("Back to ${"%.0f".format(nominal)} mm/s")
+            Text(stringResource(R.string.debug_back_to, "%.0f".format(nominal)))
         }
-        Spacer(Modifier.weight(1f))
-        TextButton(onHide) { Text("Hide") }
     }
+    // Language: system (the default), or English / Spanish to test a translation. Applied by recreating the activity.
+    Spacer(Modifier.height(8.dp))
+    Text(stringResource(R.string.debug_language), style = MaterialTheme.typography.bodyMedium)
+    Text(stringResource(R.string.debug_language_hint), style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant)
+    val chosen = remember { Lang.choice(ctx) }
+    Row(Modifier.padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Lang.CHOICES.forEach { c ->
+            FilterChip(chosen == c, {
+                if (c != chosen) { Lang.set(ctx, c); Printers.languageChanged(); ctx.findActivity()?.recreate() }
+            }, { Text(stringResource(languageName(c))) })
+        }
+    }
+    Row {
+        Spacer(Modifier.weight(1f))
+        TextButton(onHide) { Text(stringResource(R.string.debug_hide)) }
+    }
+}
+
+@StringRes
+private fun languageName(choice: String) = when (choice) {
+    "en" -> R.string.language_en
+    "es" -> R.string.language_es
+    else -> R.string.language_system
+}
+
+private tailrec fun Context.findActivity(): Activity? = when (this) {
+    is Activity -> this
+    is ContextWrapper -> baseContext.findActivity()
+    else -> null
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -437,44 +475,43 @@ private fun PrinterSheet(granted: Boolean, snack: SnackbarHostState, onClose: ()
                 interactionSource = remember { MutableInteractionSource() }, indication = null) {
                 taps++
                 when {
-                    debugOpen -> if (taps == 1) say("Debug settings are already open, below")
-                    taps >= 7 -> { Printers.debugUnlocked = true; debugOpen = true; say("Debug settings unlocked") }
-                    taps >= 3 -> say(if (taps == 6) "1 more tap to open the debug settings" else "${7 - taps} more taps to open the debug settings")
+                    debugOpen -> if (taps == 1) say(context.getString(R.string.sheet_debug_open))
+                    taps >= 7 -> { Printers.debugUnlocked = true; debugOpen = true; say(context.getString(R.string.sheet_debug_unlocked)) }
+                    taps >= 3 -> say(context.resources.getQuantityString(R.plurals.sheet_debug_taps, 7 - taps, 7 - taps))
                 }
             }) {
                 Box(Modifier.size(48.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primaryContainer), contentAlignment = Alignment.Center) {
                     Icon(Icons.Default.Print, null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
                 }
                 Column(Modifier.padding(start = 16.dp).weight(1f)) {
-                    Text(name ?: "No printer yet", style = MaterialTheme.typography.titleMedium)
-                    Text(if (name == null) "Turn it on; it's found on the first print, or use Find printers."
-                         else "${Printers.model().name} · Bluetooth LE · $status",
+                    Text(name ?: stringResource(R.string.sheet_no_printer), style = MaterialTheme.typography.titleMedium)
+                    Text(if (name == null) stringResource(R.string.sheet_no_printer_hint)
+                         else stringResource(R.string.sheet_printer_info, Printers.model().name, status),
                         style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             Spacer(Modifier.height(24.dp))
             Row {
-                Text("Darkness", style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
-                Text(darkness.label, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
+                Text(stringResource(R.string.sheet_darkness), style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
+                Text(stringResource(darkness.label), style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.primary)
             }
             Slider(darkness.ordinal.toFloat(), { Printers.setDarkness(Darkness.entries[it.roundToInt()]) },
                 valueRange = 0f..(Darkness.entries.size - 1).toFloat(), steps = Darkness.entries.size - 2)
             Row {
-                Text("Lighter", style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(1f))
-                Text("Darker (prints slower)", style = MaterialTheme.typography.labelSmall)
+                Text(stringResource(R.string.sheet_lighter), style = MaterialTheme.typography.labelSmall, modifier = Modifier.weight(1f))
+                Text(stringResource(R.string.sheet_darker), style = MaterialTheme.typography.labelSmall)
             }
             Spacer(Modifier.height(8.dp))
-            Text("Time estimates assume ${"%.1f".format(Printers.speed())} mm/s at every darkness" +
-                    if (debugSpeed != null) " (debug setting)." else ", the printer's slowest nominal speed.",
+            Text(stringResource(if (debugSpeed != null) R.string.sheet_estimates_debug else R.string.sheet_estimates, "%.1f".format(Printers.speed())),
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             if (name != null) {
                 // Which paper to buy and what the printer can do; transport tuning is left out (Model.details).
                 Spacer(Modifier.height(16.dp))
-                Text("Printer details", style = MaterialTheme.typography.titleSmall)
+                Text(stringResource(R.string.sheet_details), style = MaterialTheme.typography.titleSmall)
                 Spacer(Modifier.height(4.dp))
-                Printers.model().details().forEach { (label, value) ->
+                Printers.model().details(context).forEach { (label, value) ->
                     Row(Modifier.padding(vertical = 2.dp)) {
-                        Text(label, style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(96.dp))
+                        Text(label, style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(120.dp))
                         Text(value, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.weight(1f))
                     }
@@ -482,32 +519,32 @@ private fun PrinterSheet(granted: Boolean, snack: SnackbarHostState, onClose: ()
             }
             if (debugOpen) DebugSettings(debugSpeed, onHide = { Printers.debugUnlocked = false; debugOpen = false; taps = 0 })
             HorizontalDivider(Modifier.padding(vertical = 12.dp))
-            ListItem(headlineContent = { Text("Check status and battery") },
+            ListItem(headlineContent = { Text(stringResource(R.string.sheet_check_status)) },
                 leadingContent = { Icon(Icons.Default.BatteryStd, null) },
                 modifier = Modifier.clickable(enabled = granted && !Printers.busy) {
-                    scope.launch { snack.showSnackbar(runCatching { Printers.readStatus() }.getOrElse { it.message ?: "error" }) }
+                    scope.launch { snack.showSnackbar(runCatching { Printers.readStatus() }.getOrElse { Lang.text(context, it, R.string.sheet_error) }) }
                     onClose()
                 })
-            ListItem(headlineContent = { Text(if (scanning) "Looking for printers…" else "Find printers") },
+            ListItem(headlineContent = { Text(stringResource(if (scanning) R.string.sheet_scanning else R.string.sheet_find)) },
                 leadingContent = { if (scanning) CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.dp) else Icon(Icons.Default.BluetoothSearching, null) },
                 modifier = Modifier.clickable(enabled = granted && !scanning) {
                     scanning = true
                     scope.launch {
-                        found = runCatching { Printers.scan() }.getOrElse { snack.showSnackbar(it.message ?: "Scan failed"); null }
+                        found = runCatching { Printers.scan() }.getOrElse { snack.showSnackbar(Lang.text(context, it, R.string.sheet_scan_failed)); null }
                         scanning = false
                     }
                 })
-            if (name != null) ListItem(headlineContent = { Text("Forget this printer") },
+            if (name != null) ListItem(headlineContent = { Text(stringResource(R.string.sheet_forget)) },
                 leadingContent = { Icon(Icons.Default.LinkOff, null) },
                 modifier = Modifier.clickable { Printers.forget() })
         }
     }
     found?.let { list ->
-        AlertDialog(onDismissRequest = { found = null }, confirmButton = { TextButton({ found = null }) { Text("Close") } },
-            title = { Text(if (list.isEmpty()) "No printers found" else "Pick a printer") },
+        AlertDialog(onDismissRequest = { found = null }, confirmButton = { TextButton({ found = null }) { Text(stringResource(R.string.action_close)) } },
+            title = { Text(stringResource(if (list.isEmpty()) R.string.sheet_none_found else R.string.sheet_pick)) },
             text = {
                 Column {
-                    if (list.isEmpty()) Text("Is it on, and not connected to another app?")
+                    if (list.isEmpty()) Text(stringResource(R.string.sheet_none_found_hint))
                     list.forEach { f ->
                         TextButton({ Printers.remember(f); found = null }) { Text("${f.name}  ·  ${f.address}") }
                     }
@@ -522,13 +559,14 @@ private fun NowPrinting(queue: List<QueueEntry>, open: () -> Unit) {
     val active = queue.filter { it.active }
     val cur = active.firstOrNull { it.state != JobState.WAITING } ?: active.firstOrNull() ?: return
     val now = rememberNow()
+    val ctx = LocalContext.current
     Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = MaterialTheme.shapes.medium,
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).clip(MaterialTheme.shapes.medium).clickable(onClick = open)) {
         Column(Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(stateText(cur, now) + " “${cur.title}”", Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                Text(stateText(ctx, cur) + " “${cur.title}”", Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.labelLarge)
-                Text(left(cur, now).removePrefix("about ") + if (active.size > 1) " · ${active.size - 1} waiting" else "",
+                Text(left(ctx, cur, now, about = false) + if (active.size > 1) " · " + stringResource(R.string.now_waiting, active.size - 1) else "",
                     style = MaterialTheme.typography.labelMedium)
             }
             LinearProgressIndicator({ cur.timeFraction(now) }, Modifier.fillMaxWidth().padding(top = 6.dp))
@@ -536,10 +574,10 @@ private fun NowPrinting(queue: List<QueueEntry>, open: () -> Unit) {
     }
 }
 
-private fun stateText(e: QueueEntry, now: Long) = when (e.state) {
-    JobState.WAITING -> "Waiting:"
-    JobState.CONNECTING -> "Connecting:"
-    else -> if (e.copies > 1) "Printing ${e.copy}/${e.copies}:" else "Printing"
+private fun stateText(ctx: Context, e: QueueEntry) = when (e.state) {
+    JobState.WAITING -> ctx.getString(R.string.state_waiting)
+    JobState.CONNECTING -> ctx.getString(R.string.state_connecting)
+    else -> if (e.copies > 1) ctx.getString(R.string.state_printing_copy, e.copy, e.copies) else ctx.getString(R.string.state_printing)
 }
 
 /** Home: every tool on one screen. The two most likely ones get big tiles, the rest a compact grid. */
@@ -548,7 +586,7 @@ private fun HomeScreen(order: List<Tool>, open: (Tool) -> Unit) {
     LazyVerticalGrid(GridCells.Fixed(2), contentPadding = PaddingValues(16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         item(span = { GridItemSpan(maxLineSpan) }) {
-            Text("What do you want to print?", style = MaterialTheme.typography.titleMedium)
+            Text(stringResource(R.string.home_title), style = MaterialTheme.typography.titleMedium)
         }
         items(order.take(2), key = { it.key }) { t ->
             Card(onClick = { open(t) }, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
@@ -558,22 +596,22 @@ private fun HomeScreen(order: List<Tool>, open: (Tool) -> Unit) {
                         Icon(t.icon, null, tint = MaterialTheme.colorScheme.onPrimary)
                     }
                     Column {
-                        Text(t.label, style = MaterialTheme.typography.titleLarge)
-                        Text(t.blurb, style = MaterialTheme.typography.bodySmall, maxLines = 2)
+                        Text(stringResource(t.label), style = MaterialTheme.typography.titleLarge)
+                        Text(stringResource(t.blurb), style = MaterialTheme.typography.bodySmall, maxLines = 2)
                     }
                 }
             }
         }
         item(span = { GridItemSpan(maxLineSpan) }) {
-            Text("More tools", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 8.dp))
+            Text(stringResource(R.string.home_more), style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 8.dp))
         }
         items(order.drop(2), key = { it.key }) { t ->
             Card(onClick = { open(t) }, colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)) {
                 Row(Modifier.fillMaxWidth().heightIn(min = 72.dp).padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
                     Icon(t.icon, null, tint = MaterialTheme.colorScheme.primary)
                     Column(Modifier.padding(start = 12.dp)) {
-                        Text(t.label, style = MaterialTheme.typography.titleSmall, maxLines = 1)
-                        Text(t.blurb, style = MaterialTheme.typography.bodySmall, maxLines = 2,
+                        Text(stringResource(t.label), style = MaterialTheme.typography.titleSmall, maxLines = 1)
+                        Text(stringResource(t.blurb), style = MaterialTheme.typography.bodySmall, maxLines = 2,
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
@@ -585,19 +623,20 @@ private fun HomeScreen(order: List<Tool>, open: (Tool) -> Unit) {
 @Composable
 private fun QueueScreen(queue: List<QueueEntry>) {
     val now = rememberNow()
+    val ctx = LocalContext.current
     val active = queue.filter { it.active }
     val done = queue.filterNot { it.active }.reversed()
     if (queue.isEmpty()) {
         Column(Modifier.fillMaxSize().padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
             Icon(Icons.Default.Print, null, Modifier.size(48.dp), tint = MaterialTheme.colorScheme.outline)
-            Text("Nothing in the queue", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 12.dp))
-            Text("Prints show up here with the time they have left.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.queue_empty_title), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 12.dp))
+            Text(stringResource(R.string.queue_empty_text), color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         return
     }
     LazyColumn(Modifier.fillMaxSize()) {
         if (active.isNotEmpty()) item {
-            Text("All done in about ${eta(active.sumOf { it.remaining(now) })}", style = MaterialTheme.typography.titleMedium,
+            Text(stringResource(R.string.queue_all_done, eta(active.sumOf { it.remaining(now) })), style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(16.dp, 12.dp))
         }
         var ahead = 0.0
@@ -610,22 +649,22 @@ private fun QueueScreen(queue: List<QueueEntry>) {
                 supportingContent = {
                     Column {
                         Text(when (e.state) {
-                            JobState.WAITING -> "Starts in about ${eta(startsIn)} · takes ${eta(e.seconds)}"
-                            JobState.CONNECTING -> "Connecting… ${left(e, now)}"
-                            else -> "${stateText(e, now)} · ${left(e, now)}"
+                            JobState.WAITING -> stringResource(R.string.queue_starts_in, eta(startsIn), eta(e.seconds))
+                            JobState.CONNECTING -> stringResource(R.string.queue_connecting, left(ctx, e, now))
+                            else -> "${stateText(ctx, e)} · ${left(ctx, e, now)}"
                         })
                         if (e.state != JobState.WAITING) LinearProgressIndicator({ e.timeFraction(now) }, Modifier.fillMaxWidth().padding(top = 6.dp))
                     }
                 },
                 trailingContent = {
-                    if (e.state == JobState.WAITING) IconButton({ Printers.cancel(e.id) }) { Icon(Icons.Default.Close, "Remove from queue") }
+                    if (e.state == JobState.WAITING) IconButton({ Printers.cancel(e.id) }) { Icon(Icons.Default.Close, stringResource(R.string.queue_remove)) }
                 },
             )
         }
         if (done.isNotEmpty()) item {
             Row(Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp, top = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("Finished", style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f))
-                TextButton({ Printers.clearFinished() }) { Text("Clear") }
+                Text(stringResource(R.string.queue_finished), style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f))
+                TextButton({ Printers.clearFinished() }) { Text(stringResource(R.string.queue_clear)) }
             }
         }
         items(done, key = { it.id }) { e ->
@@ -635,9 +674,9 @@ private fun QueueScreen(queue: List<QueueEntry>) {
                 headlineContent = { Text(e.title, maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 supportingContent = {
                     Text(when (e.state) {
-                        JobState.DONE -> "Printed at $time"
-                        JobState.CANCELLED -> "Removed at $time"
-                        else -> "Failed: ${e.error}"
+                        JobState.DONE -> stringResource(R.string.queue_printed_at, time)
+                        JobState.CANCELLED -> stringResource(R.string.queue_removed_at, time)
+                        else -> stringResource(R.string.queue_failed, e.error ?: "")
                     }, color = if (e.state == JobState.FAILED) MaterialTheme.colorScheme.error else Color.Unspecified)
                 },
                 trailingContent = {
@@ -661,7 +700,7 @@ private fun Thumb(bmp: Bitmap?) {
 @Composable
 private fun Preview(bmp: Bitmap?, modifier: Modifier = Modifier) {
     Box(modifier.fillMaxWidth().background(Color(0xFFE6E6E1)).padding(12.dp), contentAlignment = Alignment.TopCenter) {
-        if (bmp == null) Text("Nothing to print yet", color = Color.Gray, modifier = Modifier.padding(32.dp))
+        if (bmp == null) Text(stringResource(R.string.preview_empty), color = Color.Gray, modifier = Modifier.padding(32.dp))
         else Image(bmp.asImageBitmap(), null, Modifier.widthIn(max = 384.dp).fillMaxWidth().background(Color.White)
             .border(1.dp, Color(0xFFCCCCCC)), contentScale = ContentScale.FillWidth, filterQuality = FilterQuality.None)
     }
@@ -682,15 +721,15 @@ private fun PrintBar(lines: Int?, onPrint: (copies: Int) -> Unit) {
     var copies by remember { mutableIntStateOf(1) }
     val debugSpeed by Printers.debugSpeed.collectAsState()   // re-estimate when the debug speed changes
     Row(Modifier.fillMaxWidth().padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
-        IconButton({ if (copies > 1) copies-- }) { Icon(Icons.Default.Remove, "fewer") }
+        IconButton({ if (copies > 1) copies-- }) { Icon(Icons.Default.Remove, stringResource(R.string.copies_fewer)) }
         Text("×$copies")
-        IconButton({ copies++ }) { Icon(Icons.Default.Add, "more") }
-        if (lines != null) Text("about ${eta(Printers.estimate(lines, copies, mmPerS = Protocol.speedFor(debugSpeed)))}", style = MaterialTheme.typography.bodySmall,
+        IconButton({ copies++ }) { Icon(Icons.Default.Add, stringResource(R.string.copies_more)) }
+        if (lines != null) Text(stringResource(R.string.print_estimate, eta(Printers.estimate(lines, copies, mmPerS = Protocol.speedFor(debugSpeed)))), style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.weight(1f))
         Button({ onPrint(copies) }, enabled = lines != null,
             modifier = Modifier.onGloballyPositioned { fly.from = it.boundsInRoot().center }) {
-            Icon(Icons.Default.Print, null); Spacer(Modifier.width(8.dp)); Text("Print")
+            Icon(Icons.Default.Print, null); Spacer(Modifier.width(8.dp)); Text(stringResource(R.string.action_print))
         }
     }
 }
@@ -713,7 +752,7 @@ private fun ImageTab(document: Boolean, pages: List<Bitmap>, setPages: (List<Bit
                         is Sources.Loaded.Pages -> l.bitmaps
                         is Sources.Loaded.Text -> listOf(Imaging.textBitmap(l.text, Printers.width, 24f))
                     }
-                }.onSuccess { b -> error = null; setPages(b) }.onFailure { e -> error = "Can't open it: ${e.message}" }
+                }.onSuccess { b -> error = null; setPages(b) }.onFailure { e -> error = ctx.getString(R.string.image_cant_open, Lang.text(ctx, e)) }
             }.start()
         }
     }
@@ -729,21 +768,22 @@ private fun ImageTab(document: Boolean, pages: List<Bitmap>, setPages: (List<Bit
     Column(Modifier.fillMaxSize()) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
             Row(Modifier.padding(16.dp, 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                if (document) OutlinedButton({ pick.launch(arrayOf("application/pdf", "text/plain", "image/*")) }) { Text("Choose PDF or file") }
-                else OutlinedButton({ pick.launch(arrayOf("image/*")) }) { Text("Choose photo") }
-                if (document && pages.isNotEmpty()) Text("${pages.size} page" + if (pages.size > 1) "s" else "", style = MaterialTheme.typography.bodySmall)
+                if (document) OutlinedButton({ pick.launch(arrayOf("application/pdf", "text/plain", "image/*")) }) { Text(stringResource(R.string.image_pick_file)) }
+                else OutlinedButton({ pick.launch(arrayOf("image/*")) }) { Text(stringResource(R.string.image_pick_photo)) }
+                if (document && pages.isNotEmpty()) Text(pluralStringResource(R.plurals.pages, pages.size, pages.size), style = MaterialTheme.typography.bodySmall)
             }
             error?.let { Text(it, Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
             Row(Modifier.padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Dither.entries.forEach { FilterChip(dither == it, { dither = it }, { Text(it.label) }) }
+                Dither.entries.forEach { FilterChip(dither == it, { dither = it }, { Text(stringResource(it.label)) }) }
             }
             if (!document) {
-                LabeledSlider("Brightness", bright, -0.5f..0.5f) { bright = it }
-                LabeledSlider("Contrast", contrast, 0.5f..2f) { contrast = it }
+                LabeledSlider(stringResource(R.string.image_brightness), bright, -0.5f..0.5f) { bright = it }
+                LabeledSlider(stringResource(R.string.image_contrast), contrast, 0.5f..2f) { contrast = it }
             }
             Preview(rows?.let { Imaging.preview(it, Printers.width) })
         }
-        val title = if (document) "Document" + if (pages.size > 1) " (${pages.size} pages)" else "" else "Photo"
+        val title = if (document) stringResource(R.string.tool_document) + if (pages.size > 1) " (${pluralStringResource(R.plurals.pages, pages.size, pages.size)})" else ""
+                    else stringResource(R.string.tool_photo)
         PrintBar(rows?.size) { n -> rows?.let { print(Job(title, it, Printers.width, copies = n)) } }
     }
 }
@@ -763,9 +803,9 @@ private fun TextTab(text: String, setText: (String) -> Unit, print: (Job) -> Uni
     val rows = rememberRows(text, size, bold) { w -> text.takeIf { it.isNotBlank() }?.let { textRows(Imaging.textBitmap(it, w, size, bold), w) } }
     Column(Modifier.fillMaxSize()) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-            OutlinedTextField(text, setText, Modifier.fillMaxWidth().padding(16.dp), label = { Text("Note") }, minLines = 3)
+            OutlinedTextField(text, setText, Modifier.fillMaxWidth().padding(16.dp), label = { Text(stringResource(R.string.text_note)) }, minLines = 3)
             Row(Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
-                FilterChip(bold, { bold = !bold }, { Text("Bold") })
+                FilterChip(bold, { bold = !bold }, { Text(stringResource(R.string.text_bold)) })
                 Slider(size, { size = it }, valueRange = 18f..72f, modifier = Modifier.weight(1f).padding(start = 12.dp))
             }
             Preview(rows?.let { Imaging.preview(it, Printers.width) })
@@ -776,15 +816,16 @@ private fun TextTab(text: String, setText: (String) -> Unit, print: (Job) -> Uni
 
 @Composable
 private fun ListTab(print: (Job) -> Unit) {
-    var title by remember { mutableStateOf("To do") }
+    val defaultTitle = stringResource(R.string.list_default_title)
+    var title by remember { mutableStateOf(defaultTitle) }
     var items by remember { mutableStateOf("") }
     val rows = rememberRows(title, items) { w ->
         items.lines().filter { it.isNotBlank() }.takeIf { it.isNotEmpty() }?.let { textRows(Imaging.checklistBitmap(title, it, w), w) }
     }
     Column(Modifier.fillMaxSize()) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-            OutlinedTextField(title, { title = it }, Modifier.fillMaxWidth().padding(16.dp, 8.dp), label = { Text("Title") }, singleLine = true)
-            OutlinedTextField(items, { items = it }, Modifier.fillMaxWidth().padding(16.dp, 8.dp), label = { Text("One item per line") }, minLines = 4)
+            OutlinedTextField(title, { title = it }, Modifier.fillMaxWidth().padding(16.dp, 8.dp), label = { Text(stringResource(R.string.list_title)) }, singleLine = true)
+            OutlinedTextField(items, { items = it }, Modifier.fillMaxWidth().padding(16.dp, 8.dp), label = { Text(stringResource(R.string.one_item_per_line)) }, minLines = 4)
             Preview(rows?.let { Imaging.preview(it, Printers.width) })
         }
         PrintBar(rows?.size) { n -> rows?.let { print(Job(title, it, Printers.width, Protocol.MODE_TEXT, n)) } }
@@ -793,23 +834,25 @@ private fun ListTab(print: (Job) -> Unit) {
 
 @Composable
 private fun BannerTab(print: (Job) -> Unit) {
+    val ctx = LocalContext.current
     var text by remember { mutableStateOf("") }
     val rows = rememberRows(text) { w -> text.takeIf { it.isNotBlank() }?.let { textRows(Imaging.bannerBitmap(it, w), w) } }
     Column(Modifier.fillMaxSize()) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-            OutlinedTextField(text, { text = it }, Modifier.fillMaxWidth().padding(16.dp), label = { Text("Banner text") }, singleLine = true)
+            OutlinedTextField(text, { text = it }, Modifier.fillMaxWidth().padding(16.dp), label = { Text(stringResource(R.string.banner_text)) }, singleLine = true)
             Preview(rows?.let { Imaging.preview(it, Printers.width) }, Modifier.heightIn(max = 600.dp))
         }
-        PrintBar(rows?.size) { n -> rows?.let { print(Job("banner $text", it, Printers.width, Protocol.MODE_TEXT, n)) } }
+        PrintBar(rows?.size) { n -> rows?.let { print(Job(ctx.getString(R.string.job_banner, text), it, Printers.width, Protocol.MODE_TEXT, n)) } }
     }
 }
 
 @Composable
 private fun CodeTab(print: (Job) -> Unit) {
+    val ctx = LocalContext.current
     var content by remember { mutableStateOf("") }
     var caption by remember { mutableStateOf("") }
     var format by remember { mutableStateOf(BarcodeFormat.QR_CODE) }
-    val formats = listOf(BarcodeFormat.QR_CODE to "QR", BarcodeFormat.CODE_128 to "Barcode")
+    val formats = listOf(BarcodeFormat.QR_CODE to stringResource(R.string.code_qr), BarcodeFormat.CODE_128 to stringResource(R.string.code_barcode))
     val rows = rememberRows(content, caption, format) { w ->
         if (content.isBlank()) null else runCatching {
             val code = textRows(Imaging.codeBitmap(content, format, w), w)
@@ -821,11 +864,11 @@ private fun CodeTab(print: (Job) -> Unit) {
             Row(Modifier.padding(16.dp, 8.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 formats.forEach { (f, l) -> FilterChip(format == f, { format = f }, { Text(l) }) }
             }
-            OutlinedTextField(content, { content = it }, Modifier.fillMaxWidth().padding(16.dp, 4.dp), label = { Text("Link or text") })
-            OutlinedTextField(caption, { caption = it }, Modifier.fillMaxWidth().padding(16.dp, 4.dp), label = { Text("Caption (optional)") })
+            OutlinedTextField(content, { content = it }, Modifier.fillMaxWidth().padding(16.dp, 4.dp), label = { Text(stringResource(R.string.code_content)) })
+            OutlinedTextField(caption, { caption = it }, Modifier.fillMaxWidth().padding(16.dp, 4.dp), label = { Text(stringResource(R.string.code_caption)) })
             Preview(rows?.let { Imaging.preview(it, Printers.width) })
         }
-        PrintBar(rows?.size) { n -> rows?.let { print(Job("code", it, Printers.width, copies = n)) } }
+        PrintBar(rows?.size) { n -> rows?.let { print(Job(ctx.getString(R.string.job_code), it, Printers.width, copies = n)) } }
     }
 }
 
@@ -866,41 +909,41 @@ private fun ReceiptTab(print: (Job) -> Unit) {
     Column(Modifier.fillMaxSize()) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
             TextButton({ showBusiness = !showBusiness }, Modifier.padding(horizontal = 8.dp)) {
-                Text(if (business.isBlank()) "Business details" else business, Modifier.weight(1f, fill = false))
+                Text(if (business.isBlank()) stringResource(R.string.receipt_business_details) else business, Modifier.weight(1f, fill = false))
                 Icon(if (showBusiness) Icons.Default.ExpandLess else Icons.Default.ExpandMore, null)
             }
             if (showBusiness) {
-                OutlinedTextField(business, { business = it }, Modifier.fillMaxWidth().padding(16.dp, 2.dp), label = { Text("Business name") }, singleLine = true)
-                OutlinedTextField(address, { address = it }, Modifier.fillMaxWidth().padding(16.dp, 2.dp), label = { Text("Address") }, singleLine = true)
-                OutlinedTextField(url, { url = it }, Modifier.fillMaxWidth().padding(16.dp, 2.dp), label = { Text("Website") }, singleLine = true,
+                OutlinedTextField(business, { business = it }, Modifier.fillMaxWidth().padding(16.dp, 2.dp), label = { Text(stringResource(R.string.receipt_business_name)) }, singleLine = true)
+                OutlinedTextField(address, { address = it }, Modifier.fillMaxWidth().padding(16.dp, 2.dp), label = { Text(stringResource(R.string.receipt_address)) }, singleLine = true)
+                OutlinedTextField(url, { url = it }, Modifier.fillMaxWidth().padding(16.dp, 2.dp), label = { Text(stringResource(R.string.receipt_website)) }, singleLine = true,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri))
-                OutlinedTextField(footer, { footer = it }, Modifier.fillMaxWidth().padding(16.dp, 2.dp), label = { Text("Message at the bottom") }, singleLine = true)
+                OutlinedTextField(footer, { footer = it }, Modifier.fillMaxWidth().padding(16.dp, 2.dp), label = { Text(stringResource(R.string.receipt_footer)) }, singleLine = true)
             }
-            Text("Products", Modifier.padding(16.dp, 8.dp, 16.dp, 0.dp), style = MaterialTheme.typography.labelLarge)
+            Text(stringResource(R.string.receipt_products), Modifier.padding(16.dp, 8.dp, 16.dp, 0.dp), style = MaterialTheme.typography.labelLarge)
             items.forEachIndexed { i, it ->
                 Column(Modifier.padding(16.dp, 4.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         OutlinedTextField(it.name, { v -> items[i] = it.copy(name = v) }, Modifier.weight(1f),
-                            label = { Text("Product ${i + 1}") }, singleLine = true)
-                        IconButton({ items.removeAt(i); if (items.isEmpty()) items.add(ItemRow()) }) { Icon(Icons.Default.Close, "remove") }
+                            label = { Text(stringResource(R.string.receipt_product_n, i + 1)) }, singleLine = true)
+                        IconButton({ items.removeAt(i); if (items.isEmpty()) items.add(ItemRow()) }) { Icon(Icons.Default.Close, stringResource(R.string.receipt_remove)) }
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(end = 48.dp)) {
-                        OutlinedTextField(it.qty, { v -> items[i] = it.copy(qty = v) }, Modifier.weight(1f), label = { Text("Qty") },
+                        OutlinedTextField(it.qty, { v -> items[i] = it.copy(qty = v) }, Modifier.weight(1f), label = { Text(stringResource(R.string.receipt_qty)) },
                             singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal))
-                        OutlinedTextField(it.price, { v -> items[i] = it.copy(price = v) }, Modifier.weight(2f), label = { Text("Price (CLP)") },
+                        OutlinedTextField(it.price, { v -> items[i] = it.copy(price = v) }, Modifier.weight(2f), label = { Text(stringResource(R.string.receipt_price)) },
                             prefix = { Text("$") }, singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number))
                     }
                 }
             }
             Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                TextButton({ items.add(ItemRow()) }) { Icon(Icons.Default.Add, null); Spacer(Modifier.width(4.dp)); Text("Add product") }
+                TextButton({ items.add(ItemRow()) }) { Icon(Icons.Default.Add, null); Spacer(Modifier.width(4.dp)); Text(stringResource(R.string.receipt_add)) }
                 Spacer(Modifier.weight(1f))
                 built.getOrNull()?.let {
-                    Text("Total ${Clp.format(it.total)}", Modifier.padding(end = 8.dp), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.receipt_total, Clp.format(it.total)), Modifier.padding(end = 8.dp), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 }
             }
             built.exceptionOrNull()?.let {
-                Text(it.message ?: "Can't make this receipt", Modifier.padding(16.dp, 0.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+                Text(Lang.text(ctx, it, R.string.receipt_cant), Modifier.padding(16.dp, 0.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
             }
             Preview(rows?.let { Imaging.preview(it, Printers.width) })
         }
@@ -909,7 +952,7 @@ private fun ReceiptTab(print: (Job) -> Unit) {
             scope.launch {
                 val job = withContext(Dispatchers.Default) {
                     runCatching { build() }.getOrNull()?.let {
-                        Job("Receipt ${Clp.format(it.total)}", textRows(ReceiptArt.bitmap(it, Printers.width), Printers.width), Printers.width, Protocol.MODE_TEXT, n)
+                        Job(ctx.getString(R.string.job_receipt, Clp.format(it.total)), textRows(ReceiptArt.bitmap(it, Printers.width), Printers.width), Printers.width, Protocol.MODE_TEXT, n)
                     }
                 }
                 job?.let(print)
@@ -922,20 +965,22 @@ private fun ReceiptTab(print: (Job) -> Unit) {
  *  an exact preview. Back from the editor returns to the gallery. */
 @Composable
 private fun TemplatesTab(print: (Job) -> Unit) {
-    var all by remember { mutableStateOf(TemplateArt.all()) }
+    val ctx = LocalContext.current
+    val lang = Lang.code(ctx)
+    var all by remember { mutableStateOf(TemplateArt.all(lang)) }
     var chosenId by rememberSaveable { mutableStateOf<String?>(null) }
     val chosen = all.firstOrNull { it.id == chosenId }
-    if (chosen == null) TemplateGallery(all, pick = { chosenId = it.id }, imported = { all = TemplateArt.all(); chosenId = it.id })
+    if (chosen == null) TemplateGallery(all, pick = { chosenId = it.id }, imported = { all = TemplateArt.all(lang); chosenId = it.id })
     else {
         BackHandler { chosenId = null }
-        TemplateEditor(chosen, print, removed = { TemplateArt.delete(chosen); all = TemplateArt.all(); chosenId = null })
+        TemplateEditor(chosen, print, removed = { TemplateArt.delete(chosen); all = TemplateArt.all(lang); chosenId = null })
     }
 }
 
 /** Gallery thumbnails, made once per run (each takes a few milliseconds). */
 private object Thumbs {
     private val cache = HashMap<String, Bitmap>()
-    @Synchronized fun get(t: Templates.Template): Bitmap? = cache.getOrPut(t.category + "/" + t.id) {
+    @Synchronized fun get(t: Templates.Template): Bitmap? = cache.getOrPut(t.category + "/" + t.id + "/" + t.fields.joinToString("|") { it.default }) {
         runCatching { TemplateArt.render(t, null, 240) }.getOrNull() ?: return null
     }
 }
@@ -951,14 +996,15 @@ private fun TemplateGallery(all: List<Templates.Template>, pick: (Templates.Temp
             scope.launch {
                 runCatching { withContext(Dispatchers.IO) { TemplateArt.import(ctx, it) } }
                     .onSuccess { t -> error = null; imported(t) }
-                    .onFailure { e -> error = "Can't use that file: ${e.message}" }
+                    .onFailure { e -> error = ctx.getString(R.string.templates_cant_use, Lang.text(ctx, e)) }
             }
         }
     }
     // In-season templates (Christmas in November and December, ...) and their chip come first.
     val today = remember { java.time.LocalDate.now() }
     val ordered = remember(all, today) { Templates.galleryOrder(all, today.monthValue, today.dayOfMonth) }
-    val cats = listOf("all" to "All") + Templates.categoryOrder(all, today.monthValue, today.dayOfMonth).map { it to Templates.CATEGORIES.getValue(it) }
+    val cats = listOf("all" to stringResource(R.string.templates_all)) +
+        Templates.categoryOrder(all, today.monthValue, today.dayOfMonth).map { it to categoryLabel(it) }
     val shown = ordered.filter { category == "all" || it.category == category }
     Column(Modifier.fillMaxSize()) {
         LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -984,8 +1030,8 @@ private fun TemplateGallery(all: List<Templates.Template>, pick: (Templates.Temp
                     Column(Modifier.fillMaxWidth().aspectRatio(0.86f).padding(12.dp), verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(Icons.Default.Add, null, tint = MaterialTheme.colorScheme.primary)
-                        Text("Your own SVG", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 8.dp))
-                        Text("Any SVG file; docs/TEMPLATES.md shows how to add text boxes", style = MaterialTheme.typography.bodySmall,
+                        Text(stringResource(R.string.templates_own_svg), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 8.dp))
+                        Text(stringResource(R.string.templates_own_svg_hint), style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                     }
                 }
@@ -993,6 +1039,19 @@ private fun TemplateGallery(all: List<Templates.Template>, pick: (Templates.Temp
         }
     }
 }
+
+@Composable
+private fun categoryLabel(key: String) = stringResource(when (key) {
+    "love" -> R.string.category_love
+    "frames" -> R.string.category_frames
+    "lists" -> R.string.category_lists
+    "notes" -> R.string.category_notes
+    "party" -> R.string.category_party
+    "labels" -> R.string.category_labels
+    "christmas" -> R.string.category_christmas
+    "holidays" -> R.string.category_holidays
+    else -> R.string.category_mine
+})
 
 @Composable
 private fun TemplateEditor(t: Templates.Template, print: (Job) -> Unit, removed: () -> Unit) {
@@ -1005,12 +1064,13 @@ private fun TemplateEditor(t: Templates.Template, print: (Job) -> Unit, removed:
             runCatching { JSONObject(prefs.getString(t.id, "{}")!!).let { o -> o.keys().forEach { k -> if (k in this) put(k, o.getString(k)) } } }
         }
     }
-    fun save() = prefs.edit().putString(t.id, JSONObject(values.toMap()).toString()).apply()
+    // Only what differs from the example text is kept, so untouched boxes follow the app's language.
+    fun save() = prefs.edit().putString(t.id, JSONObject(values.toMap().filter { (k, v) -> v != t.defaults()[k] }).toString()).apply()
     var error by remember(t.id) { mutableStateOf<String?>(null) }
     val snapshot = values.toMap()
     val rows = rememberRows(t.id, snapshot) { w ->
         runCatching { textRows(TemplateArt.render(t, snapshot, w), w) }
-            .onSuccess { error = null }.onFailure { error = "Can't draw this template: ${it.message}" }.getOrNull()
+            .onSuccess { error = null }.onFailure { error = ctx.getString(R.string.templates_cant_draw, Lang.text(ctx, it)) }.getOrNull()
     }
     Column(Modifier.fillMaxSize()) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
@@ -1019,13 +1079,13 @@ private fun TemplateEditor(t: Templates.Template, print: (Job) -> Unit, removed:
                 OutlinedTextField(values[f.key] ?: "", { values[f.key] = it; save() },
                     Modifier.fillMaxWidth().padding(16.dp, 4.dp), label = { Text(f.label) }, singleLine = !f.multiline,
                     minLines = if (f.list != "none") 3 else 1,
-                    supportingText = if (f.list != "none") ({ Text("One item per line") }) else null)
+                    supportingText = if (f.list != "none") ({ Text(stringResource(R.string.one_item_per_line)) }) else null)
             }
             Row(Modifier.padding(horizontal = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                if (t.fields.isNotEmpty()) TextButton({ values.putAll(t.defaults()); prefs.edit().remove(t.id).apply() }) { Text("Example text") }
-                if (t.category == "mine") TextButton(removed) { Text("Remove from Mine") }
+                if (t.fields.isNotEmpty()) TextButton({ values.putAll(t.defaults()); prefs.edit().remove(t.id).apply() }) { Text(stringResource(R.string.templates_example)) }
+                if (t.category == "mine") TextButton(removed) { Text(stringResource(R.string.templates_remove)) }
                 Spacer(Modifier.weight(1f))
-                if (t.stretch != null) Text("Grows to fit", Modifier.padding(end = 8.dp), style = MaterialTheme.typography.bodySmall,
+                if (t.stretch != null) Text(stringResource(R.string.templates_grows), Modifier.padding(end = 8.dp), style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             error?.let { Text(it, Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall) }
@@ -1040,7 +1100,7 @@ private fun TemplateEditor(t: Templates.Template, print: (Job) -> Unit, removed:
 private fun HistoryTab(reprint: (HistoryItem) -> Unit) {
     val items by Printers.history.collectAsState()
     val fly = LocalFly.current
-    if (items.isEmpty()) Text("Prints show up here so you can reprint them.", Modifier.padding(24.dp), color = Color.Gray)
+    if (items.isEmpty()) Text(stringResource(R.string.history_empty), Modifier.padding(24.dp), color = Color.Gray)
     LazyColumn(Modifier.fillMaxSize()) {
         items(items, key = { it.file.name }) { item ->
             val thumb = remember(item.file) { BitmapFactory.decodeFile(item.file.path)?.asImageBitmap() }
@@ -1052,9 +1112,9 @@ private fun HistoryTab(reprint: (HistoryItem) -> Unit) {
                 trailingContent = {
                     Row {
                         IconButton({ fly.from = at; reprint(item) }, Modifier.onGloballyPositioned { at = it.boundsInRoot().center }) {
-                            Icon(Icons.Default.Print, "reprint")
+                            Icon(Icons.Default.Print, stringResource(R.string.history_reprint))
                         }
-                        IconButton({ Printers.deleteHistory(item) }) { Icon(Icons.Default.Delete, "delete") }
+                        IconButton({ Printers.deleteHistory(item) }) { Icon(Icons.Default.Delete, stringResource(R.string.history_delete)) }
                     }
                 },
             )

@@ -22,6 +22,7 @@ Each release also has a Windows exe and a zip; Obtainium only takes the `.apk`.
 
 ## Android app
 `iPreent-vX.Y.Z.apk` from the Releases page (Android 8+). Material You colours, light/dark from the system.
+English and Spanish, following the system language (the debug settings can force one of them).
 - **Create** (home): every tool on one screen. The two you're most likely to want get big tiles (Photo and
   Document at first), the rest a compact grid. The order starts from fixed weights and slowly follows what you
   actually print; it's only recalculated when the app starts, so tiles never move while you're looking.
@@ -45,7 +46,8 @@ These printers don't show that they're working unless you look at the paper slot
   darkness: timing real prints wasn't reliable, and it's better to be told a print takes a bit longer than it
   does. (The listing's "40 ppm" turned out far too fast.) Prints are still timed and logged, but only to check the
   speed later; `ipreent bench` measures it on about 11 cm of paper.
-- **Debug settings** change the speed the estimates use, only to test another figure: on Android tap the
+- **Debug settings** change the speed the estimates use, only to test another figure (on Android they also hold the
+  **Language** override): on Android tap the
   printer's name in the printer sheet 7 times; on Windows hold **Shift** while opening the printer menu
   (*Debug settings…*); on the command line `ipreent settings paper-speed 12` (`reset` goes back to 10). The
   command line and the Windows app share this setting on the same PC.

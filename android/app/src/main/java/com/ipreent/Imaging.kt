@@ -9,11 +9,14 @@ import android.graphics.Typeface
 import android.text.Layout
 import android.text.StaticLayout
 import android.text.TextPaint
+import androidx.annotation.StringRes
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.MultiFormatWriter
 import com.google.zxing.EncodeHintType
 
-enum class Dither(val label: String) { FLOYD("Floyd–Steinberg"), ATKINSON("Atkinson"), THRESHOLD("Threshold") }
+enum class Dither(@StringRes val label: Int) {
+    FLOYD(R.string.dither_floyd), ATKINSON(R.string.dither_atkinson), THRESHOLD(R.string.dither_threshold)
+}
 
 /** Turn images and text into rows of 0/1 pixels at the printer's width. */
 object Imaging {

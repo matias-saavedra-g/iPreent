@@ -20,9 +20,9 @@ class IpreentPrintService : PrintService() {
     override fun onCreatePrinterDiscoverySession() = object : PrinterDiscoverySession() {
         override fun onStartPrinterDiscovery(priorityList: MutableList<PrinterId>) {
             val id = generatePrinterId("ipreent")
-            val name = Printers.savedName ?: "iPreent printer"
+            val name = Printers.savedName ?: Lang.str(this@IpreentPrintService, R.string.print_service_name)
             // Paper is a continuous roll; offer a long page at the roll width (58 mm ≈ 2.28 in).
-            val roll = PrintAttributes.MediaSize("roll58", "58 mm roll", 2283, 11690)
+            val roll = PrintAttributes.MediaSize("roll58", Lang.str(this@IpreentPrintService, R.string.print_service_roll), 2283, 11690)
             val dpi = Printers.model().dpi
             val caps = PrinterCapabilitiesInfo.Builder(id)
                 .addMediaSize(roll, true)
@@ -45,7 +45,7 @@ class IpreentPrintService : PrintService() {
         scope.launch {
             try {
                 val width = Printers.width
-                val data = job.document.data ?: error("no document")
+                val data = job.document.data ?: fail(R.string.err_no_document, "no document")
                 // The spooler hands us a pipe; PdfRenderer needs a seekable file, so copy it first.
                 val pages = withContext(Dispatchers.IO) {
                     val tmp = java.io.File.createTempFile("job", ".pdf", cacheDir)
@@ -63,7 +63,7 @@ class IpreentPrintService : PrintService() {
                 Printers.enqueue(Job(job.document.info.name, rows, width)).await()
                 job.complete()
             } catch (e: Throwable) {
-                job.fail(e.message)
+                job.fail(Lang.text(this@IpreentPrintService, e))
             }
         }
     }

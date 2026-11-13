@@ -12,6 +12,7 @@ import android.net.Uri
 import android.text.TextPaint
 import com.caverock.androidsvg.RenderOptions
 import com.caverock.androidsvg.SVG
+import org.json.JSONObject
 import java.io.File
 
 /**
@@ -26,6 +27,7 @@ object TemplateArt {
     fun init(ctx: Context) {
         if (fonts.isNotEmpty()) return
         val a = ctx.assets
+        assets = a
         fonts = mapOf(
             "round" to runCatching { Typeface.createFromAsset(a, "fonts/Fredoka-SemiBold.ttf") }.getOrDefault(Typeface.DEFAULT_BOLD),
             "script" to runCatching { Typeface.createFromAsset(a, "fonts/Pacifico-Regular.ttf") }.getOrDefault(Typeface.DEFAULT_BOLD),
@@ -37,8 +39,30 @@ object TemplateArt {
         }
     }
 
-    /** Built-in templates, then the user's own SVGs (Mine). */
-    fun all(): List<Templates.Template> = (builtin ?: emptyList()) + mine()
+    private lateinit var assets: android.content.res.AssetManager
+    private val translations = HashMap<String, Map<String, Templates.Translation>>()
+
+    /** Translated names, labels and example texts for [lang] (assets/i18n/templates.<lang>.json); empty if there is none. */
+    private fun translation(lang: String): Map<String, Templates.Translation> = translations.getOrPut(lang) {
+        runCatching {
+            val root = JSONObject(assets.open("i18n/templates.$lang.json").bufferedReader().use { it.readText() })
+            root.keys().asSequence().associateWith { id ->
+                val o = root.getJSONObject(id)
+                val fo = o.optJSONObject("fields")
+                Templates.Translation(o.optString("name").ifEmpty { null },
+                    fo?.keys()?.asSequence()?.associateWith { k ->
+                        fo.getJSONObject(k).let { f -> f.optString("label").ifEmpty { null } to
+                            (if (f.has("default")) f.getString("default") else null) }
+                    }.orEmpty())
+            }
+        }.getOrDefault(emptyMap())
+    }
+
+    /** Built-in templates (in [lang] when translated), then the user's own SVGs (Mine). */
+    fun all(lang: String = "en"): List<Templates.Template> {
+        val tr = translation(lang)
+        return (builtin ?: emptyList()).map { Templates.localize(it, tr[it.id]) } + mine()
+    }
 
     private fun mine(): List<Templates.Template> =
         (mineDir.listFiles { f -> f.name.endsWith(".svg", ignoreCase = true) } ?: emptyArray()).sortedBy { it.name }.mapNotNull { f ->
@@ -48,7 +72,7 @@ object TemplateArt {
     /** Copies a picked SVG into Mine after checking it can be drawn. Returns the new template. */
     fun import(ctx: Context, uri: Uri): Templates.Template {
         val text = ctx.contentResolver.openInputStream(uri)?.use { it.readBytes() }?.toString(Charsets.UTF_8)
-            ?: throw Templates.TemplateError("can't read the file")
+            ?: throw Templates.TemplateError("can't read the file", R.string.err_tpl_unreadable)
         val name = (Sources.displayName(ctx, uri) ?: "my-template").substringBeforeLast('.')
             .replace(Regex("[^A-Za-z0-9_-]+"), "-").trim('-').ifEmpty { "my-template" }
         val t = Templates.parse(text, Templates.idOf(name)).copy(category = "mine")
@@ -74,7 +98,7 @@ object TemplateArt {
         val art = Bitmap.createBitmap(width, lay.artHeight, Bitmap.Config.ARGB_8888)
         Canvas(art).apply {
             drawColor(Color.WHITE)
-            val svg = try { SVG.getFromString(t.svg) } catch (e: Exception) { throw Templates.TemplateError("can't draw this SVG (${e.message})") }
+            val svg = try { SVG.getFromString(t.svg) } catch (e: Exception) { throw Templates.TemplateError("can't draw this SVG (${e.message})", R.string.err_tpl_draw, listOf(e.message ?: "")) }
             // Without this AndroidSVG draws at the file's own width/height and ignores the viewport's size.
             if (svg.documentViewBox == null) svg.setDocumentViewBox(0f, 0f, t.width.toFloat(), t.height.toFloat())
             svg.setDocumentWidth("100%")

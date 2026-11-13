@@ -54,7 +54,8 @@ object Printers {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val lock = Mutex()
 
-    val status = MutableStateFlow("Idle")
+    /** One line about what the printer is doing, in the app's language (set again when the language changes). */
+    val status = MutableStateFlow("")
     val history = MutableStateFlow<List<HistoryItem>>(emptyList())
     /** Waiting and printing jobs plus the last few finished ones, oldest first. */
     val queue = MutableStateFlow<List<QueueEntry>>(emptyList())
@@ -73,9 +74,15 @@ object Printers {
         table = JSONArray(app.assets.open("models.json").bufferedReader().readText())
         _darkness.value = Darkness.entries.getOrNull(prefs.getInt("darkness", Darkness.NORMAL.ordinal)) ?: Darkness.NORMAL
         _printerName.value = savedName
+        status.value = s(R.string.status_idle)
         _debugSpeed.value = prefs.getFloat("debug_mm_per_s", 0f).toDouble().takeIf { it > 0 }
         loadHistory()
     }
+
+    private fun s(id: Int, vararg args: Any) = Lang.str(app, id, *args)
+
+    /** The language was changed in the debug settings: redo the texts that are kept as strings. */
+    fun languageChanged() { if (!busy) status.value = s(R.string.status_idle) }
 
     private val prefs get() = app.getSharedPreferences("printer", Context.MODE_PRIVATE)
     private val historyDir get() = File(app.filesDir, "history").apply { mkdirs() }
@@ -144,15 +151,15 @@ object Printers {
         for (c in candidates) {
             var f = c
             if (f == null) {
-                status.value = "Scanning…"
+                status.value = s(R.string.status_scanning)
                 f = scan().firstOrNull() ?: break
             }
-            status.value = "Connecting to ${f.name.ifEmpty { f.address }}…"
+            status.value = s(R.string.status_connecting, f.name.ifEmpty { f.address })
             val p = try { BlePrinter.connect(app, f.address, model(f.name)) } catch (e: Throwable) { lastErr = e; continue }
             remember(f)
             try { return block(p) } finally { p.close() }
         }
-        throw IllegalStateException(lastErr?.message ?: "No printer found. Is it on and not connected to another app?")
+        throw lastErr ?: UserError(R.string.err_no_printer, emptyList(), "No printer found. Is it on and not connected to another app?")
     }
 
     /** Queue a job. Jobs print one after another; the returned Deferred completes when this one is done. */
@@ -174,7 +181,7 @@ object Printers {
                         val t0 = System.currentTimeMillis()
                         update(id) { it.copy(state = JobState.PRINTING, seconds = secs, startedAt = t0) }
                         repeat(job.copies) { n ->
-                            status.value = "Printing ${job.title}" + if (job.copies > 1) " (${n + 1}/${job.copies})" else ""
+                            status.value = if (job.copies > 1) s(R.string.status_printing_copies, job.title, n + 1, job.copies) else s(R.string.status_printing, job.title)
                             update(id) { it.copy(copy = n + 1, progress = 0f) }
                             var shown = 0
                             p.send(bytes) { f ->
@@ -185,15 +192,16 @@ object Printers {
                         }
                         logTiming(job.rows.size, p.model.dpi, job.copies, (System.currentTimeMillis() - t0) / 1000.0)
                     }
-                    status.value = "Done"
+                    status.value = s(R.string.status_done)
                 }
                 update(id) { it.copy(state = JobState.DONE, finishedAt = System.currentTimeMillis()) }
             } catch (e: CancellationException) {
                 update(id) { it.copy(state = JobState.CANCELLED, finishedAt = System.currentTimeMillis()) }
                 throw e
             } catch (e: Throwable) {
-                status.value = "Error: ${e.message}"
-                update(id) { it.copy(state = JobState.FAILED, error = e.message ?: "failed", finishedAt = System.currentTimeMillis()) }
+                val text = Lang.text(app, e)
+                status.value = s(R.string.status_error, text)
+                update(id) { it.copy(state = JobState.FAILED, error = text, finishedAt = System.currentTimeMillis()) }
                 throw e
             } finally {
                 running.remove(id)
@@ -204,18 +212,24 @@ object Printers {
         return d
     }
 
+    private val STATE_WORDS = mapOf("out of paper" to R.string.printer_state_out_of_paper, "cover open" to R.string.printer_state_cover_open,
+        "overheated" to R.string.printer_state_overheated, "low battery" to R.string.printer_state_low_battery,
+        "charging" to R.string.printer_state_charging, "printing" to R.string.printer_state_printing,
+        "ready" to R.string.printer_state_ready, "unknown" to R.string.printer_state_unknown)
+
     suspend fun readStatus(): String = lock.withLock {
         withPrinter { p ->
             val st = p.request(Protocol.CMD_GET_STATE)
             val bat = p.request(Protocol.CMD_BATTERY)
-            "${p.model.name}: ${Protocol.describeState(st)}" + (bat?.let { " · battery ${it[0].toInt() and 0xFF}%" } ?: "")
+            val state = Protocol.describeState(st) { w -> s(STATE_WORDS.getValue(w)) }
+            bat?.let { s(R.string.status_battery, p.model.name, state, it[0].toInt() and 0xFF) } ?: s(R.string.status_state, p.model.name, state)
         }.also { status.value = it }
     }
 
     // ---- history: each job saved as the exact 1-bit PNG that was printed -------------------------
 
     private fun save(job: Job, picture: Bitmap) {
-        val safe = job.title.replace(Regex("[^A-Za-z0-9 _-]"), "").take(40).ifBlank { "print" }
+        val safe = job.title.replace(Regex("[^\\p{L}\\p{N} _-]"), "").take(40).ifBlank { "print" }
         val f = File(historyDir, "${System.currentTimeMillis()}_${job.mode}_$safe.png")
         f.outputStream().use { picture.compress(Bitmap.CompressFormat.PNG, 100, it) }
         historyDir.listFiles()!!.sortedByDescending { it.lastModified() }.drop(50).forEach { it.delete() }

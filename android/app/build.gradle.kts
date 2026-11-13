@@ -11,8 +11,8 @@ android {
         applicationId = "com.ipreent"
         minSdk = 26
         targetSdk = 35
-        versionCode = 7
-        versionName = "0.7.0"
+        versionCode = 8
+        versionName = "0.8.0"
     }
     // A real key comes from the environment (the release workflow sets it from repository secrets);
     // without one, release builds are signed with the local debug key, as before.
@@ -38,6 +38,8 @@ android {
     }
     kotlinOptions { jvmTarget = "17" }
     buildFeatures { compose = true }
+    // A string missing from values-es/ is not an error: Android falls back to the English one in values/.
+    lint { disable += "MissingTranslation" }
 }
 
 dependencies {

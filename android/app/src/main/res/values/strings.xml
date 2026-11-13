@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- English (default). Spanish lives in values-es/strings.xml; a unit test (StringsTest) checks both have the same
+     names and the same format arguments. Non-translatable names stay in this file only. -->
+<resources>
+    <string name="app_name" translatable="false">iPreent</string>
+    <string name="share_label">Print with iPreent</string>
+
+    <!-- Tools (home screen and top bar) -->
+    <string name="tool_photo">Photo</string>
+    <string name="tool_photo_blurb">From your gallery</string>
+    <string name="tool_document">Document</string>
+    <string name="tool_document_blurb">PDFs, sharp text</string>
+    <string name="tool_text">Text</string>
+    <string name="tool_text_blurb">Notes and messages</string>
+    <string name="tool_receipt">Receipt</string>
+    <string name="tool_receipt_blurb">Boleta with total and barcode</string>
+    <string name="tool_template">Templates</string>
+    <string name="tool_template_blurb">Hearts, frames, lists, tags</string>
+    <string name="tool_list">Checklist</string>
+    <string name="tool_list_blurb">To-do lists with boxes</string>
+    <string name="tool_code">QR &amp; barcode</string>
+    <string name="tool_code_blurb">Links, labels, product codes</string>
+    <string name="tool_banner">Banner</string>
+    <string name="tool_banner_blurb">Big text along the paper</string>
+
+    <!-- Navigation -->
+    <string name="nav_create">Create</string>
+    <string name="nav_queue">Queue</string>
+    <string name="nav_history">History</string>
+    <string name="back_to_tools">Back to all tools</string>
+    <string name="printer_settings">Printer settings</string>
+
+    <!-- Common -->
+    <string name="action_print">Print</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_close">Close</string>
+    <string name="one_item_per_line">One item per line</string>
+
+    <!-- Snackbars -->
+    <string name="snack_printed">Printed “%1$s”</string>
+    <string name="snack_removed">Removed “%1$s” from the queue</string>
+    <string name="snack_print_failed">Print failed</string>
+    <string name="shared_open_failed">Could not open shared file: %1$s</string>
+
+    <!-- Time left -->
+    <string name="left_about">about %1$s left</string>
+    <string name="left_short">%1$s left</string>
+    <string name="left_finishing">finishing</string>
+
+    <!-- Busy dialog -->
+    <string name="busy_free_title">The printer is free now</string>
+    <string name="busy_free_text">Print “%1$s”?</string>
+    <string name="busy_title">The printer is busy</string>
+    <string name="busy_printing_left">“%1$s” is printing: about %2$s left.</string>
+    <string name="busy_printing_almost">“%1$s” is printing: almost done.</string>
+    <plurals name="busy_more_waiting">
+        <item quantity="one">%d more waiting.</item>
+        <item quantity="other">%d more waiting.</item>
+    </plurals>
+    <string name="busy_add_question">Add “%1$s” to the queue? It should start in about %2$s and take about %3$s.</string>
+    <string name="busy_add">Add to queue</string>
+
+    <!-- Printer chip and sheet -->
+    <string name="printer_setup">Set up printer</string>
+    <string name="sheet_no_printer">No printer yet</string>
+    <string name="sheet_no_printer_hint">Turn it on; it’s found on the first print, or use Find printers.</string>
+    <string name="sheet_printer_info">%1$s · Bluetooth LE · %2$s</string>
+    <string name="sheet_darkness">Darkness</string>
+    <string name="sheet_lighter">Lighter</string>
+    <string name="sheet_darker">Darker (prints slower)</string>
+    <string name="sheet_estimates">Time estimates assume %1$s mm/s at every darkness, the printer’s slowest nominal speed.</string>
+    <string name="sheet_estimates_debug">Time estimates assume %1$s mm/s at every darkness (debug setting).</string>
+    <string name="sheet_details">Printer details</string>
+    <string name="sheet_check_status">Check status and battery</string>
+    <string name="sheet_scanning">Looking for printers…</string>
+    <string name="sheet_find">Find printers</string>
+    <string name="sheet_forget">Forget this printer</string>
+    <string name="sheet_scan_failed">Scan failed</string>
+    <string name="sheet_error">error</string>
+    <string name="sheet_none_found">No printers found</string>
+    <string name="sheet_none_found_hint">Is it on, and not connected to another app?</string>
+    <string name="sheet_pick">Pick a printer</string>
+    <string name="sheet_debug_open">Debug settings are already open, below</string>
+    <string name="sheet_debug_unlocked">Debug settings unlocked</string>
+    <plurals name="sheet_debug_taps">
+        <item quantity="one">%d more tap to open the debug settings</item>
+        <item quantity="other">%d more taps to open the debug settings</item>
+    </plurals>
+
+    <!-- Darkness levels -->
+    <string name="darkness_lightest">Lightest</string>
+    <string name="darkness_lighter">Lighter</string>
+    <string name="darkness_normal">Normal</string>
+    <string name="darkness_darker">Darker</string>
+    <string name="darkness_darkest">Darkest</string>
+
+    <!-- Printer details -->
+    <string name="detail_paper">Paper</string>
+    <string name="detail_labels">Labels</string>
+    <string name="detail_print_width">Print width</string>
+    <string name="detail_resolution">Resolution</string>
+    <string name="detail_labels_value">die-cut labels supported</string>
+    <string name="detail_width_value">%1$s mm (%2$d dots)</string>
+    <string name="detail_resolution_value">%1$d dpi (%2$s dots per mm)</string>
+    <string name="paper_unknown">thermal paper wider than the print width</string>
+    <string name="paper_1">narrow label tape (about 15 mm)</string>
+    <string name="paper_2">57 mm thermal roll (sold as 57 or 58 mm)</string>
+    <string name="paper_3">80 mm thermal roll</string>
+    <string name="paper_4">4-inch thermal labels or roll (about 110 mm)</string>
+    <string name="paper_8">A4 thermal paper</string>
+
+    <!-- Debug settings -->
+    <string name="debug_title">Debug settings</string>
+    <string name="debug_speed_info">Time estimates assume the printer’s slowest nominal speed, %1$s mm/s, because measured times aren’t reliable yet. Change it only to test another figure.</string>
+    <string name="debug_paper_speed">Paper speed</string>
+    <string name="debug_speed_value" translatable="false">%1$s mm/s</string>
+    <string name="debug_last_measured">The last timed print looked like about %1$s mm/s (not used).</string>
+    <string name="debug_back_to">Back to %1$s mm/s</string>
+    <string name="debug_hide">Hide</string>
+    <string name="debug_language">Language</string>
+    <string name="debug_language_hint">Overrides the system language; for testing translations.</string>
+    <string name="language_system">System</string>
+    <string name="language_en" translatable="false">English</string>
+    <string name="language_es" translatable="false">Español</string>
+
+    <!-- Queue -->
+    <string name="now_waiting">%1$d waiting</string>
+    <string name="state_waiting">Waiting:</string>
+    <string name="state_connecting">Connecting:</string>
+    <string name="state_printing">Printing</string>
+    <string name="state_printing_copy">Printing %1$d/%2$d:</string>
+    <string name="queue_empty_title">Nothing in the queue</string>
+    <string name="queue_empty_text">Prints show up here with the time they have left.</string>
+    <string name="queue_all_done">All done in about %1$s</string>
+    <string name="queue_starts_in">Starts in about %1$s · takes %2$s</string>
+    <string name="queue_connecting">Connecting… %1$s</string>
+    <string name="queue_remove">Remove from queue</string>
+    <string name="queue_finished">Finished</string>
+    <string name="queue_clear">Clear</string>
+    <string name="queue_printed_at">Printed at %1$s</string>
+    <string name="queue_removed_at">Removed at %1$s</string>
+    <string name="queue_failed">Failed: %1$s</string>
+
+    <!-- Home and history -->
+    <string name="home_title">What do you want to print?</string>
+    <string name="home_more">More tools</string>
+    <string name="history_empty">Prints show up here so you can reprint them.</string>
+    <string name="history_reprint">Reprint</string>
+    <string name="history_delete">Delete</string>
+
+    <!-- Tool screens -->
+    <string name="preview_empty">Nothing to print yet</string>
+    <string name="copies_fewer">Fewer copies</string>
+    <string name="copies_more">More copies</string>
+    <string name="print_estimate">about %1$s</string>
+    <string name="image_pick_file">Choose PDF or file</string>
+    <string name="image_pick_photo">Choose photo</string>
+    <plurals name="pages">
+        <item quantity="one">%d page</item>
+        <item quantity="other">%d pages</item>
+    </plurals>
+    <string name="image_cant_open">Can’t open it: %1$s</string>
+    <string name="image_brightness">Brightness</string>
+    <string name="image_contrast">Contrast</string>
+    <string name="dither_floyd" translatable="false">Floyd–Steinberg</string>
+    <string name="dither_atkinson" translatable="false">Atkinson</string>
+    <string name="dither_threshold">Threshold</string>
+    <string name="text_note">Note</string>
+    <string name="text_bold">Bold</string>
+    <string name="list_default_title">To do</string>
+    <string name="list_title">Title</string>
+    <string name="banner_text">Banner text</string>
+    <string name="job_banner">banner %1$s</string>
+    <string name="code_qr" translatable="false">QR</string>
+    <string name="code_barcode">Barcode</string>
+    <string name="code_content">Link or text</string>
+    <string name="code_caption">Caption (optional)</string>
+    <string name="job_code">code</string>
+
+    <!-- Receipt -->
+    <string name="receipt_business_details">Business details</string>
+    <string name="receipt_business_name">Business name</string>
+    <string name="receipt_address">Address</string>
+    <string name="receipt_website">Website</string>
+    <string name="receipt_footer">Message at the bottom</string>
+    <string name="receipt_products">Products</string>
+    <string name="receipt_product_n">Product %1$d</string>
+    <string name="receipt_qty">Qty</string>
+    <string name="receipt_price">Price (CLP)</string>
+    <string name="receipt_remove">Remove</string>
+    <string name="receipt_add">Add product</string>
+    <string name="receipt_total">Total %1$s</string>
+    <string name="receipt_cant">Can’t make this receipt</string>
+    <string name="job_receipt">Receipt %1$s</string>
+
+    <!-- Templates -->
+    <string name="templates_all">All</string>
+    <string name="category_love">Love</string>
+    <string name="category_frames">Frames</string>
+    <string name="category_lists">Lists</string>
+    <string name="category_notes">Notes</string>
+    <string name="category_party">Party</string>
+    <string name="category_labels">Labels</string>
+    <string name="category_christmas">Christmas</string>
+    <string name="category_holidays">Holidays</string>
+    <string name="category_mine">Mine</string>
+    <string name="templates_own_svg">Your own SVG</string>
+    <string name="templates_own_svg_hint">Any SVG file; docs/TEMPLATES.md shows how to add text boxes</string>
+    <string name="templates_cant_use">Can’t use that file: %1$s</string>
+    <string name="templates_cant_draw">Can’t draw this template: %1$s</string>
+    <string name="templates_example">Example text</string>
+    <string name="templates_remove">Remove from Mine</string>
+    <string name="templates_grows">Grows to fit</string>
+
+    <!-- Printer state words (from the printer’s status byte) -->
+    <string name="printer_state_out_of_paper">out of paper</string>
+    <string name="printer_state_cover_open">cover open</string>
+    <string name="printer_state_overheated">overheated</string>
+    <string name="printer_state_low_battery">low battery</string>
+    <string name="printer_state_charging">charging</string>
+    <string name="printer_state_printing">printing</string>
+    <string name="printer_state_ready">ready</string>
+    <string name="printer_state_unknown">unknown</string>
+
+    <!-- Printer status line and errors -->
+    <string name="status_idle">Idle</string>
+    <string name="status_scanning">Scanning…</string>
+    <string name="status_connecting">Connecting to %1$s…</string>
+    <string name="status_printing">Printing %1$s</string>
+    <string name="status_printing_copies">Printing %1$s (%2$d/%3$d)</string>
+    <string name="status_done">Done</string>
+    <string name="status_error">Error: %1$s</string>
+    <string name="status_battery">%1$s: %2$s · battery %3$d%%</string>
+    <string name="status_state">%1$s: %2$s</string>
+    <string name="err_failed">failed</string>
+    <string name="err_no_printer">No printer found. Is it on and not connected to another app?</string>
+    <string name="err_bt_off">Bluetooth is off</string>
+    <string name="err_no_bt">No Bluetooth on this device</string>
+    <string name="err_disconnected">Disconnected (status %1$d)</string>
+    <string name="err_no_write_char">No known write characteristic; is this a supported printer?</string>
+    <string name="err_bt_write">Bluetooth write failed</string>
+    <string name="err_not_price">not a price: “%1$s”</string>
+    <string name="err_not_qty">not a quantity: “%1$s”</string>
+    <string name="err_qty_positive">quantity must be more than zero</string>
+    <string name="err_no_name">no product name</string>
+    <string name="err_no_price">no price</string>
+    <string name="err_row">Row %1$d: %2$s</string>
+    <string name="err_no_products">Add products with their quantity and price.</string>
+    <string name="err_barcode_long">receipt number too long for a barcode on this paper</string>
+    <string name="err_tpl_unreadable">can’t read the file</string>
+    <string name="err_tpl_draw">can’t draw this SVG (%1$s)</string>
+    <string name="err_tpl_invalid">not a valid SVG file (%1$s)</string>
+    <string name="err_tpl_not_svg">not an SVG file</string>
+    <string name="err_tpl_no_size">the SVG has no size (viewBox or width/height)</string>
+
+    <!-- Android print service -->
+    <string name="print_service_name">iPreent printer</string>
+    <string name="print_service_roll">58 mm roll</string>
+    <string name="err_no_document">no document</string>
+</resources>

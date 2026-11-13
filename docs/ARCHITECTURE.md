@@ -81,6 +81,18 @@ fails if the copies differ.
   a job is open → `Fly` paper slip to the Queue icon → `Printers.enqueue`. History reprints use the same path.
   Templates tool: `TemplateGallery` (filter chips, in-season templates and chip first, adaptive grid of thumbnails, *Your own SVG* card →
   `filesDir/templates`) → `TemplateEditor` (one text field per box, exact preview, PrintBar); back returns to the gallery.
+- **Language**: all UI text is in `res/values/strings.xml` (English, the default) and `res/values-es/strings.xml`
+  (Spanish); Android picks one from the system language. `Lang.kt` holds the debug override (SharedPreferences
+  `printer`, key `language`: `system`/`en`/`es`), applied in `MainActivity.attachBaseContext`; the Language chips in
+  `DebugSettings` save it and recreate the activity. Code without an Activity (queue, print service) gets text through
+  `Lang.str(ctx, id, …)`. Pure code that must stay JVM-testable throws `UserError`/`TemplateError` (English `message`
+  for tests, string `res` + `args` for the UI; `Lang.text` picks). Template names, box labels and example texts for
+  Spanish are in `assets/i18n/templates.es.json` (`Templates.localize`); the SVGs themselves stay shared with Python.
+  Anything not translated falls back to English: Android uses `values/` for a string missing from `values-es/` (lint's
+  `MissingTranslation` is off so that is not a build error), and a template or box missing from the JSON keeps its English
+  text. `LocalizationTest` only checks that what exists matches (no unknown names, same `%` arguments).
+  Add a language = a `values-xx/strings.xml`, an optional `templates.xx.json`, and an entry in `Lang.CHOICES`.
+  The Windows app and the CLI are English only. Receipts always print in Spanish (BOLETA).
 - `Printers.kt`: app-wide state: model table, remembered printer (`printerName` flow), darkness, the queue
   (`QueueEntry`: waiting/connecting/printing/done/failed/cancelled, thumbnail, estimate, progress; cancel waiting
   jobs), estimate speed (nominal 10 mm/s or `debugSpeed`), history (each print saved as its exact 1-bit PNG, last 50).
@@ -99,7 +111,7 @@ fails if the copies differ.
 | Windows | registry `HKCU\Software\iPreent\iPreent` (QSettings) | print settings, mode, receipt form, template texts (`template_values`, `template_id`), API settings + token, usage, `debug_unlocked` |
 | | `HKCU\...\CurrentVersion\Run` | "Start with Windows" |
 | CLI + Windows | config dir: `templates/*.svg` | the user's own templates (Mine) |
-| Android | SharedPreferences `printer`, `receipt`, `usage`, `templates`; `filesDir/history/*.png`, `filesDir/templates/*.svg` | printer, darkness, `debug_mm_per_s`, `debug_unlocked`, `last_measured_mm_per_s` (shown in the debug settings only); receipt form; tool usage; template texts (id → JSON); print history; own templates (Mine) |
+| Android | SharedPreferences `printer`, `receipt`, `usage`, `templates`; `filesDir/history/*.png`, `filesDir/templates/*.svg` | printer, darkness, `debug_mm_per_s`, `debug_unlocked`, `language`, `last_measured_mm_per_s` (shown in the debug settings only); receipt form; tool usage; template texts (id → JSON); print history; own templates (Mine) |
 
 ## Checking changes without hardware
 - `pytest -q` (two known Linux failures: no emoji font; `winreg`). Tests never touch the real config dir
