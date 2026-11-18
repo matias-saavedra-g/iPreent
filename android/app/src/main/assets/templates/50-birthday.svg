@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 400" width="384" height="400"
-     ip:name="Birthday cake" ip:category="party">
+     ip:name="Birthday cake" ip:category="birthday">
   <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
   <rect x="102" y="96" width="180" height="70" rx="10" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
   <rect x="82" y="166" width="220" height="70" rx="10" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>

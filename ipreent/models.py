@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .i18n import tr
+from .protocol import dots_per_mm
 
 _TABLE = None
 
@@ -40,13 +41,14 @@ def details(model):
     transport tuning (MTU, chunk interval, compressed lines, frame format), the raw speed byte and
     energy numbers, and the vendor's internal flags (device id, retract length, sensor values).
     """
-    mm = model.width * 25.4 / model.dpi
+    dpmm = dots_per_mm(model.dpi)
+    mm = model.width / dpmm
     paper = PAPER.get(model.paper, tr("thermal paper wider than the print width"))
     out = [(tr("Paper"), paper)]
     if model.labels:
         out.append((tr("Labels"), tr("die-cut labels supported")))
     return out + [(tr("Print width"), tr("{0:.1f} mm ({1} dots)", mm, model.width)),
-                  (tr("Resolution"), tr("{0} dpi ({1:.0f} dots per mm)", model.dpi, model.dpi / 25.4))]
+                  (tr("Resolution"), tr("{0} dpi ({1:.0f} dots per mm)", round(dpmm * 25.4), dpmm))]
 
 
 def _table():

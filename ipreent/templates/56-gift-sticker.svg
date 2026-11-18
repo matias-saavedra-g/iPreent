@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 200" width="384" height="200"
+     ip:name="Gift sticker" ip:category="birthday">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <rect x="8" y="8" width="368" height="184" rx="20" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <rect x="18" y="18" width="348" height="164" rx="14" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" stroke-dasharray="3 7"/>
+  <rect x="34" y="84" width="92" height="80" rx="4" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <rect x="28" y="62" width="104" height="24" rx="4" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <rect x="74" y="62" width="12" height="102" fill="#000"/>
+  <path d="M80 62 C58 30 34 50 80 62 M80 62 C102 30 126 50 80 62" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <path d="M140 37 Q141.8 44.2 149 46 Q141.8 47.8 140 55 Q138.2 47.8 131 46 Q138.2 44.2 140 37Z" fill="#000"/>
+  <circle cx="36" cy="42" r="4" fill="#000"/>
+  <rect ip:field="to" ip:label="To" ip:default="For Sofía" ip:size="36" ip:min="16" ip:lines="1" ip:align="left" x="146" y="30" width="212" height="76" fill="none"/>
+  <rect ip:field="from" ip:label="From" ip:default="From uncle Matías" ip:size="24" ip:min="14" ip:align="left" x="146" y="106" width="212" height="66" fill="none"/>
+</svg>

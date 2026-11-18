@@ -13,9 +13,10 @@ object Features {
     const val PRIOR_SCALE = 10.0   // counts level off at 1 / (1 - DECAY) = 10, so habit can outweigh the guess
 
     /** Android tools. Photos and documents first (what these printers are bought for), then notes, receipts,
-     *  templates (cards, tags, journal stickers), checklists, QR/barcodes for labels, and banners (fun, but occasional). */
-    val ANDROID = linkedMapOf("photo" to 0.22, "document" to 0.19, "text" to 0.16, "receipt" to 0.13,
-        "template" to 0.10, "list" to 0.09, "code" to 0.07, "banner" to 0.04)
+     *  templates (cards, tags, journal stickers), checklists, QR/barcodes for labels, banners (fun, but occasional)
+     *  and the ruler. */
+    val ANDROID = linkedMapOf("photo" to 0.22, "document" to 0.19, "text" to 0.14, "receipt" to 0.13,
+        "template" to 0.10, "list" to 0.09, "code" to 0.07, "banner" to 0.04, "ruler" to 0.02)
 
     fun recordUse(usage: Map<String, Double>, key: String, decay: Double = DECAY): Map<String, Double> {
         val out = usage.mapValues { it.value * decay }.toMutableMap()

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 430" width="384" height="430"
+     ip:name="Balloons" ip:category="birthday">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <path d="M120 166 C100 192 152 212 186 248" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <path d="M264 170 C286 198 232 214 198 248" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <path d="M192 150 C212 182 172 212 192 248" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <ellipse cx="120" cy="100" rx="46" ry="58" fill="#fff" stroke="#000" stroke-width="6"/>
+  <path d="M95 86 Q97 65 113 59" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M114 166 L120 158 L126 166 Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <ellipse cx="264" cy="104" rx="46" ry="58" fill="#fff" stroke="#000" stroke-width="6"/>
+  <path d="M239 90 Q241 69 257 63" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M258 170 L264 162 L270 170 Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <ellipse cx="192" cy="80" rx="50" ry="62" fill="#fff" stroke="#000" stroke-width="6"/>
+  <path d="M164 64 Q167 43 184 37" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M186 150 L192 142 L198 150 Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M192 250 C170 234 164 264 192 253 M192 250 C214 234 220 264 192 253" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M192 253 L182 274 M192 253 L203 274" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M40.0 47.0 L43.4 55.3 L52.4 56.0 L45.6 61.8 L47.6 70.5 L40.0 65.8 L32.4 70.5 L34.4 61.8 L27.6 56.0 L36.6 55.3Z" fill="#000"/>
+  <path d="M346.0 200.0 L348.6 206.4 L355.5 206.9 L350.3 211.4 L351.9 218.1 L346.0 214.5 L340.1 218.1 L341.7 211.4 L336.5 206.9 L343.4 206.4Z" fill="#000"/>
+  <path d="M338 28 Q340.4 37.6 350 40 Q340.4 42.4 338 52 Q335.6 42.4 326 40 Q335.6 37.6 338 28Z" fill="#000"/>
+  <path d="M48 190 Q50.0 198.0 58 200 Q50.0 202.0 48 210 Q46.0 202.0 38 200 Q46.0 198.0 48 190Z" fill="#000"/>
+  <circle cx="30" cy="130" r="5" fill="#000"/>
+  <circle cx="356" cy="128" r="5" fill="#000"/>
+  <circle cx="70" cy="250" r="4" fill="#000"/>
+  <circle cx="318" cy="262" r="4" fill="#000"/>
+  <rect ip:field="title" ip:label="Title" ip:default="Happy birthday" ip:font="script" ip:size="46" ip:min="20" ip:lines="1" x="16" y="284" width="352" height="70" fill="none"/>
+  <rect ip:field="name" ip:label="Name" ip:default="Sofía" ip:size="40" ip:min="18" ip:lines="1" x="16" y="354" width="352" height="62" fill="none"/>
+</svg>

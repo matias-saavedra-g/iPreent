@@ -25,7 +25,7 @@ object Templates {
     const val NS = "urn:ipreent:template"
     private const val SVG_NS = "http://www.w3.org/2000/svg"
     val CATEGORIES = linkedMapOf("love" to "Love", "frames" to "Frames", "lists" to "Lists", "notes" to "Notes",
-        "party" to "Party", "labels" to "Labels", "christmas" to "Christmas", "holidays" to "Holidays", "mine" to "Mine")
+        "party" to "Party", "birthday" to "Birthday", "labels" to "Labels", "christmas" to "Christmas", "holidays" to "Holidays", "mine" to "Mine")
     val FONTS = listOf("round", "script", "sans", "bold")
     val LISTS = listOf("none", "check", "dot", "heart")
     const val LINE_HEIGHT = 1.25

@@ -13,13 +13,13 @@ DECAY = 0.9          # each use shrinks older counts by 10%
 PRIOR_SCALE = 10.0   # counts level off at 1 / (1 - DECAY) = 10, so habit can outweigh the guess
 
 # Windows app modes. Photos and documents first (what these printers are bought for), then notes,
-# receipts (small shops), templates (cards, tags, journal stickers), checklists, banners and codes.
-DESKTOP = {"photo": 0.22, "document": 0.19, "text": 0.16, "receipt": 0.13, "template": 0.10, "list": 0.09,
-           "banner": 0.05, "qr": 0.04, "barcode": 0.02}
+# receipts (small shops), templates (cards, tags, journal stickers), checklists, banners, codes and the ruler.
+DESKTOP = {"photo": 0.22, "document": 0.19, "text": 0.14, "receipt": 0.13, "template": 0.10, "list": 0.09,
+           "banner": 0.05, "qr": 0.04, "barcode": 0.02, "ruler": 0.02}
 
 # Command-line subcommands, for the home screen and the order in `ipreent --help`.
-CLI = {"print": 0.27, "text": 0.22, "receipt": 0.14, "status": 0.07, "template": 0.07, "preview": 0.07,
-       "queue": 0.05, "scan": 0.04, "feed": 0.03, "settings": 0.02, "forget": 0.01, "bench": 0.01}
+CLI = {"print": 0.27, "text": 0.20, "receipt": 0.14, "status": 0.07, "template": 0.07, "preview": 0.07,
+       "queue": 0.05, "scan": 0.04, "feed": 0.03, "settings": 0.02, "ruler": 0.02, "forget": 0.01, "bench": 0.01}
 
 
 def record_use(usage, key, decay=DECAY):

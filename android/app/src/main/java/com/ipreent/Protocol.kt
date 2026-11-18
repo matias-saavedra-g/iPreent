@@ -96,7 +96,11 @@ object Protocol {
     const val MIN_MM_PER_S = 2.0
     const val MAX_MM_PER_S = 100.0
 
-    fun paperMm(lines: Int, dpi: Int) = lines * 25.4 / dpi
+    /** Dots (and paper rows) per mm. The vendor table's "200 dpi" is really 203.2 dpi: 8 dots per mm, the 384 dots
+     *  of a 58 mm printer covering 48 mm (port of protocol.dots_per_mm). */
+    fun dotsPerMm(dpi: Int): Double = if (dpi == 200) 8.0 else dpi / 25.4
+
+    fun paperMm(lines: Int, dpi: Int) = lines / dotsPerMm(dpi)
 
     /** Paper speed for estimates: the debug [override] (clamped to 2-100 mm/s) when set, else the nominal speed. */
     fun speedFor(override: Double? = null): Double =

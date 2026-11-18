@@ -103,8 +103,14 @@ COPY_OVERHEAD_S = 1.0    # waiting for the printer to report it has finished, pe
 MIN_MM_PER_S, MAX_MM_PER_S = 2.0, 100.0
 
 
+def dots_per_mm(dpi):
+    """Dots (and paper rows) per millimetre. The vendor table's "200 dpi" is really 203.2 dpi: 8 dots per
+    mm, the 384 dots of a 58 mm printer covering 48 mm. Taking 200 literally made every length 1.6 % long."""
+    return 8.0 if dpi == 200 else dpi / 25.4
+
+
 def paper_mm(lines, dpi):
-    return lines * 25.4 / dpi
+    return lines / dots_per_mm(dpi)
 
 
 def _clamp_speed(v):

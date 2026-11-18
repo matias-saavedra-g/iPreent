@@ -2,6 +2,21 @@
 
 Each `## vX.Y.Z` section becomes the notes of that GitHub Release.
 
+## Unreleased
+**Ruler**, a new tool in the Android app, the Windows app and the command line (`ipreent ruler 150`): a millimetre
+ruler along the paper (1 to 100 cm) with a scale across the paper. Each tick is placed on its own, so it stays within
+1/16 mm however long it is. Film the paper while it prints to measure your printer's real speed: the big centimetre
+numbers and a timing track that switches every millimetre make it easy to count millimetres between frames. If a
+printed 100 mm measures a little differently on a good ruler, enter what you read and rulers correct for it.
+
+**Birthday templates**: a new *Birthday* category with the cake plus balloons, a cupcake, a crown with name and age, a
+card that grows with your message, a birthday gift tag and a small gift sticker for wrapping paper. English and
+Spanish.
+
+**Lengths are exact now**: the printers listed as "200 dpi" really have 8 dots per mm (203.2 dpi). Paper lengths,
+time estimates, measured speeds and the print width in the printer details were 1.6 % too long (48.8 mm instead of
+48.0 mm).
+
 ## v0.8.1
 **Downloads**
 - `iPreent-v0.8.1.apk`: Android app (Android 8+). Installs over v0.8.0. Also available through Obtainium (see README).

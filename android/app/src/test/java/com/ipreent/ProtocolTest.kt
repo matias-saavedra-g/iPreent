@@ -43,8 +43,8 @@ class ProtocolTest {
         assertEquals(listOf(
             "Paper" to "57 mm thermal roll (sold as 57 or 58 mm)",
             "Labels" to "die-cut labels supported",
-            "Print width" to "48.8 mm (384 dots)",
-            "Resolution" to "200 dpi (8 dots per mm)",
+            "Print width" to "48.0 mm (384 dots)",
+            "Resolution" to "203 dpi (8 dots per mm)",
         ), m.details())
         assertEquals("Paper" to "A4 thermal paper", Model.lookup(table, "A41II").details()[0])
         assertEquals(listOf("Paper", "Print width", "Resolution"), Model.lookup(table, "GB01").details().map { it.first })
@@ -52,9 +52,9 @@ class ProtocolTest {
 
     // Same cases as tests/test_protocol.py
     @Test fun printTimeEstimate() {
-        assertEquals(10.299, Protocol.estimateSeconds(400, 200), 1e-3)
-        assertEquals(14.598, Protocol.estimateSeconds(400, 200, copies = 2, connect = false), 1e-3)
-        assertEquals(4.610, Protocol.estimateSeconds(0, 200, mmPerS = 20.0), 1e-3)
+        assertEquals(10.2, Protocol.estimateSeconds(400, 200), 1e-3)
+        assertEquals(14.4, Protocol.estimateSeconds(400, 200, copies = 2, connect = false), 1e-3)
+        assertEquals(4.6, Protocol.estimateSeconds(0, 200, mmPerS = 20.0), 1e-3)
         assertEquals(Protocol.estimateSeconds(400, 200), Protocol.estimateSeconds(400, 200, copies = 0), 1e-9)
     }
 
@@ -69,7 +69,7 @@ class ProtocolTest {
     }
 
     @Test fun measuredSpeed() {
-        assertEquals(21.539, Protocol.measuredSpeed(1600, 200, 1, 11.0)!!, 1e-3)
+        assertEquals(21.2, Protocol.measuredSpeed(1600, 200, 1, 11.0)!!, 1e-3)
         assertNull(Protocol.measuredSpeed(10, 200, 1, 9.0))
         assertNull(Protocol.measuredSpeed(1600, 200, 1, 0.5))
         assertEquals(Protocol.MIN_MM_PER_S, Protocol.measuredSpeed(1600, 200, 1, 1000.0)!!, 1e-9)

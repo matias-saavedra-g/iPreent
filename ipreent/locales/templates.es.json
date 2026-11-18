@@ -43,6 +43,25 @@
   "congrats": {"name": "Confeti", "fields": {
     "title": {"label": "Título", "default": "¡Yupi!"},
     "message": {"label": "Mensaje", "default": "Lo lograste"}}},
+  "balloons": {"name": "Globos", "fields": {
+    "title": {"label": "Título", "default": "Feliz cumpleaños"},
+    "name": {"label": "Nombre", "default": "Sofía"}}},
+  "birthday-gift-tag": {"name": "Etiqueta de cumpleaños", "fields": {
+    "title": {"label": "Título", "default": "¡Feliz cumpleaños!"},
+    "to": {"label": "Para", "default": "Para Sofía"},
+    "from": {"label": "De", "default": "Con cariño, tío Matías"}}},
+  "gift-sticker": {"name": "Sticker de regalo", "fields": {
+    "to": {"label": "Para", "default": "Para Sofía"},
+    "from": {"label": "De", "default": "De tío Matías"}}},
+  "cupcake": {"name": "Cupcake", "fields": {
+    "title": {"label": "Título", "default": "Feliz cumpleaños"},
+    "name": {"label": "Nombre", "default": "Sofía"}}},
+  "birthday-crown": {"name": "Corona de cumpleaños", "fields": {
+    "name": {"label": "Nombre", "default": "Sofía"},
+    "age": {"label": "Edad", "default": "¡cumple 7!"}}},
+  "bunting-card": {"name": "Tarjeta de cumpleaños", "fields": {
+    "title": {"label": "Título", "default": "¡Feliz cumpleaños!"},
+    "message": {"label": "Mensaje", "default": "Que tengas un día tan dulce como tú.\nCon cariño, Matías"}}},
   "jar-label": {"name": "Etiqueta de frasco", "fields": {
     "name": {"label": "Nombre", "default": "Mermelada de frutilla"},
     "date": {"label": "Fecha o nota", "default": "Noviembre 2026"}}},

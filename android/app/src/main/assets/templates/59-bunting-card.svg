@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 380" width="384" height="380"
+     ip:name="Birthday card" ip:category="birthday" ip:stretch="260">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <rect x="12" y="12" width="360" height="356" rx="14" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M12 40 Q192 110 372 40" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <path d="M17.4 42.1 L51.6 53.7 L34.5 86.2 Z" fill="#000"/>
+  <path d="M62.4 56.9 L96.6 65.2 L79.5 99.3 Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M107.4 67.3 L141.6 72.3 L124.5 108.1 Z" fill="#000"/>
+  <path d="M152.4 73.3 L186.6 75.0 L169.5 112.5 Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M197.4 75.0 L231.6 73.3 L214.5 112.5 Z" fill="#000"/>
+  <path d="M242.4 72.3 L276.6 67.3 L259.5 108.1 Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M287.4 65.2 L321.6 56.9 L304.5 99.3 Z" fill="#000"/>
+  <path d="M332.4 53.7 L366.6 42.1 L349.5 86.2 Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <circle cx="150" cy="352" r="4" fill="#000"/>
+  <circle cx="192" cy="352" r="4" fill="#000"/>
+  <circle cx="234" cy="352" r="4" fill="#000"/>
+  <path d="M46 335 Q47.8 342.2 55 344 Q47.8 345.8 46 353 Q44.2 345.8 37 344 Q44.2 342.2 46 335Z" fill="#000"/>
+  <path d="M338 335 Q339.8 342.2 347 344 Q339.8 345.8 338 353 Q336.2 345.8 329 344 Q336.2 342.2 338 335Z" fill="#000"/>
+  <rect ip:field="title" ip:label="Title" ip:default="Happy birthday!" ip:font="script" ip:size="48" ip:min="22" ip:lines="1" x="28" y="112" width="328" height="76" fill="none"/>
+  <rect ip:field="message" ip:label="Message" ip:default="Wishing you a day as sweet as you are.&#10;Love, Matías" ip:size="28" ip:min="18" x="32" y="192" width="320" height="146" fill="none"/>
+</svg>

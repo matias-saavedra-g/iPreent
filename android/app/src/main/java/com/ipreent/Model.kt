@@ -22,25 +22,27 @@ data class Model(
 ) {
     /** What a person needs to know about the printer (port of models.details: same lines, same omissions). */
     fun details(): List<Pair<String, String>> {
-        val mm = width * 25.4 / dpi
+        val dpmm = Protocol.dotsPerMm(dpi)
+        val mm = width / dpmm
         val paperName = PAPER[paper] ?: "thermal paper wider than the print width"
         return listOfNotNull(
             "Paper" to paperName,
             if (labels) "Labels" to "die-cut labels supported" else null,
             "Print width" to "${"%.1f".format(java.util.Locale.ROOT, mm)} mm ($width dots)",
-            "Resolution" to "$dpi dpi (${"%.0f".format(java.util.Locale.ROOT, dpi / 25.4)} dots per mm)",
+            "Resolution" to "${Math.round(dpmm * 25.4)} dpi (${"%.0f".format(java.util.Locale.ROOT, dpmm)} dots per mm)",
         )
     }
 
     /** The same lines as [details], in the app's language (the screens use this one; tests and the Python twin use English). */
     fun details(ctx: Context): List<Pair<String, String>> {
-        val mm = width * 25.4 / dpi
+        val dpmm = Protocol.dotsPerMm(dpi)
+        val mm = width / dpmm
         fun t(id: Int, vararg a: Any) = Lang.str(ctx, id, *a)
         return listOfNotNull(
             t(R.string.detail_paper) to t(PAPER_RES[paper] ?: R.string.paper_unknown),
             if (labels) t(R.string.detail_labels) to t(R.string.detail_labels_value) else null,
             t(R.string.detail_print_width) to t(R.string.detail_width_value, "%.1f".format(mm), width),
-            t(R.string.detail_resolution) to t(R.string.detail_resolution_value, dpi, "%.0f".format(dpi / 25.4)),
+            t(R.string.detail_resolution) to t(R.string.detail_resolution_value, Math.round(dpmm * 25.4).toInt(), "%.0f".format(dpmm)),
         )
     }
 
