@@ -2,7 +2,12 @@
 
 Each `## vX.Y.Z` section becomes the notes of that GitHub Release.
 
-## Unreleased
+## v0.9.0
+**Downloads**
+- `iPreent-v0.9.0.apk`: Android app (Android 8+). Installs over v0.8.1. Also available through Obtainium (see README).
+- `iPreent-v0.9.0-portable.exe`: Windows app. One file, no install, no Python.
+- `ipreent-cli-v0.9.0.zip`: command line for Windows, Linux and macOS. Needs Python 3.10+; see `INSTALL.txt`.
+
 **Ruler**, a new tool in the Android app, the Windows app and the command line (`ipreent ruler 150`): a millimetre
 ruler along the paper (1 to 100 cm) with a scale across the paper. Each tick is placed on its own, so it stays within
 1/16 mm however long it is. Film the paper while it prints to measure your printer's real speed: the big centimetre
