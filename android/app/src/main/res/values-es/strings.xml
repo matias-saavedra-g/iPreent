@@ -20,6 +20,8 @@
     <string name="tool_code_blurb">Enlaces, etiquetas y códigos de producto</string>
     <string name="tool_banner">Letrero</string>
     <string name="tool_banner_blurb">Texto grande a lo largo del papel</string>
+    <string name="tool_ruler">Regla</string>
+    <string name="tool_ruler_blurb">Milímetros, también para cronometrar la impresora</string>
 
     <!-- Navegación -->
     <string name="nav_create">Crear</string>
@@ -167,6 +169,12 @@
     <string name="list_title">Título</string>
     <string name="banner_text">Texto del letrero</string>
     <string name="job_banner">letrero %1$s</string>
+    <string name="ruler_length">Largo</string>
+    <string name="ruler_length_range">%1$d a %2$d mm</string>
+    <string name="ruler_measured">100 mm impresos miden</string>
+    <string name="ruler_measured_hint">Vacío = sin corrección</string>
+    <string name="ruler_help">Una marca por milímetro, cada una ubicada por separado para que el error nunca se acumule (menos de 1/16 mm). Para cronometrar la impresora, graba el papel mientras sale y cuenta los milímetros entre cuadros: velocidad = mm ÷ (cuadros ÷ cuadros por segundo). Si 100 mm impresos miden distinto con una buena regla, ingresa lo que mediste.</string>
+    <string name="job_ruler">regla %1$d mm</string>
     <string name="code_barcode">Código de barras</string>
     <string name="code_content">Enlace o texto</string>
     <string name="code_caption">Leyenda (opcional)</string>
@@ -195,6 +203,7 @@
     <string name="category_lists">Listas</string>
     <string name="category_notes">Notas</string>
     <string name="category_party">Fiesta</string>
+    <string name="category_food">Comida</string>
     <string name="category_labels">Etiquetas</string>
     <string name="category_christmas">Navidad</string>
     <string name="category_holidays">Fechas especiales</string>

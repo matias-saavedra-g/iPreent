@@ -7,12 +7,12 @@ moves something described here, update this file in the same commit.
 ```
                 ┌──────────── ipreent/ (Python package) ────────────┐
                 │ protocol  models  imaging  receipt  convert       │
-                │ templates features  busy  config  api  ble  spp   │
+                │ templates ruler features busy config api ble spp  │
                 └──────┬───────────────────────────────┬────────────┘
            cli.py (command line)           desktop/ (Windows app, PySide6)
                                                    app · worker · server · spool
 
-   android/app/src/main/java/com/ipreent/  ← Kotlin port of protocol, models, imaging, receipt, templates, features
+   android/app/src/main/java/com/ipreent/  ← Kotlin port of protocol, models, imaging, receipt, templates, ruler, features
 ```
 The printer protocol is in [PROTOCOL.md](../PROTOCOL.md): frames `51 78 CMD 00 LEN DATA CRC8 FF`, one 1-bit row
 of 384 dots per line frame (raw or run-length), energy/speed/feed commands, and the printer's flow-control
@@ -21,22 +21,24 @@ notification. Everything prints by turning content into a list of rows (0/1 per 
 ## Python package `ipreent/`
 | Module | Job | Kotlin twin |
 |---|---|---|
-| `protocol.py` | Frames, CRC8, row encodings, `print_job` byte stream, notification parsing, **print-time estimate** (`speed_for`, `estimate_seconds`, `measured_speed`, `format_eta`; a fixed 10 mm/s, the slowest nominal speed, at every darkness, unless the debug setting overrides it; timed prints are logged, never learnt) | `Protocol.kt` |
+| `protocol.py` | Frames, CRC8, row encodings, `print_job` byte stream, notification parsing, `dots_per_mm` (the table's "200 dpi" = 8 dots/mm, 203.2 dpi; every mm figure goes through it), **print-time estimate** (`speed_for`, `estimate_seconds`, `measured_speed`, `format_eta`, `hold_seconds`: a print counts as printing until its estimate is up, even after the printer says ready; a fixed 10 mm/s, the slowest nominal speed, at every darkness, unless the debug setting overrides it; timed prints are logged, never learnt) | `Protocol.kt` |
 | `models.py` + `models.json` | 187 printer profiles (width, dpi, speeds, MTU, RLE, serial-only flag, paper class, label mode) looked up by the longest model number that prefixes the Bluetooth name; `details()` = what the settings screens show (paper to buy, die-cut labels if supported, print width, resolution) and deliberately not ink, speed, transport tuning or vendor flags | `Model.kt` (+ `assets/models.json`) |
 | `imaging.py` | Images → gray → 1-bit rows (Floyd–Steinberg, Atkinson, threshold), text with emoji fallback, checklist, banner, QR (segno), Code 128 | `Imaging.kt` |
 | `receipt.py` | Receipts (BOLETA): CLP parsing/formatting, totals, layout, receipt number = print time | `Receipt.kt` |
 | `templates.py` + `templates/*.svg` + `fonts/` | Templates (docs/TEMPLATES.md): SVG designs with `ip:` text boxes; `parse`, `wrap`/`fit`/`layout` (shrink to fit, stretch at `ip:stretch`), `gallery_order`/`category_order` (`ip:season`: in-season templates and chips first), `render` (art with resvg_py, text with `imaging.draw_text` and the bundled Fredoka/Pacifico fonts), user SVGs from `<config dir>/templates` (Mine) | `Templates.kt` (layout) + `TemplateArt.kt` (AndroidSVG drawing; `assets/templates`, `assets/fonts`) |
+| `ruler.py` | Millimetre ruler along the paper as pure geometry (seven-segment digits, no fonts, so both apps print identical dots): ticks each rounded on their own from mm × rows per mm, scale across the paper, timing track for filming; `measured` = feed correction (what a printed 100 mm measured, 90-110) | `Ruler.kt` |
 | `convert.py` | File type detection, PDF pages (pypdfium2), text files → images | `Sources.kt` (Android loading) |
 | `features.py` | Tool weights + decayed usage → home-screen order (`DESKTOP`, `CLI` tables) | `Features.kt` (`ANDROID` table) |
 | `busy.py` | One print at a time across programs on a PC: OS lock on `print.lock` + `busy.json` (label, start, estimate, queue behind) | none (Android is one app) |
 | `i18n.py` + `locales/*.json` | Language of the CLI and Windows app: system language, or the debug choice (`language.json` in the config dir, env `IPREENT_LANG` wins); `tr("English text {0}", value)` looks the exact English text up in `locales/<lang>.json` and falls back to English for anything missing or broken, `trn` for singular/plural; `locales/templates.<lang>.json` = template names, labels and example texts | `Lang.kt` + `res/values-es` (the template JSON is shared, byte for byte, with `assets/i18n`) |
 | `config.py` | Config dir: `%APPDATA%\ipreent` (Windows), `~/Library/Application Support/ipreent` (macOS), `~/.config/ipreent` | SharedPreferences |
-| `api.py` | `connect()` (explicit target → remembered printer → scan), `rows_for`, `print_rows` (times each print and calls `log_print`), `estimate`, `known_speed` / `debug_speed` / `set_debug_speed`, sync helpers `print_text/print_file/status` | `Printers.kt` |
+| `api.py` | `connect()` (explicit target → remembered printer → scan), `rows_for`, `print_rows` (times each print and calls `log_print`, then holds until the estimate is up; `hold=False` for bench), `estimate`, `known_speed` / `debug_speed` / `set_debug_speed`, sync helpers `print_text/print_file/status` | `Printers.kt` |
 | `ble.py` / `spp.py` | Bluetooth LE (bleak) and Bluetooth serial (pyserial / RFCOMM socket) transports | `BlePrinter.kt` (BLE only) |
 | `cli.py` | Command line (see below) | |
 
 Shared test cases: `tests/test_protocol.py` ↔ `ProtocolTest.kt` (incl. the SC03h details), `test_receipt.py` ↔ `ReceiptTest.kt`,
-`test_features.py` ↔ `FeaturesTest.kt`, `test_templates.py` ↔ `TemplatesTest.kt`. Change both sides together. The template
+`test_features.py` ↔ `FeaturesTest.kt`, `test_templates.py` ↔ `TemplatesTest.kt`, `test_ruler.py` ↔ `RulerTest.kt`
+(height, black dots and a position hash of whole rulers must match). Change both sides together. The template
 SVGs and fonts exist twice (`ipreent/templates`, `ipreent/fonts` and `android/app/src/main/assets/`); a Python test
 fails if the copies differ.
 
@@ -44,7 +46,7 @@ fails if the copies differ.
 - Subcommands, listed in `--help` by `features.CLI` weight: `print`, `text`, `receipt`, `status`, `template`
   (list, `--fields`, print or `--preview` a template; texts in field order or `--set KEY=TEXT`), `preview`,
   `queue`, `scan`, `feed`, `settings` (darkness; `paper-speed` = the debug speed for estimates, `reset` = 10 mm/s),
-  `forget`, `bench` (one short strip per darkness level, timed, to measure the real speed and show how much
+  `forget`, `ruler` (`ipreent ruler [MM] [--preview PNG]`; feed correction in `settings ruler-100mm`), `bench` (one short strip per darkness level, timed, to measure the real speed and show how much
   darkness slows the printer; it doesn't change the estimates). Plain `ipreent` shows an overview (printer, settings, queue,
   three most used commands by weight + usage).
 - Connection options (`-a/-p/--rfcomm/--ble/-m`) and tuning (`--width/--energy/--speed/--rle`) work before or
@@ -58,7 +60,7 @@ fails if the copies differ.
 - `app.py`: `MainWindow` (left: printer card with gear menu, mode list ordered by `features.DESKTOP`, queue with
   countdowns; centre: editor + exact preview; right: print settings, only the rows the mode uses) and `App`
   (tray menu, Ctrl+Alt+P hotkey, single instance via `QLocalServer`, HTTP API, print-dialog bridge, autostart).
-  Modes are keys: `photo, document, text, receipt, template, list, qr, banner, barcode` (saved as `mode_key`).
+  Modes are keys: `photo, document, text, receipt, template, list, qr, banner, barcode, ruler` (saved as `mode_key`).
   Printer menu: holding Shift while opening it adds *Debug settings…* (paper speed for estimates, shared with
   the CLI through `timing.json`, and the *Language* override, shared through `language.json`; stays listed
   afterwards, QSettings `debug_unlocked`). Changing the language restarts the app (the windows are built with their
@@ -78,7 +80,7 @@ fails if the copies differ.
 
 ## Android app (`android/app/src/main/java/com/ipreent/`)
 - `MainActivity.kt`: Compose UI. Nav bar **Create · Queue · History** (Material 3: 3–5 destinations). Create =
-  home grid of `Tool`s (`photo, document, text, receipt, template, list, code, banner`), order fixed per run from
+  home grid of `Tool`s (`photo, document, text, receipt, template, list, code, banner, ruler`), order fixed per run from
   `Features.ANDROID` + usage (top two get big tiles). Tool screens have a back arrow; the top bar always has the
   printer chip (name + gear → `PrinterSheet`: darkness, status/battery, find, forget; tapping the printer's name
   7 times opens `DebugSettings`, the paper speed for estimates). Print → `BusyDialog` if
@@ -113,11 +115,11 @@ fails if the copies differ.
 | | `config.json` | remembered printer (name, address/port, transport, model) |
 | | `timing.json` | `debug_mm_per_s` (debug speed for estimates; absent = 10 mm/s), number of timed prints, `log` of the last 100 timed prints (energy, lines, seconds, black share, whether the printer said "printing"); older files' learnt `speeds` are ignored and dropped |
 | | `print.lock`, `busy.json` | cross-program lock and the job holding it |
-| CLI | `receipt.json`, `settings.json`, `usage.json` | receipt header; default darkness; command usage |
-| Windows | registry `HKCU\Software\iPreent\iPreent` (QSettings) | print settings, mode, receipt form, template texts (`template_values`, `template_id`), API settings + token, usage, `debug_unlocked` |
+| CLI | `receipt.json`, `settings.json`, `usage.json` | receipt header; default darkness, `ruler_100mm` (ruler feed correction); command usage |
+| Windows | registry `HKCU\Software\iPreent\iPreent` (QSettings) | print settings, mode, receipt form, template texts (`template_values`, `template_id`), ruler (`ruler_mm`, `ruler_100mm`), API settings + token, usage, `debug_unlocked` |
 | | `HKCU\...\CurrentVersion\Run` | "Start with Windows" |
 | CLI + Windows | config dir: `templates/*.svg` | the user's own templates (Mine) |
-| Android | SharedPreferences `printer`, `receipt`, `usage`, `templates`; `filesDir/history/*.png`, `filesDir/templates/*.svg` | printer, darkness, `debug_mm_per_s`, `debug_unlocked`, `language`, `last_measured_mm_per_s` (shown in the debug settings only); receipt form; tool usage; template texts (id → JSON); print history; own templates (Mine) |
+| Android | SharedPreferences `printer`, `receipt`, `usage`, `templates`, `ruler` (`mm`, `measured_100mm`); `filesDir/history/*.png`, `filesDir/templates/*.svg` | printer, darkness, `debug_mm_per_s`, `debug_unlocked`, `language`, `last_measured_mm_per_s` (shown in the debug settings only); receipt form; tool usage; template texts (id → JSON); print history; own templates (Mine) |
 
 ## Checking changes without hardware
 - `pytest -q` (two known Linux failures: no emoji font; `winreg`). Tests never touch the real config dir

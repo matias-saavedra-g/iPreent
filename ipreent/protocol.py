@@ -103,8 +103,14 @@ COPY_OVERHEAD_S = 1.0    # waiting for the printer to report it has finished, pe
 MIN_MM_PER_S, MAX_MM_PER_S = 2.0, 100.0
 
 
+def dots_per_mm(dpi):
+    """Dots (and paper rows) per millimetre. The vendor table's "200 dpi" is really 203.2 dpi: 8 dots per
+    mm, the 384 dots of a 58 mm printer covering 48 mm. Taking 200 literally made every length 1.6 % long."""
+    return 8.0 if dpi == 200 else dpi / 25.4
+
+
 def paper_mm(lines, dpi):
-    return lines * 25.4 / dpi
+    return lines / dots_per_mm(dpi)
 
 
 def _clamp_speed(v):
@@ -125,6 +131,16 @@ def estimate_seconds(lines, dpi=200, copies=1, mm_per_s=NOMINAL_MM_PER_S, feed=N
     feed = default_feed(dpi) if feed is None else feed
     per_copy = paper_mm(lines + feed, dpi) / mm_per_s + COPY_OVERHEAD_S
     return (CONNECT_S if connect else 0.0) + max(1, copies) * per_copy
+
+
+def hold_seconds(estimate, elapsed):
+    """How much longer a finished print still counts as printing.
+
+    The printer can report "ready" as soon as it has the data, seconds before the paper stops (it often
+    never reports "printing" at all). The estimate wins: a job stays "printing" (countdown shown, next
+    job and other programs kept waiting) until its estimated time is up, and only then is it "printed".
+    """
+    return max(0.0, estimate - elapsed)
 
 
 def measured_speed(lines, dpi, copies, seconds, feed=None):

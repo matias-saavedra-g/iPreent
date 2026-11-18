@@ -2,6 +2,30 @@
 
 Each `## vX.Y.Z` section becomes the notes of that GitHub Release.
 
+## v0.9.0
+**Downloads**
+- `iPreent-v0.9.0.apk`: Android app (Android 8+). Installs over v0.8.1. Also available through Obtainium (see README).
+- `iPreent-v0.9.0-portable.exe`: Windows app. One file, no install, no Python.
+- `ipreent-cli-v0.9.0.zip`: command line for Windows, Linux and macOS. Needs Python 3.10+; see `INSTALL.txt`.
+
+**Ruler**, a new tool in the Android app, the Windows app and the command line (`ipreent ruler 150`): a millimetre
+ruler along the paper (1 to 100 cm) with a scale across the paper. Each tick is placed on its own, so it stays within
+1/16 mm however long it is. Film the paper while it prints to measure your printer's real speed: the big centimetre
+numbers and a timing track that switches every millimetre make it easy to count millimetres between frames. If a
+printed 100 mm measures a little differently on a good ruler, enter what you read and rulers correct for it.
+
+**Food templates**: a new *Food* category with cute designs, junk and healthy: burger, pizza slice, fries, hot dog
+(*completo* in Spanish), donut, ice cream, avocado, apple, broccoli and a salad bowl, each with a title and a message.
+English and Spanish.
+
+**Countdowns no longer vanish early**: the printer often says it's ready seconds before the paper stops, and the
+queue used to mark the print done right then (a 13 s countdown gone after 2-3 s). Now the estimate wins: a print
+stays *printing*, with its countdown, until its estimated time is up, and only then does the next one start.
+
+**Lengths are exact now**: the printers listed as "200 dpi" really have 8 dots per mm (203.2 dpi). Paper lengths,
+time estimates, measured speeds and the print width in the printer details were 1.6 % too long (48.8 mm instead of
+48.0 mm).
+
 ## v0.8.1
 **Downloads**
 - `iPreent-v0.8.1.apk`: Android app (Android 8+). Installs over v0.8.0. Also available through Obtainium (see README).

@@ -41,7 +41,7 @@ HERE = Path(__file__).parent / "templates"
 
 # Gallery categories, in the order the filter chips show them. "mine" = the user's own SVG files.
 CATEGORIES = {"love": "Love", "frames": "Frames", "lists": "Lists", "notes": "Notes", "party": "Party",
-              "labels": "Labels", "christmas": "Christmas", "holidays": "Holidays", "mine": "Mine"}
+              "food": "Food", "labels": "Labels", "christmas": "Christmas", "holidays": "Holidays", "mine": "Mine"}
 
 
 def category_name(key):

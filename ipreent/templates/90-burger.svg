@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 420" width="384" height="420"
+     ip:name="Burger" ip:category="food">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <path d="M92 204 L292 204 Q292 240 262 240 L122 240 Q92 240 92 204 Z" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <rect x="86" y="160" width="212" height="42" rx="21" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <circle cx="120" cy="176" r="3" fill="#000"/>
+  <circle cx="150" cy="188" r="3" fill="#000"/>
+  <circle cx="184" cy="174" r="3" fill="#000"/>
+  <circle cx="222" cy="190" r="3" fill="#000"/>
+  <circle cx="256" cy="178" r="3" fill="#000"/>
+  <circle cx="276" cy="190" r="3" fill="#000"/>
+  <path d="M90 152 L296 152" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <path d="M126 150 L140 176 L154 150Z" fill="#000"/>
+  <path d="M232 150 L246 172 L260 150Z" fill="#000"/>
+  <path d="M84 140 q13.5 14 27 0 q13.5 14 27 0 q13.5 14 27 0 q13.5 14 27 0 q13.5 14 27 0 q13.5 14 27 0 q13.5 14 27 0 q13.5 14 27 0" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <path d="M90 130 Q90 44 192 44 Q294 44 294 130 Z" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <ellipse cx="140" cy="80" rx="7" ry="3.5" transform="rotate(-25 140 80)" fill="#000"/>
+  <ellipse cx="186" cy="64" rx="7" ry="3.5" transform="rotate(5 186 64)" fill="#000"/>
+  <ellipse cx="234" cy="78" rx="7" ry="3.5" transform="rotate(25 234 78)" fill="#000"/>
+  <ellipse cx="162" cy="104" rx="7" ry="3.5" transform="rotate(10 162 104)" fill="#000"/>
+  <ellipse cx="214" cy="104" rx="7" ry="3.5" transform="rotate(-15 214 104)" fill="#000"/>
+  <ellipse cx="120" cy="110" rx="7" ry="3.5" transform="rotate(-40 120 110)" fill="#000"/>
+  <ellipse cx="262" cy="108" rx="7" ry="3.5" transform="rotate(40 262 108)" fill="#000"/>
+  <path d="M44 58 Q46.4 67.6 56 70 Q46.4 72.4 44 82 Q41.6 72.4 32 70 Q41.6 67.6 44 58Z" fill="#000"/>
+  <path d="M340 50 Q342.0 58.0 350 60 Q342.0 62.0 340 70 Q338.0 62.0 330 60 Q338.0 58.0 340 50Z" fill="#000"/>
+  <circle cx="40" cy="200" r="5" fill="#000"/>
+  <circle cx="344" cy="210" r="5" fill="#000"/>
+  <rect ip:field="title" ip:label="Title" ip:default="Burger night!" ip:font="script" ip:size="46" ip:min="20" ip:lines="1" x="16" y="270" width="352" height="70" fill="none"/>
+  <rect ip:field="message" ip:label="Message" ip:default="Saturday at 8 pm" ip:size="30" ip:min="16" x="24" y="340" width="336" height="68" fill="none"/>
+</svg>

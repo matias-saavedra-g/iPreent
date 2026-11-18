@@ -8,6 +8,7 @@ Examples:
   ipreent receipt -b "My shop" -i "Coffee" 1800 -i "Empanada" 2990 2
   ipreent template                   cute designs to fill in: hearts, frames, lists, tags
   ipreent template big-heart "Te quiero"   print one with your text
+  ipreent ruler 150                  a 15 cm ruler, millimetre accurate (also to time the printer)
   ipreent queue                      what is printing and how long it has left
   ipreent settings darkness darker   change the default darkness
 The printer used last is remembered; `ipreent forget` clears it. Run `ipreent` alone for an overview.
@@ -21,7 +22,7 @@ import time
 
 from PIL import Image
 
-from . import __version__, api, busy, config, convert, features, imaging, protocol, receipt, templates
+from . import __version__, api, busy, config, convert, features, imaging, protocol, receipt, ruler, templates
 from .models import details, lookup
 from . import i18n
 from .i18n import tr, trn
@@ -88,9 +89,13 @@ def _progress_eta(seconds):
 
     def show(done, total):
         left = protocol.format_eta(max(0.0, seconds - (time.monotonic() - t0)))
-        end = "" if done < total else "\n"
-        print(tr("\r  sending {0:3d}% · about {1} left ", 100 * done // total, left), end=end, file=sys.stderr, flush=True)
+        print(tr("\r  sending {0:3d}% · about {1} left ", 100 * done // total, left), end="", file=sys.stderr, flush=True)
     return show
+
+
+def _hold_line(left):
+    """The countdown after the data is sent: the printer may say ready while the paper still moves."""
+    print(tr("\r  printing · about {0} left       ", protocol.format_eta(left)), end="", file=sys.stderr, flush=True)
 
 
 def _ask(question):
@@ -139,24 +144,27 @@ def _parse_pages(spec):
     return pages
 
 
-async def _print_items(args, make_items, label="print"):
+async def _print_items(args, make_items, label="print", with_dpi=False):
+    """with_dpi: make_items(width, dpi) instead of make_items(width), for prints sized in mm (the ruler)."""
     dither = not getattr(args, "no_dither", False)
     guess = _offline_model(args)
     width = args.width or guess.width
-    rows, mode = api.rows_for(make_items(width), width, dither=dither)
+    lay = (lambda w, m: make_items(w, m.dpi)) if with_dpi else (lambda w, m: make_items(w))
+    rows, mode = api.rows_for(lay(width, guess), width, dither=dither)
     if not rows:
         sys.exit(tr("Nothing to print."))
     lock = await _take_turn(args, label, api.estimate(len(rows), guess, args.copies, feed=args.feed,
                                                       energy=_job_energy(args)))
     try:
         async with api.connect(_target(args)) as p:
-            if p.model.width != width:     # first print on a new printer: lay it out again
-                rows, mode = api.rows_for(make_items(p.model.width), p.model.width, dither=dither)
+            if p.model.width != width or (with_dpi and p.model.dpi != guess.dpi):   # a new printer: lay out again
+                rows, mode = api.rows_for(lay(p.model.width, p.model), p.model.width, dither=dither)
             seconds = api.estimate(len(rows), p.model, args.copies, connect=False, feed=args.feed)
             lock.publish(label, seconds, APP)
             mm = protocol.paper_mm(len(rows), p.model.dpi)
             print(tr("{0}: {1} lines ({2:.0f} mm) x{3}, about {4}", p.model.name, len(rows), mm, args.copies, protocol.format_eta(seconds)), file=sys.stderr)
-            await api.print_rows(p, rows, mode, args.copies, _progress_eta(seconds), feed=args.feed)
+            await api.print_rows(p, rows, mode, args.copies, _progress_eta(seconds), feed=args.feed, on_hold=_hold_line)
+            print(file=sys.stderr)
             st = await p.request(protocol.CMD_GET_STATE)
             print(tr("Printer:"), protocol.describe_state(st) if st else tr("done"), file=sys.stderr)
     finally:
@@ -384,10 +392,16 @@ def _speed_line():
     return tr("paper-speed  {0:.1f} mm/s for time estimates ({1})", api.known_speed(), how)
 
 
+def _ruler_line():
+    m = _ruler_measured()
+    how = tr("no correction") if m == ruler.DEFAULT_MEASURED else tr("rows spread to match; undo with: ipreent settings ruler-100mm reset")
+    return tr("ruler-100mm  {0:g} mm: what a printed 100 mm ruler measures ({1})", m, how)
+
+
 def _settings_lines():
     e = _default_energy()
     return [tr("darkness     {0}   (lightest, lighter, normal, darker, darkest or a number)", _darkness_name(e)),
-            _speed_line(), _language_line()]
+            _speed_line(), _ruler_line(), _language_line()]
 
 
 def _language_line():
@@ -419,6 +433,21 @@ async def cmd_settings(args):
         except ValueError as e:
             sys.exit(tr("Error: {0}", e))
         print(tr("Language is now {0}.", i18n.describe()))
+    elif args.key == "ruler-100mm":
+        if args.value.lower() in ("reset", "100"):
+            s.pop("ruler_100mm", None)
+            config.save_extra("settings", s)
+            print(tr("Ruler feed correction removed: rulers use the nominal rows per mm."))
+            return
+        try:
+            v = float(args.value.replace(",", "."))
+            assert ruler.MIN_MEASURED <= v <= ruler.MAX_MEASURED
+        except (ValueError, AssertionError):
+            sys.exit(tr("Error: ruler-100mm is what a printed 100 mm ruler measures, {0:g} to {1:g} mm, or 'reset'",
+                        ruler.MIN_MEASURED, ruler.MAX_MEASURED))
+        s["ruler_100mm"] = v
+        config.save_extra("settings", s)
+        print(tr("Rulers now correct the feed: 100 mm printed measured {0:g} mm.", v))
     elif args.key == "darkness":
         try:
             s["energy"] = _energy(args.value)
@@ -449,7 +478,7 @@ def _bench_rows(width, dpi, mm, black, label):
     """A small label, then `mm` of an even pattern with `black` (0-1) of its dots black."""
     rows, _ = api.rows_for([(imaging.text_image(label, width, size=20), True)], width)
     level = round(black * 16)
-    band = int(mm * dpi / 25.4)
+    band = int(mm * protocol.dots_per_mm(dpi))
     return rows + [[1 if BAYER4[y % 4][x % 4] < level else 0 for x in range(width)] for y in range(band)]
 
 
@@ -482,7 +511,7 @@ async def cmd_bench(args):
                 rows = _bench_rows(m.width, m.dpi, args.mm, args.black / 100,
                                    tr("iPreent bench · {0} ({1}) · {2:g}% black", _darkness_name(e), e, args.black))
                 t0 = time.monotonic()
-                await api.print_rows(p, rows, protocol.MODE_IMAGE, energy=e, feed=0, poll=0.1)
+                await api.print_rows(p, rows, protocol.MODE_IMAGE, energy=e, feed=0, poll=0.1, hold=False)
                 secs = time.monotonic() - t0
                 mm = protocol.paper_mm(len(rows), m.dpi)
                 v = protocol.measured_speed(len(rows), m.dpi, 1, secs, 0)
@@ -506,6 +535,34 @@ async def cmd_bench(args):
                "settings paper-speed MM_PER_S (debug)."), api.known_speed()))
 
 
+# ---- ruler: millimetres along the paper -------------------------------------------------------
+def _ruler_measured():
+    """The feed correction: what a printed 100 mm measured (ipreent settings ruler-100mm)."""
+    return ruler.clamp_measured(_settings().get("ruler_100mm", ruler.DEFAULT_MEASURED))
+
+
+async def cmd_ruler(args):
+    if not ruler.MIN_MM <= args.mm <= ruler.MAX_MM:
+        sys.exit(tr("Error: the ruler can be {0} to {1} mm long", ruler.MIN_MM, ruler.MAX_MM))
+    measured = _ruler_measured()
+
+    def items(width, dpi):
+        return [(ruler.image(width, dpi, args.mm, measured), True)]
+    if args.preview:
+        m = _offline_model(args)
+        width = args.width or m.width
+        rows, _ = api.rows_for(items(width, m.dpi), width, dither=False)
+        img = Image.new("1", (width, len(rows)), 1)
+        img.putdata([0 if px else 1 for row in rows for px in row])
+        img.save(args.preview)
+        print(tr("Wrote {0}: {1} mm ruler, {2}x{3} dots", args.preview, args.mm, width, len(rows)))
+        return
+    if measured != ruler.DEFAULT_MEASURED:
+        print(tr("Feed correction: a printed 100 mm measured {0:g} mm (ipreent settings ruler-100mm).", measured),
+              file=sys.stderr)
+    await _print_items(args, items, tr("ruler {0} mm", args.mm), with_dpi=True)
+
+
 HOME = {
     "print": ("ipreent print FILE...", tr("photos, PDFs, text files")),
     "text": ('ipreent text "Hello"', tr("a note (or pipe text in)")),
@@ -518,6 +575,7 @@ HOME = {
     "feed": ("ipreent feed", tr("feed blank paper")),
     "settings": ("ipreent settings", tr("darkness and other defaults")),
     "bench": ("ipreent bench", tr("time a few short strips to measure the speed")),
+    "ruler": ("ipreent ruler 150", tr("a millimetre ruler (also to time the printer on video)")),
     "forget": ("ipreent forget", tr("forget the remembered printer")),
 }
 
@@ -562,7 +620,7 @@ async def cmd_preview(args):
     img = Image.new("1", (width, len(rows)), 1)
     img.putdata([0 if px else 1 for row in rows for px in row])
     img.save(args.out)
-    print(tr("Wrote {0}: {1}x{2} dots ({3:.0f} mm of paper)", args.out, width, len(rows), len(rows) / m.dpi * 25.4))
+    print(tr("Wrote {0}: {1}x{2} dots ({3:.0f} mm of paper)", args.out, width, len(rows), protocol.paper_mm(len(rows), m.dpi)))
 
 
 async def cmd_forget(args):
@@ -697,8 +755,8 @@ def main(argv=None):
     s = sub.add_parser("settings", help=tr("show or change defaults: darkness, paper speed"),
                        description=tr("Defaults used when no option is given. "
                                    "Examples: ipreent settings darkness darker · ipreent settings paper-speed reset · "
-                                   "ipreent settings language es"))
-    s.add_argument("key", nargs="?", choices=["darkness", "paper-speed", "language"])
+                                   "ipreent settings language es · ipreent settings ruler-100mm 98.5"))
+    s.add_argument("key", nargs="?", choices=["darkness", "paper-speed", "ruler-100mm", "language"])
     s.add_argument("value", nargs="?")
     s.set_defaults(fn=cmd_settings)
 
@@ -713,6 +771,27 @@ def main(argv=None):
     s.add_argument("--black", type=float, default=50, help=tr("%% of dots black in the pattern (default 50)"))
     queue_args(s)
     s.set_defaults(fn=cmd_bench)
+
+    s = sub.add_parser(
+        "ruler", help=tr("print a millimetre ruler (also to time the printer on video)"),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=tr("Prints a ruler along the paper: a tick every millimetre, numbers every centimetre, a "
+                       "scale across\nthe paper and a timing track whose blocks switch every millimetre. Each "
+                       "tick is placed on its\nown, so the error stays under 1/16 mm however long it is. To "
+                       "time the printer, film the paper\ncoming out and count millimetres between frames: "
+                       "speed = mm / (frames / frame rate).\nIf a printed 100 mm measures differently on a good "
+                       "ruler: ipreent settings ruler-100mm MM."),
+        epilog=tr("examples:\n"
+                  "  ipreent ruler                    # 10 cm\n"
+                  "  ipreent ruler 300 --preview r.png\n"
+                  "  ipreent settings ruler-100mm 98.5"))
+    s.add_argument("mm", nargs="?", type=int, default=ruler.DEFAULT_MM,
+                   help=tr("length in mm, {0}-{1} (default {2})", ruler.MIN_MM, ruler.MAX_MM, ruler.DEFAULT_MM))
+    s.add_argument("--preview", metavar="PNG", help=tr("save a picture instead of printing"))
+    s.add_argument("-n", "--copies", type=int, default=1)
+    s.add_argument("--feed", type=int, help=tr("blank lines after the print (default ~96)"))
+    queue_args(s)
+    s.set_defaults(fn=cmd_ruler)
 
     s = sub.add_parser("preview", help=tr("save a PNG of exactly what would print (no printer needed)"))
     s.add_argument("file", nargs="?")

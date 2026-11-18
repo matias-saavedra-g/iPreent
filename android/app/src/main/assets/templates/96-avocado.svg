@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 420" width="384" height="420"
+     ip:name="Avocado" ip:category="food">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <path d="M192 28 C148 28 140 82 126 122 C106 176 130 252 192 252 C254 252 278 176 258 122 C244 82 236 28 192 28 Z" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <path d="M192 46 C160 46 154 90 144 124 C128 172 148 236 192 236 C236 236 256 172 240 124 C230 90 224 46 192 46 Z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <circle cx="192" cy="182" r="34" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <path d="M174 172 Q176 160 188 156" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <circle cx="180.0" cy="112" r="4.5" fill="#000"/>
+  <circle cx="204.0" cy="112" r="4.5" fill="#000"/>
+  <path d="M186.0 119.0 Q192.0 126.0 198.0 119.0" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.5"/>
+  <ellipse cx="170.0" cy="120.0" rx="5.0" ry="3.0" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+  <ellipse cx="214.0" cy="120.0" rx="5.0" ry="3.0" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+  <path d="M60 58 Q62.4 67.6 72 70 Q62.4 72.4 60 82 Q57.6 72.4 48 70 Q57.6 67.6 60 58Z" fill="#000"/>
+  <path d="M330 190 Q332.0 198.0 340 200 Q332.0 202.0 330 210 Q328.0 202.0 320 200 Q328.0 198.0 330 190Z" fill="#000"/>
+  <circle cx="320" cy="60" r="5" fill="#000"/>
+  <circle cx="64" cy="220" r="5" fill="#000"/>
+  <rect ip:field="title" ip:label="Title" ip:default="Lunch" ip:font="script" ip:size="46" ip:min="20" ip:lines="1" x="16" y="270" width="352" height="70" fill="none"/>
+  <rect ip:field="message" ip:label="Message" ip:default="Avocado toast &amp; juice" ip:size="30" ip:min="16" x="24" y="340" width="336" height="68" fill="none"/>
+</svg>

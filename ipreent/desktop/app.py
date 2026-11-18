@@ -27,7 +27,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QApplication, QButtonGroup, QC
                                QSystemTrayIcon, QTableWidget, QTableWidgetItem, QToolButton,
                                QVBoxLayout, QWidget)
 
-from .. import api, busy, config, convert, features, imaging, protocol, receipt, templates
+from .. import api, busy, config, convert, features, imaging, protocol, receipt, ruler, templates
 from ..cli import ENERGY_PRESETS
 from ..models import details, lookup
 from .. import i18n
@@ -43,7 +43,8 @@ DARKNESS_NAMES = [tr("Lightest"), tr("Lighter"), tr("Normal"), tr("Darker"), tr(
 # key: (label, Segoe Fluent / MDL2 icon glyph). The nav order comes from features.DESKTOP.
 MODES = {"photo": (tr("Photo"), "\uE91B"), "document": (tr("Document"), "\uE8A5"), "text": (tr("Text"), "\uE8D2"),
          "receipt": (tr("Receipt"), "\uE719"), "list": (tr("Checklist"), "\uE9D5"), "qr": (tr("QR code"), "\uED14"),
-         "banner": (tr("Banner"), "\uE7C1"), "barcode": (tr("Barcode"), "\uE8EC"), "template": (tr("Templates"), "\uEB52")}
+         "banner": (tr("Banner"), "\uE7C1"), "barcode": (tr("Barcode"), "\uE8EC"), "template": (tr("Templates"), "\uEB52"),
+         "ruler": (tr("Ruler"), "\uED5E")}
 OLD_MODES = ["photo", "text", "list", "banner", "qr", "barcode", "receipt"]   # saved as a row number before 0.5
 GLYPH_SETTINGS, GLYPH_PRINTER = "\uE713", "\uE749"
 ICON_FONTS = ("Segoe Fluent Icons", "Segoe MDL2 Assets")
@@ -518,6 +519,7 @@ class MainWindow(QMainWindow):
         self.barcode.textChanged.connect(self.schedule)
         add("receipt", self._receipt_editor())
         add("template", self._template_editor())
+        add("ruler", self._ruler_editor())
         for e in (self.text, self.list_items):
             e.textChanged.connect(self.schedule)
         for e in (self.list_title, self.banner, self.qr):
@@ -854,6 +856,25 @@ class MainWindow(QMainWindow):
             mine.setChecked(True)
             self.load_templates(select=added)
 
+    def _ruler_editor(self):
+        """Ruler: length, and the feed correction measured from a printed 100 mm (both remembered)."""
+        s = self.settings
+        self.ruler_mm = QSpinBox(minimum=ruler.MIN_MM, maximum=ruler.MAX_MM, singleStep=10, suffix=" mm")
+        self.ruler_mm.setValue(int(s.value("ruler_mm", ruler.DEFAULT_MM)))
+        self.ruler_measured = QDoubleSpinBox(minimum=ruler.MIN_MEASURED, maximum=ruler.MAX_MEASURED, decimals=1,
+                                             singleStep=0.1, suffix=" mm")
+        self.ruler_measured.setValue(ruler.clamp_measured(s.value("ruler_100mm", ruler.DEFAULT_MEASURED)))
+        help_ = QLabel(tr("A tick every millimetre, placed one by one so the error never builds up (under 1/16 mm). "
+                          "To time the printer, film the paper coming out and count millimetres between frames: "
+                          "speed = mm ÷ (frames ÷ frame rate). If a printed 100 mm measures differently on a good "
+                          "ruler, enter what you read below."), wordWrap=True)
+        help_.setStyleSheet("color: palette(placeholder-text)")
+        w = self._editor(help_, (tr("Length"), self.ruler_mm), (tr("A printed 100 mm measures"), self.ruler_measured))
+        w.layout().addStretch(1)
+        for spin in (self.ruler_mm, self.ruler_measured):
+            spin.valueChanged.connect(self.schedule)
+        return w
+
     def _editor(self, widget, *extra):
         w = QWidget()
         lay = QVBoxLayout(w)
@@ -967,6 +988,9 @@ class MainWindow(QMainWindow):
         s.setValue("dialog_quality", self.dialog_quality.currentData())
         s.setValue("doc_look", self.doc_look.currentData())
         s.setValue("mode_key", self.mode())
+        if hasattr(self, "ruler_mm"):
+            s.setValue("ruler_mm", self.ruler_mm.value())
+            s.setValue("ruler_100mm", self.ruler_measured.value())
         if getattr(self, "tpl_current", None) is not None:
             s.setValue("template_id", self.tpl_current.id)
         if hasattr(self, "tpl_values"):
@@ -1012,7 +1036,7 @@ class MainWindow(QMainWindow):
         if not self.rows or m is None:
             return
         n = self.copies.value()
-        mm = len(self.rows) * 25.4 / m.dpi * n
+        mm = protocol.paper_mm(len(self.rows), m.dpi) * n
         secs = api.estimate(len(self.rows), m, n, energy=self.energy())
         self.length.setText(tr("About {0:.0f} mm of paper, {1} to print", mm, protocol.format_eta(secs)))
 
@@ -1069,6 +1093,9 @@ class MainWindow(QMainWindow):
         if mode == "receipt":
             r = self.receipt()
             return [(r.image(width), True)] if r else []
+        if mode == "ruler":
+            m = self.model()
+            return [(ruler.image(width, m.dpi, self.ruler_mm.value(), self.ruler_measured.value()), True)]
         if mode == "template":
             t = self.tpl_current
             if t is None:
@@ -1117,8 +1144,8 @@ class MainWindow(QMainWindow):
             label.setText(", ".join(names) if names else tr("Nothing added yet."))
         if self.rows:
             self.paper.setPixmap(QPixmap.fromImage(qimage_from_rows(self.rows, m.width)))
-            mm = len(self.rows) * 25.4 / m.dpi
-            self.caption.setText(tr("{0} × {1} dots · {2:.0f} × {3:.0f} mm", m.width, len(self.rows), m.width * 25.4 / m.dpi, mm))
+            mm = protocol.paper_mm(len(self.rows), m.dpi)
+            self.caption.setText(tr("{0} × {1} dots · {2:.0f} × {3:.0f} mm", m.width, len(self.rows), protocol.paper_mm(m.width, m.dpi), mm))
             self._preview_model = m
             self.update_length()
         else:
@@ -1198,6 +1225,8 @@ class MainWindow(QMainWindow):
             label = self.r_total.text().replace(tr("Total"), tr("Receipt"))
         if mode == "template" and self.tpl_current is not None:
             label = self.tpl_current.name
+        if mode == "ruler":
+            label = tr("Ruler {0} mm", self.ruler_mm.value())
         if not self.confirm_busy(label):
             return
 

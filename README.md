@@ -31,7 +31,7 @@ English and Spanish, following the system language (the debug settings can force
 - The **printer button** at the top right (name + gear) opens the printer settings: darkness, status and battery,
   printer details (which paper to buy, print width, resolution), find printers, forget the printer.
 - **Templates**: cute designs to fill in (hearts, frames, to-do and shopping lists, notes, birthday and
-  thank-you cards, gift tags, jar labels, name tags, **Christmas** and other holidays: New Year, Fiestas Patrias,
+  thank-you cards, **food** (burger, pizza, fries, hot dog, donut, ice cream, avocado, apple, broccoli, salad), gift tags, jar labels, name tags, **Christmas** and other holidays: New Year, Fiestas Patrias,
   Halloween, Valentine's, Easter, Mother's, Father's, Children's and Teachers' Day; the ones in season come
   first). Pick one from the gallery, type your text (it shrinks to
   fit; lists grow longer), print. *Your own SVG* adds any SVG file. See [docs/TEMPLATES.md](docs/TEMPLATES.md).
@@ -55,6 +55,15 @@ These printers don't show that they're working unless you look at the paper slot
   darkness: timing real prints wasn't reliable, and it's better to be told a print takes a bit longer than it
   does. (The listing's "40 ppm" turned out far too fast.) Prints are still timed and logged, but only to check the
   speed later; `ipreent bench` measures it on about 11 cm of paper.
+- **The estimate wins over the printer's "ready"**: many of these printers say they're ready as soon as they have
+  the data, seconds before the paper stops. A print therefore stays *printing*, with its countdown, until its
+  estimated time is up, even if the printer already says it's free; only then is it *printed* and the next job
+  starts (in every app, and for other programs waiting on the printer).
+- **Ruler** (every app): a millimetre ruler along the paper, 1 to 100 cm, with a scale across the paper too. Each tick
+  is placed on its own, so it stays within 1/16 mm however long it is. To measure the real speed, film the paper
+  coming out: the big centimetre numbers and the timing track (blocks that switch every millimetre) let you count
+  millimetres between two frames, and speed = mm ÷ (frames ÷ frame rate). If a printed 100 mm measures differently
+  on a good ruler, enter what you read (*A printed 100 mm measures*; `ipreent settings ruler-100mm 98.5`).
 - **Debug settings** change the speed the estimates use, only to test another figure (on Android they also hold the
   **Language** override): on Android tap the
   printer's name in the printer sheet 7 times; on Windows hold **Shift** while opening the printer menu
@@ -69,7 +78,7 @@ These printers don't show that they're working unless you look at the paper slot
 (or run it from source with `ipreent-desktop`).
 - Fluent look (Windows 11 style, Mica, system accent); follows the light/dark setting live.
 - **Photo** and **Document** modes (pictures dithered; PDFs and text sharp by default), plus text, checklist,
-  banner, QR, barcode, **receipt** and **templates** (hearts, frames, lists, cards and labels to fill in; add your
+  banner, QR, barcode, **ruler**, **receipt** and **templates** (hearts, frames, lists, cards and labels to fill in; add your
   own SVGs) modes, with an exact preview, paper length and print time. The mode list is
   ordered by how likely you are to use it (same weights as the phone).
 - The printer card at the top left (or its gear) opens the printer settings: darkness, status and battery,
@@ -147,6 +156,7 @@ ipreent                             # overview: printer, settings, queue, most u
 ipreent queue --watch               # what is printing (here or in the Windows app) and the time left
 ipreent settings darkness darker    # default darkness; `ipreent settings` lists all settings and printer details
 ipreent bench                       # time short strips at 3 darkness levels to measure the real speed
+ipreent ruler 150                   # a 15 cm millimetre ruler (film it printing to measure the speed)
 ipreent receipt -b "My shop" -i "Coffee" 1800 2 -i "Bread" 1.200   # see Receipts below
 ipreent template                    # cute designs: hearts, frames, lists, cards, tags, Christmas (docs/TEMPLATES.md)
 ipreent template big-heart "Te quiero"              # print one with your text

@@ -191,6 +191,10 @@ object Printers {
                             p.waitDone()
                         }
                         logTiming(job.rows.size, p.model.dpi, job.copies, (System.currentTimeMillis() - t0) / 1000.0)
+                        // The printer can say "ready" while the paper still moves: the estimate wins, so the job stays
+                        // "printing" (countdown shown, next job waiting) until its estimated time is up.
+                        val hold = Protocol.holdSeconds(secs, (System.currentTimeMillis() - t0) / 1000.0)
+                        if (hold > 0) delay((hold * 1000).toLong())
                     }
                     status.value = s(R.string.status_done)
                 }

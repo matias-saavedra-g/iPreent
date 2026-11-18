@@ -96,7 +96,11 @@ object Protocol {
     const val MIN_MM_PER_S = 2.0
     const val MAX_MM_PER_S = 100.0
 
-    fun paperMm(lines: Int, dpi: Int) = lines * 25.4 / dpi
+    /** Dots (and paper rows) per mm. The vendor table's "200 dpi" is really 203.2 dpi: 8 dots per mm, the 384 dots
+     *  of a 58 mm printer covering 48 mm (port of protocol.dots_per_mm). */
+    fun dotsPerMm(dpi: Int): Double = if (dpi == 200) 8.0 else dpi / 25.4
+
+    fun paperMm(lines: Int, dpi: Int) = lines / dotsPerMm(dpi)
 
     /** Paper speed for estimates: the debug [override] (clamped to 2-100 mm/s) when set, else the nominal speed. */
     fun speedFor(override: Double? = null): Double =
@@ -109,6 +113,10 @@ object Protocol {
         val perCopy = paperMm(lines + (feed ?: defaultFeed(dpi)), dpi) / mmPerS + COPY_OVERHEAD_S
         return (if (connect) CONNECT_S else 0.0) + maxOf(1, copies) * perCopy
     }
+
+    /** How much longer a finished print still counts as printing: the printer can say "ready" seconds before the
+     *  paper stops, so the estimate wins (port of protocol.hold_seconds). */
+    fun holdSeconds(estimate: Double, elapsed: Double): Double = maxOf(0.0, estimate - elapsed)
 
     /** mm/s shown by one timed print (connection excluded), or null if under 20 mm or nonsense. Shown in the
      *  debug settings only, never used for estimates. */

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 420" width="384" height="420"
+     ip:name="Apple" ip:category="food">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <path d="M192 86 C160 62 100 70 100 142 C100 200 140 252 170 252 C180 252 186 246 192 246 C198 246 204 252 214 252 C244 252 284 200 284 142 C284 70 224 62 192 86 Z" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <path d="M192 86 Q190 62 200 40" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <path d="M200 58 Q228 30 258 42 Q232 72 200 58 Z" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <path d="M206 56 Q228 48 246 46" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+  <path d="M124 132 Q126 108 146 98" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <circle cx="176.4" cy="160" r="5.9" fill="#000"/>
+  <circle cx="207.6" cy="160" r="5.9" fill="#000"/>
+  <path d="M184.2 169.1 Q192.0 178.2 199.8 169.1" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4.5"/>
+  <ellipse cx="163.4" cy="170.4" rx="6.5" ry="3.9" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+  <ellipse cx="220.6" cy="170.4" rx="6.5" ry="3.9" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+  <path d="M56 58 Q58.4 67.6 68 70 Q58.4 72.4 56 82 Q53.6 72.4 44 70 Q53.6 67.6 56 58Z" fill="#000"/>
+  <path d="M330 100 Q332.0 108.0 340 110 Q332.0 112.0 330 120 Q328.0 112.0 320 110 Q328.0 108.0 330 100Z" fill="#000"/>
+  <circle cx="330" cy="240" r="5" fill="#000"/>
+  <circle cx="56" cy="220" r="5" fill="#000"/>
+  <rect ip:field="title" ip:label="Title" ip:default="An apple a day" ip:font="script" ip:size="46" ip:min="20" ip:lines="1" x="16" y="270" width="352" height="70" fill="none"/>
+  <rect ip:field="message" ip:label="Message" ip:default="keeps the doctor away" ip:size="30" ip:min="16" x="24" y="340" width="336" height="68" fill="none"/>
+</svg>

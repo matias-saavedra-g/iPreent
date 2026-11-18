@@ -136,7 +136,8 @@ private enum class Tool(val key: String, @StringRes val label: Int, @StringRes v
     TEMPLATE("template", R.string.tool_template, R.string.tool_template_blurb, Icons.Default.AutoAwesome),
     LIST("list", R.string.tool_list, R.string.tool_list_blurb, Icons.Default.Checklist),
     CODE("code", R.string.tool_code, R.string.tool_code_blurb, Icons.Default.QrCode2),
-    BANNER("banner", R.string.tool_banner, R.string.tool_banner_blurb, Icons.Default.ViewDay);
+    BANNER("banner", R.string.tool_banner, R.string.tool_banner_blurb, Icons.Default.ViewDay),
+    RULER("ruler", R.string.tool_ruler, R.string.tool_ruler_blurb, Icons.Default.Straighten);
 
     companion object { fun of(key: String) = entries.first { it.key == key } }
 }
@@ -297,6 +298,7 @@ private fun App(shared: MutableState<Sources.Loaded?>) {
                                 Tool.CODE -> CodeTab(print)
                                 Tool.RECEIPT -> ReceiptTab(print)
                                 Tool.TEMPLATE -> TemplatesTab(print)
+                                Tool.RULER -> RulerTab(print)
                             }
                         }
                     }
@@ -846,6 +848,44 @@ private fun BannerTab(print: (Job) -> Unit) {
     }
 }
 
+/** Ruler: a millimetre ruler along the paper (Ruler.kt), also for timing the printer on video. Length and the
+ *  feed correction (what a printed 100 mm measured) are remembered in SharedPreferences `ruler`. */
+@Composable
+private fun RulerTab(print: (Job) -> Unit) {
+    val ctx = LocalContext.current
+    val prefs = remember { ctx.getSharedPreferences("ruler", Context.MODE_PRIVATE) }
+    var length by remember { mutableStateOf(prefs.getInt("mm", Ruler.DEFAULT_MM).toString()) }
+    var measured by remember { mutableStateOf(prefs.getFloat("measured_100mm", Ruler.DEFAULT_MEASURED.toFloat()).toDouble().let {
+        if (it == Ruler.DEFAULT_MEASURED) "" else "%.1f".format(java.util.Locale.ROOT, it) }) }
+    val mm = length.toIntOrNull()?.takeIf { it in Ruler.MIN_MM..Ruler.MAX_MM }
+    val m100 = measured.replace(',', '.').toDoubleOrNull()
+    val correction = if (measured.isBlank()) Ruler.DEFAULT_MEASURED else m100?.takeIf { it in Ruler.MIN_MEASURED..Ruler.MAX_MEASURED }
+    LaunchedEffect(mm, correction) {
+        prefs.edit().apply { mm?.let { putInt("mm", it) }; correction?.let { putFloat("measured_100mm", it.toFloat()) } }.apply()
+    }
+    val dpi = Printers.model().dpi
+    val rows = rememberRows(mm, correction, dpi) { w -> if (mm != null && correction != null) Ruler.rows(w, dpi, mm, correction) else null }
+    Column(Modifier.fillMaxSize()) {
+        Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(length, { length = it.filter(Char::isDigit).take(4) }, Modifier.weight(1f),
+                    label = { Text(stringResource(R.string.ruler_length)) }, suffix = { Text("mm") }, singleLine = true,
+                    isError = mm == null, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    supportingText = { Text(stringResource(R.string.ruler_length_range, Ruler.MIN_MM, Ruler.MAX_MM)) })
+                OutlinedTextField(measured, { measured = it.take(6) }, Modifier.weight(1f),
+                    label = { Text(stringResource(R.string.ruler_measured)) }, suffix = { Text("mm") }, singleLine = true,
+                    placeholder = { Text("100.0") }, isError = correction == null,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    supportingText = { Text(stringResource(R.string.ruler_measured_hint)) })
+            }
+            Text(stringResource(R.string.ruler_help), Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Preview(rows?.let { Imaging.preview(it, Printers.width) }, Modifier.heightIn(max = 600.dp))
+        }
+        PrintBar(rows?.size) { n -> rows?.let { print(Job(ctx.getString(R.string.job_ruler, mm ?: 0), it, Printers.width, Protocol.MODE_TEXT, n)) } }
+    }
+}
+
 @Composable
 private fun CodeTab(print: (Job) -> Unit) {
     val ctx = LocalContext.current
@@ -1047,6 +1087,7 @@ private fun categoryLabel(key: String) = stringResource(when (key) {
     "lists" -> R.string.category_lists
     "notes" -> R.string.category_notes
     "party" -> R.string.category_party
+    "food" -> R.string.category_food
     "labels" -> R.string.category_labels
     "christmas" -> R.string.category_christmas
     "holidays" -> R.string.category_holidays

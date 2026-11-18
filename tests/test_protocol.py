@@ -31,10 +31,10 @@ def test_notification_parse():
 
 
 def test_print_time_estimate():
-    # 400 lines + 96 feed at 200 dpi = 62.99 mm; at 10 mm/s = 6.299 s, +1 s per copy, +3 s connect.
-    assert round(p.estimate_seconds(400, 200), 3) == 10.299
-    assert round(p.estimate_seconds(400, 200, copies=2, connect=False), 3) == 14.598
-    assert round(p.estimate_seconds(0, 200, mm_per_s=20), 3) == 4.610
+    # 400 lines + 96 feed at "200 dpi" (8 dots/mm) = 62 mm; at 10 mm/s = 6.2 s, +1 s per copy, +3 s connect.
+    assert round(p.estimate_seconds(400, 200), 3) == 10.2
+    assert round(p.estimate_seconds(400, 200, copies=2, connect=False), 3) == 14.4
+    assert round(p.estimate_seconds(0, 200, mm_per_s=20), 3) == 4.6
     assert p.estimate_seconds(400, 200, copies=0) == p.estimate_seconds(400, 200)
 
 
@@ -48,11 +48,17 @@ def test_speed_is_the_slowest_nominal_unless_overridden():
 
 
 def test_measured_speed():
-    # 1600 + 96 lines = 215.39 mm took 11 s (10 s moving): 21.54 mm/s. Shown only, never used.
-    assert round(p.measured_speed(1600, 200, 1, 11.0), 3) == 21.539
+    # 1600 + 96 lines = 212 mm took 11 s (10 s moving): 21.2 mm/s. Shown only, never used.
+    assert round(p.measured_speed(1600, 200, 1, 11.0), 3) == 21.2
     assert p.measured_speed(10, 200, 1, 9.0) is None            # too short to tell
     assert p.measured_speed(1600, 200, 1, 0.5) is None          # nonsense timing
     assert p.measured_speed(1600, 200, 1, 1000.0) == p.MIN_MM_PER_S   # clamped
+
+
+def test_hold_until_the_estimate_is_up():
+    # The printer said "ready" after 3 s of a 13 s estimate: still printing for 10 s. Late: no wait.
+    assert p.hold_seconds(13.0, 3.0) == 10.0
+    assert p.hold_seconds(13.0, 15.0) == 0.0
 
 
 def test_format_eta():
@@ -61,8 +67,8 @@ def test_format_eta():
 
 SC03H_DETAILS = [("Paper", "57 mm thermal roll (sold as 57 or 58 mm)"),
                  ("Labels", "die-cut labels supported"),
-                 ("Print width", "48.8 mm (384 dots)"),
-                 ("Resolution", "200 dpi (8 dots per mm)")]
+                 ("Print width", "48.0 mm (384 dots)"),
+                 ("Resolution", "203 dpi (8 dots per mm)")]
 
 
 def test_printer_details():

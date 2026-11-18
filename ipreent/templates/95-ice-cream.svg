@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 420" width="384" height="420"
+     ip:name="Ice cream" ip:category="food">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <path d="M146 160 L238 160 L192 262 Z" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <path d="M160.0 160.0 L150.4 169.6 M182.0 160.0 L157.2 184.8 M204.0 160.0 L164.0 200.0 M226.0 160.0 L170.9 215.1 M229.8 178.2 L177.7 230.3 M211.7 218.3 L184.5 245.5 M190.4 258.4 L192.6 260.6 M193.6 258.4 L191.4 260.6 M172.3 218.3 L199.5 245.5 M154.2 178.2 L206.3 230.3 M158.0 160.0 L213.1 215.1 M180.0 160.0 L220.0 200.0 M202.0 160.0 L226.8 184.8 M224.0 160.0 L233.6 169.6" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3"/>
+  <path d="M154 98 A40 40 0 1 1 230 98 q-9.5 12 -19 0 q-9.5 12 -19 0 q-9.5 12 -19 0 q-9.5 12 -19 0 Z" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <path d="M140 152 A52 52 0 1 1 244 152 q-10.4 14 -20.8 0 q-10.4 14 -20.8 0 q-10.4 14 -20.8 0 q-10.4 14 -20.8 0 q-10.4 14 -20.8 0 Z" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <circle cx="178.8" cy="128" r="5.0" fill="#000"/>
+  <circle cx="205.2" cy="128" r="5.0" fill="#000"/>
+  <path d="M185.4 135.7 Q192.0 143.4 198.6 135.7" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="3.9"/>
+  <ellipse cx="167.8" cy="136.8" rx="5.5" ry="3.3" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+  <ellipse cx="216.2" cy="136.8" rx="5.5" ry="3.3" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+  <path d="M192 34 Q196 18 210 12" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <circle cx="192" cy="42" r="10" fill="#000" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M60 68 Q62.4 77.6 72 80 Q62.4 82.4 60 92 Q57.6 82.4 48 80 Q57.6 77.6 60 68Z" fill="#000"/>
+  <path d="M326 110 Q328.0 118.0 336 120 Q328.0 122.0 326 130 Q324.0 122.0 316 120 Q324.0 118.0 326 110Z" fill="#000"/>
+  <circle cx="300" cy="40" r="5" fill="#000"/>
+  <circle cx="70" cy="200" r="5" fill="#000"/>
+  <rect ip:field="title" ip:label="Title" ip:default="Sweet treat" ip:font="script" ip:size="46" ip:min="20" ip:lines="1" x="16" y="270" width="352" height="70" fill="none"/>
+  <rect ip:field="message" ip:label="Message" ip:default="You deserve it" ip:size="30" ip:min="16" x="24" y="340" width="336" height="68" fill="none"/>
+</svg>

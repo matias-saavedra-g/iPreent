@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 420" width="384" height="420"
+     ip:name="Hot dog" ip:category="food">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <rect x="40" y="108" width="304" height="44" rx="22" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <path d="M78 128 q12 -12 24 0 q12 12 24 0 q12 -12 24 0 q12 12 24 0 q12 -12 24 0 q12 12 24 0 q12 -12 24 0 q12 12 24 0 q12 -12 24 0 q12 12 24 0" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M64 132 L320 132 Q338 210 266 210 L118 210 Q46 210 64 132 Z" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <circle cx="177.6" cy="168" r="5.4" fill="#000"/>
+  <circle cx="206.4" cy="168" r="5.4" fill="#000"/>
+  <path d="M184.8 176.4 Q192.0 184.8 199.2 176.4" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4.2"/>
+  <ellipse cx="165.6" cy="177.6" rx="6.0" ry="3.6" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+  <ellipse cx="218.4" cy="177.6" rx="6.0" ry="3.6" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+  <path d="M60 48 Q62.4 57.6 72 60 Q62.4 62.4 60 72 Q57.6 62.4 48 60 Q57.6 57.6 60 48Z" fill="#000"/>
+  <path d="M330 54 Q332.0 62.0 340 64 Q332.0 66.0 330 74 Q328.0 66.0 320 64 Q328.0 62.0 330 54Z" fill="#000"/>
+  <circle cx="192" cy="60" r="6" fill="#000"/>
+  <circle cx="120" cy="76" r="4" fill="#000"/>
+  <circle cx="264" cy="80" r="4" fill="#000"/>
+  <rect ip:field="title" ip:label="Title" ip:default="Hot dogs" ip:font="script" ip:size="46" ip:min="20" ip:lines="1" x="16" y="270" width="352" height="70" fill="none"/>
+  <rect ip:field="message" ip:label="Message" ip:default="Sunday at noon" ip:size="30" ip:min="16" x="24" y="340" width="336" height="68" fill="none"/>
+</svg>
