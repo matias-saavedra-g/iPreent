@@ -55,6 +55,12 @@ def test_measured_speed():
     assert p.measured_speed(1600, 200, 1, 1000.0) == p.MIN_MM_PER_S   # clamped
 
 
+def test_hold_until_the_estimate_is_up():
+    # The printer said "ready" after 3 s of a 13 s estimate: still printing for 10 s. Late: no wait.
+    assert p.hold_seconds(13.0, 3.0) == 10.0
+    assert p.hold_seconds(13.0, 15.0) == 0.0
+
+
 def test_format_eta():
     assert [p.format_eta(s) for s in (0, 0.2, 7, 59.5, 90, 725)] == ["0:00", "0:01", "0:07", "1:00", "1:30", "12:05"]
 

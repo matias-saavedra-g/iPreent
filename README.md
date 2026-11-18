@@ -30,8 +30,8 @@ English and Spanish, following the system language (the debug settings can force
   waiting job. A badge shows how many jobs are open. **History**: everything printed, to reprint.
 - The **printer button** at the top right (name + gear) opens the printer settings: darkness, status and battery,
   printer details (which paper to buy, print width, resolution), find printers, forget the printer.
-- **Templates**: cute designs to fill in (hearts, frames, to-do and shopping lists, notes, thank-you cards, a
-  **Birthday** set for gifts (cake, balloons, cupcake, crown, card, gift tag and a small gift sticker), gift tags, jar labels, name tags, **Christmas** and other holidays: New Year, Fiestas Patrias,
+- **Templates**: cute designs to fill in (hearts, frames, to-do and shopping lists, notes, birthday and
+  thank-you cards, **food** (burger, pizza, fries, hot dog, donut, ice cream, avocado, apple, broccoli, salad), gift tags, jar labels, name tags, **Christmas** and other holidays: New Year, Fiestas Patrias,
   Halloween, Valentine's, Easter, Mother's, Father's, Children's and Teachers' Day; the ones in season come
   first). Pick one from the gallery, type your text (it shrinks to
   fit; lists grow longer), print. *Your own SVG* adds any SVG file. See [docs/TEMPLATES.md](docs/TEMPLATES.md).
@@ -55,6 +55,10 @@ These printers don't show that they're working unless you look at the paper slot
   darkness: timing real prints wasn't reliable, and it's better to be told a print takes a bit longer than it
   does. (The listing's "40 ppm" turned out far too fast.) Prints are still timed and logged, but only to check the
   speed later; `ipreent bench` measures it on about 11 cm of paper.
+- **The estimate wins over the printer's "ready"**: many of these printers say they're ready as soon as they have
+  the data, seconds before the paper stops. A print therefore stays *printing*, with its countdown, until its
+  estimated time is up, even if the printer already says it's free; only then is it *printed* and the next job
+  starts (in every app, and for other programs waiting on the printer).
 - **Ruler** (every app): a millimetre ruler along the paper, 1 to 100 cm, with a scale across the paper too. Each tick
   is placed on its own, so it stays within 1/16 mm however long it is. To measure the real speed, film the paper
   coming out: the big centimetre numbers and the timing track (blocks that switch every millimetre) let you count

@@ -516,7 +516,7 @@ Robolectric test (home, busy home, tool screen, printer sheet, busy dialog, queu
 - [ ] Look at the Spanish Android screens on a phone for clipped text.
 
 ## 2026-11-18
-### Ruler tool and birthday templates
+### Ruler tool and food templates
 - User asked for birthday SVGs to label gifts, and a ruler, millimetre accurate if possible, to print whenever needed
   and to film while printing so the printer's real speed can be read frame by frame.
 - **Resolution was off by 1.6 %**: `models.json` says `dpi: 200` for nearly every model, but the 58 mm heads are 384
@@ -535,13 +535,23 @@ Robolectric test (home, busy home, tool screen, printer sheet, busy dialog, queu
   black share ~10 %, so the print shouldn't be slowed by heat.
 - Video caveat: the paper shown at the slot was printed a few millimetres earlier (head inside the case), so only
   differences between frames count, in the steady part, not the first or last centimetre (start/stop).
-- **Birthday**: new category `birthday` (chip *Birthday* / *Cumpleaños*) with the cake moved from Party and six new
-  designs (balloons, birthday gift tag, gift sticker, cupcake, crown, bunting card that stretches). Spanish names
-  and examples in `templates.es.json`. CLI template numbers after 53 shift by six.
-- Checked: pytest (only the two known Linux failures), Android `testDebugUnitTest assembleRelease`, the Windows Ruler
-  mode rendered offscreen, the Spanish CLI (`ruler`, `template --category birthday`). Not checked: the Android Ruler
+- **Birthday → Food**: a Birthday category (six designs, cake moved into it) was made first; the user then asked for
+  food instead, since birthday cards already existed. Removed again (cake back in Party). New category `food` (chip
+  *Food* / *Comida*), files 90-99: burger, pizza, fries, hot dog, donut, ice cream (junk), avocado, apple, broccoli,
+  salad bowl (healthy), kawaii faces, title + message. Spanish examples use Chilean words (completo, palta).
+- **Countdown vanished early** (user: a 13 s countdown gone after 2-3 s): the job was marked done when `wait_done`
+  saw the printer not "printing", which these printers report as soon as they have the data (often `busy_seen`
+  False all along). User wants the estimate to outrank the printer's availability. `protocol.hold_seconds` ↔
+  `Protocol.holdSeconds`: after `wait_done`, `api.print_rows` (and Android's queue) waits out the rest of the estimate.
+  Done in the shared print path rather than only in the queue display, so the countdown, the *printed* mark, the next
+  job's start and the cross-program lock (`ipreent queue`, `busy.json`) all agree. The timing log still records the
+  printer's own time (the held time would only echo the estimate); `bench` passes `hold=False`. Cost: when the
+  printer is really faster than 10 mm/s, the next queued job starts a little later.
+- Checked: pytest (only the two known Linux failures; new tests for the hold with a fake printer that says ready at
+  once), Android `testDebugUnitTest assembleRelease`, the Windows Ruler mode rendered offscreen, the Spanish CLI. Not checked: the Android Ruler
   screen on a phone (no screenshot run), a real print.
 
 ### Open
 - [ ] Print `ipreent ruler 200` on the SC03h, measure 100 mm against a steel ruler, and film it to get the real speed.
 - [ ] Look at the Android Ruler screen on a phone (two number fields side by side may be tight on small screens).
+- [ ] On the SC03h: check the countdown now stays until the paper stops (Windows queue, Android queue, CLI).

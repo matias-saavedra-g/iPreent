@@ -1,6 +1,6 @@
 # Templates
 
-Ready-made designs (hearts, frames, lists, notes, party cards, birthday cards and gift labels, labels, Christmas and other holidays) that you fill
+Ready-made designs (hearts, frames, lists, notes, party cards, food, labels, Christmas and other holidays) that you fill
 in with your own text and print. Same collection and same look in all three apps:
 
 - **Android**: Create › **Templates**: category chips, a grid of thumbnails, tap one to fill in its text boxes
@@ -55,7 +55,7 @@ extra attributes. Then add the iPreent namespace and mark the text boxes with in
 | On the root `<svg>` | |
 |---|---|
 | `ip:name` | Name in the gallery (default: from the file name). |
-| `ip:category` | `love`, `frames`, `lists`, `notes`, `party`, `birthday`, `labels`, `christmas` or `holidays` (your own files always show under Mine). |
+| `ip:category` | `love`, `frames`, `lists`, `notes`, `party`, `food`, `labels`, `christmas` or `holidays` (your own files always show under Mine). |
 | `ip:season` | Optional: `MM-DD..MM-DD`, inclusive, may wrap past New Year (`12-15..01-06`). In season, the template and its chip come first in the galleries. |
 | `ip:stretch` | Optional: y of the row to repeat when a box crossing it needs more room. Pick a row where only straight vertical lines cross (sides of a frame), not a curve. |
 
@@ -113,7 +113,7 @@ Windows app, or *Your own SVG* on Android. An SVG without text boxes prints as a
   Day (2nd Sunday of August) and Teachers' Day (16 October). No Thanksgiving: it isn't celebrated in Chile. Seasons
   end on the latest date the day can fall on. Chilean ones (Fiestas Patrias, the letter to Santa) have Spanish
   example text.
-- **Birthday (2026-11-18)**: its own category for gifts: the cake (moved from Party), balloons, cupcake, crown (name
-  and age), a card that grows with the message, a birthday gift tag (title, to, from) and a small gift sticker
-  (200 units tall, about 25 mm, to stick on wrapping paper).
+- **Food (2026-11-18)**: kawaii line art (little faces, sparkles), junk and healthy: burger, pizza, fries, hot dog
+  (*completo* in the Spanish texts), donut, ice cream, avocado (*palta*), apple, broccoli, salad bowl. Uses: party
+  invitations, lunch-box labels, notes. Files 90-99, after the holidays.
 - **Art**: all designs were drawn for iPreent (MIT, like the code), so there are no third-party artwork licences.

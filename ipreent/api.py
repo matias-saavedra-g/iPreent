@@ -138,7 +138,13 @@ def rows_for(items, width, dither=True):
 
 
 async def print_rows(p, rows, mode=protocol.MODE_IMAGE, copies=1, progress=None, energy=None,
-                     speed=None, feed=None, log=True, poll=0.5):
+                     speed=None, feed=None, log=True, poll=0.5, hold=True, on_hold=None):
+    """Send the job and wait until it is done.
+
+    hold: when the printer says it is ready before the estimated time is up, keep waiting until it is
+    (protocol.hold_seconds): the paper is usually still moving. on_hold(seconds_left) is called about
+    twice a second meanwhile. The timing log gets the printer's own time, not the held one.
+    """
     job = protocol.print_job(rows, p.model, energy=energy, speed=speed, mode=mode, feed_after=feed)
     t0 = time.monotonic()
     busy_seen = False
@@ -150,6 +156,12 @@ async def print_rows(p, rows, mode=protocol.MODE_IMAGE, copies=1, progress=None,
         used = p.model.energy if energy is None else energy
         log_print(len(rows), p.model, copies, time.monotonic() - t0, feed, energy=used,
                   black=black_fraction(rows), busy_seen=busy_seen)
+    if hold:
+        target = estimate(len(rows), p.model, copies, connect=False, feed=feed)
+        while (left := protocol.hold_seconds(target, time.monotonic() - t0)) > 0:
+            if on_hold:
+                on_hold(left)
+            await asyncio.sleep(min(0.5, left))
     return job
 
 

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 420" width="384" height="420"
+     ip:name="Pizza slice" ip:category="food">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <path d="M94 70 L192 252 L290 70 Z" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <path d="M78 60 Q192 14 306 60 Q302 82 288 78 Q192 44 96 78 Q82 82 78 60 Z" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <path d="M250 120 Q252 146 262 146 Q270 146 268 108" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <circle cx="156" cy="112" r="17" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <circle cx="150.05" cy="108.6" r="2.5" fill="#000"/>
+  <circle cx="161.1" cy="117.1" r="2.5" fill="#000"/>
+  <circle cx="226" cy="104" r="15" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <circle cx="220.75" cy="101.0" r="2.5" fill="#000"/>
+  <circle cx="230.5" cy="108.5" r="2.5" fill="#000"/>
+  <circle cx="196" cy="168" r="15" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <circle cx="190.75" cy="165.0" r="2.5" fill="#000"/>
+  <circle cx="200.5" cy="172.5" r="2.5" fill="#000"/>
+  <circle cx="192" cy="212" r="8" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <circle cx="189.2" cy="210.4" r="2.5" fill="#000"/>
+  <circle cx="194.4" cy="214.4" r="2.5" fill="#000"/>
+  <circle cx="130" cy="140" r="3" fill="#000"/>
+  <circle cx="240" cy="150" r="3" fill="#000"/>
+  <circle cx="170" cy="140" r="3" fill="#000"/>
+  <circle cx="214" cy="196" r="3" fill="#000"/>
+  <path d="M48 128 Q50.4 137.6 60 140 Q50.4 142.4 48 152 Q45.6 142.4 36 140 Q45.6 137.6 48 128Z" fill="#000"/>
+  <path d="M336 140 Q338.0 148.0 346 150 Q338.0 152.0 336 160 Q334.0 152.0 326 150 Q334.0 148.0 336 140Z" fill="#000"/>
+  <circle cx="60" cy="230" r="5" fill="#000"/>
+  <circle cx="330" cy="236" r="5" fill="#000"/>
+  <rect ip:field="title" ip:label="Title" ip:default="Pizza party" ip:font="script" ip:size="46" ip:min="20" ip:lines="1" x="16" y="270" width="352" height="70" fill="none"/>
+  <rect ip:field="message" ip:label="Message" ip:default="Friday · bring your friends" ip:size="30" ip:min="16" x="24" y="340" width="336" height="68" fill="none"/>
+</svg>

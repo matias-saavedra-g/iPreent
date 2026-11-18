@@ -21,7 +21,7 @@ notification. Everything prints by turning content into a list of rows (0/1 per 
 ## Python package `ipreent/`
 | Module | Job | Kotlin twin |
 |---|---|---|
-| `protocol.py` | Frames, CRC8, row encodings, `print_job` byte stream, notification parsing, `dots_per_mm` (the table's "200 dpi" = 8 dots/mm, 203.2 dpi; every mm figure goes through it), **print-time estimate** (`speed_for`, `estimate_seconds`, `measured_speed`, `format_eta`; a fixed 10 mm/s, the slowest nominal speed, at every darkness, unless the debug setting overrides it; timed prints are logged, never learnt) | `Protocol.kt` |
+| `protocol.py` | Frames, CRC8, row encodings, `print_job` byte stream, notification parsing, `dots_per_mm` (the table's "200 dpi" = 8 dots/mm, 203.2 dpi; every mm figure goes through it), **print-time estimate** (`speed_for`, `estimate_seconds`, `measured_speed`, `format_eta`, `hold_seconds`: a print counts as printing until its estimate is up, even after the printer says ready; a fixed 10 mm/s, the slowest nominal speed, at every darkness, unless the debug setting overrides it; timed prints are logged, never learnt) | `Protocol.kt` |
 | `models.py` + `models.json` | 187 printer profiles (width, dpi, speeds, MTU, RLE, serial-only flag, paper class, label mode) looked up by the longest model number that prefixes the Bluetooth name; `details()` = what the settings screens show (paper to buy, die-cut labels if supported, print width, resolution) and deliberately not ink, speed, transport tuning or vendor flags | `Model.kt` (+ `assets/models.json`) |
 | `imaging.py` | Images → gray → 1-bit rows (Floyd–Steinberg, Atkinson, threshold), text with emoji fallback, checklist, banner, QR (segno), Code 128 | `Imaging.kt` |
 | `receipt.py` | Receipts (BOLETA): CLP parsing/formatting, totals, layout, receipt number = print time | `Receipt.kt` |
@@ -32,7 +32,7 @@ notification. Everything prints by turning content into a list of rows (0/1 per 
 | `busy.py` | One print at a time across programs on a PC: OS lock on `print.lock` + `busy.json` (label, start, estimate, queue behind) | none (Android is one app) |
 | `i18n.py` + `locales/*.json` | Language of the CLI and Windows app: system language, or the debug choice (`language.json` in the config dir, env `IPREENT_LANG` wins); `tr("English text {0}", value)` looks the exact English text up in `locales/<lang>.json` and falls back to English for anything missing or broken, `trn` for singular/plural; `locales/templates.<lang>.json` = template names, labels and example texts | `Lang.kt` + `res/values-es` (the template JSON is shared, byte for byte, with `assets/i18n`) |
 | `config.py` | Config dir: `%APPDATA%\ipreent` (Windows), `~/Library/Application Support/ipreent` (macOS), `~/.config/ipreent` | SharedPreferences |
-| `api.py` | `connect()` (explicit target → remembered printer → scan), `rows_for`, `print_rows` (times each print and calls `log_print`), `estimate`, `known_speed` / `debug_speed` / `set_debug_speed`, sync helpers `print_text/print_file/status` | `Printers.kt` |
+| `api.py` | `connect()` (explicit target → remembered printer → scan), `rows_for`, `print_rows` (times each print and calls `log_print`, then holds until the estimate is up; `hold=False` for bench), `estimate`, `known_speed` / `debug_speed` / `set_debug_speed`, sync helpers `print_text/print_file/status` | `Printers.kt` |
 | `ble.py` / `spp.py` | Bluetooth LE (bleak) and Bluetooth serial (pyserial / RFCOMM socket) transports | `BlePrinter.kt` (BLE only) |
 | `cli.py` | Command line (see below) | |
 

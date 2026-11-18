@@ -1087,7 +1087,7 @@ private fun categoryLabel(key: String) = stringResource(when (key) {
     "lists" -> R.string.category_lists
     "notes" -> R.string.category_notes
     "party" -> R.string.category_party
-    "birthday" -> R.string.category_birthday
+    "food" -> R.string.category_food
     "labels" -> R.string.category_labels
     "christmas" -> R.string.category_christmas
     "holidays" -> R.string.category_holidays

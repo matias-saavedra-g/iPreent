@@ -9,9 +9,13 @@ ruler along the paper (1 to 100 cm) with a scale across the paper. Each tick is 
 numbers and a timing track that switches every millimetre make it easy to count millimetres between frames. If a
 printed 100 mm measures a little differently on a good ruler, enter what you read and rulers correct for it.
 
-**Birthday templates**: a new *Birthday* category with the cake plus balloons, a cupcake, a crown with name and age, a
-card that grows with your message, a birthday gift tag and a small gift sticker for wrapping paper. English and
-Spanish.
+**Food templates**: a new *Food* category with cute designs, junk and healthy: burger, pizza slice, fries, hot dog
+(*completo* in Spanish), donut, ice cream, avocado, apple, broccoli and a salad bowl, each with a title and a message.
+English and Spanish.
+
+**Countdowns no longer vanish early**: the printer often says it's ready seconds before the paper stops, and the
+queue used to mark the print done right then (a 13 s countdown gone after 2-3 s). Now the estimate wins: a print
+stays *printing*, with its countdown, until its estimated time is up, and only then does the next one start.
 
 **Lengths are exact now**: the printers listed as "200 dpi" really have 8 dots per mm (203.2 dpi). Paper lengths,
 time estimates, measured speeds and the print width in the printer details were 1.6 % too long (48.8 mm instead of

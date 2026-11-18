@@ -89,9 +89,13 @@ def _progress_eta(seconds):
 
     def show(done, total):
         left = protocol.format_eta(max(0.0, seconds - (time.monotonic() - t0)))
-        end = "" if done < total else "\n"
-        print(tr("\r  sending {0:3d}% · about {1} left ", 100 * done // total, left), end=end, file=sys.stderr, flush=True)
+        print(tr("\r  sending {0:3d}% · about {1} left ", 100 * done // total, left), end="", file=sys.stderr, flush=True)
     return show
+
+
+def _hold_line(left):
+    """The countdown after the data is sent: the printer may say ready while the paper still moves."""
+    print(tr("\r  printing · about {0} left       ", protocol.format_eta(left)), end="", file=sys.stderr, flush=True)
 
 
 def _ask(question):
@@ -159,7 +163,8 @@ async def _print_items(args, make_items, label="print", with_dpi=False):
             lock.publish(label, seconds, APP)
             mm = protocol.paper_mm(len(rows), p.model.dpi)
             print(tr("{0}: {1} lines ({2:.0f} mm) x{3}, about {4}", p.model.name, len(rows), mm, args.copies, protocol.format_eta(seconds)), file=sys.stderr)
-            await api.print_rows(p, rows, mode, args.copies, _progress_eta(seconds), feed=args.feed)
+            await api.print_rows(p, rows, mode, args.copies, _progress_eta(seconds), feed=args.feed, on_hold=_hold_line)
+            print(file=sys.stderr)
             st = await p.request(protocol.CMD_GET_STATE)
             print(tr("Printer:"), protocol.describe_state(st) if st else tr("done"), file=sys.stderr)
     finally:
@@ -506,7 +511,7 @@ async def cmd_bench(args):
                 rows = _bench_rows(m.width, m.dpi, args.mm, args.black / 100,
                                    tr("iPreent bench · {0} ({1}) · {2:g}% black", _darkness_name(e), e, args.black))
                 t0 = time.monotonic()
-                await api.print_rows(p, rows, protocol.MODE_IMAGE, energy=e, feed=0, poll=0.1)
+                await api.print_rows(p, rows, protocol.MODE_IMAGE, energy=e, feed=0, poll=0.1, hold=False)
                 secs = time.monotonic() - t0
                 mm = protocol.paper_mm(len(rows), m.dpi)
                 v = protocol.measured_speed(len(rows), m.dpi, 1, secs, 0)

@@ -68,6 +68,11 @@ class ProtocolTest {
         assertEquals(Protocol.MAX_MM_PER_S, Protocol.speedFor(500.0), 1e-9)
     }
 
+    @Test fun holdUntilTheEstimateIsUp() {
+        assertEquals(10.0, Protocol.holdSeconds(13.0, 3.0), 0.0)
+        assertEquals(0.0, Protocol.holdSeconds(13.0, 15.0), 0.0)
+    }
+
     @Test fun measuredSpeed() {
         assertEquals(21.2, Protocol.measuredSpeed(1600, 200, 1, 11.0)!!, 1e-3)
         assertNull(Protocol.measuredSpeed(10, 200, 1, 9.0))

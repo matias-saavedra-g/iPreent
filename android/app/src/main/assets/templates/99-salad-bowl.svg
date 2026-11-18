@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:ip="urn:ipreent:template" viewBox="0 0 384 420" width="384" height="420"
+     ip:name="Salad bowl" ip:category="food">
+  <!-- iPreent template (MIT). Art first, then the text boxes (invisible rectangles). -->
+  <path d="M88 152 Q94 112 124 124 Q130 90 164 104 Q178 74 204 100 Q228 76 242 108 Q274 94 278 126 Q302 118 296 152" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <circle cx="140" cy="134" r="15" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <circle cx="136" cy="130" r="2.5" fill="#000"/>
+  <circle cx="145" cy="138" r="2.5" fill="#000"/>
+  <circle cx="140" cy="141" r="2.5" fill="#000"/>
+  <circle cx="244" cy="132" r="15" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <circle cx="244" cy="132" r="8" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+  <circle cx="192" cy="124" r="12" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4"/>
+  <path d="M186 118 L198 130 M198 118 L186 130" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+  <path d="M76 152 L308 152 Q304 252 192 252 Q80 252 76 152 Z" fill="#fff" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="6"/>
+  <path d="M150 252 L234 252" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="8"/>
+  <circle cx="176.4" cy="196" r="5.9" fill="#000"/>
+  <circle cx="207.6" cy="196" r="5.9" fill="#000"/>
+  <path d="M184.2 205.1 Q192.0 214.2 199.8 205.1" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="4.5"/>
+  <ellipse cx="163.4" cy="206.4" rx="6.5" ry="3.9" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+  <ellipse cx="220.6" cy="206.4" rx="6.5" ry="3.9" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+  <path d="M50 58 Q52.4 67.6 62 70 Q52.4 72.4 50 82 Q47.6 72.4 38 70 Q47.6 67.6 50 58Z" fill="#000"/>
+  <path d="M336 70 Q338.0 78.0 346 80 Q338.0 82.0 336 90 Q334.0 82.0 326 80 Q334.0 78.0 336 70Z" fill="#000"/>
+  <circle cx="334" cy="216" r="5" fill="#000"/>
+  <circle cx="50" cy="216" r="5" fill="#000"/>
+  <rect ip:field="title" ip:label="Title" ip:default="Today's lunch" ip:font="script" ip:size="46" ip:min="20" ip:lines="1" x="16" y="270" width="352" height="70" fill="none"/>
+  <rect ip:field="message" ip:label="Message" ip:default="Caesar salad&#10;for Matías" ip:size="30" ip:min="16" x="24" y="340" width="336" height="68" fill="none"/>
+</svg>

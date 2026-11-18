@@ -79,3 +79,36 @@ def test_ble_verified_spp_model_prefers_ble():
     assert how["transport"] == "ble"
     _, how = api._transport(api.Target(name="SC03h-5363", port="COM5"), m, print)
     assert how == {"port": "COM5"}
+
+
+class InstantPrinter:
+    """Says "ready" the moment the data is in, like printers that never report "printing"."""
+    def __init__(self):
+        from ipreent.models import Model
+        self.model, self.busy_seen = Model(), False
+
+    async def send(self, data, progress=None):
+        pass
+
+    async def wait_done(self, interval=0.5):
+        return b"\x00"
+
+
+def test_print_rows_keeps_printing_until_the_estimate_is_up(monkeypatch):
+    clock = {"t": 100.0}
+    monkeypatch.setattr(api.time, "monotonic", lambda: clock["t"])
+
+    async def sleep(s):
+        clock["t"] += s
+    monkeypatch.setattr(api.asyncio, "sleep", sleep)
+    logged, held = [], []
+    monkeypatch.setattr(api, "log_print", lambda lines, model, copies, seconds, *a, **k: logged.append(seconds))
+    rows = [[0] * 384] * 304                   # 304 + 96 feed = 400 rows = 50 mm: 5 s at 10 mm/s, +1 s
+    expected = api.estimate(len(rows), InstantPrinter().model, connect=False)
+    asyncio.run(api.print_rows(InstantPrinter(), rows, on_hold=held.append))
+    assert clock["t"] - 100.0 == pytest.approx(expected) and expected == pytest.approx(6.0)
+    assert logged == [0.0]                     # the log keeps the printer's own (too short) time
+    assert held[0] == pytest.approx(6.0) and held == sorted(held, reverse=True)
+    clock["t"] = 100.0
+    asyncio.run(api.print_rows(InstantPrinter(), rows, hold=False))     # bench: no waiting
+    assert clock["t"] == 100.0

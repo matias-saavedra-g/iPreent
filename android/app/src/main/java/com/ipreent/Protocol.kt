@@ -114,6 +114,10 @@ object Protocol {
         return (if (connect) CONNECT_S else 0.0) + maxOf(1, copies) * perCopy
     }
 
+    /** How much longer a finished print still counts as printing: the printer can say "ready" seconds before the
+     *  paper stops, so the estimate wins (port of protocol.hold_seconds). */
+    fun holdSeconds(estimate: Double, elapsed: Double): Double = maxOf(0.0, estimate - elapsed)
+
     /** mm/s shown by one timed print (connection excluded), or null if under 20 mm or nonsense. Shown in the
      *  debug settings only, never used for estimates. */
     fun measuredSpeed(lines: Int, dpi: Int, copies: Int, seconds: Double, feed: Int? = null): Double? {

@@ -133,6 +133,16 @@ def estimate_seconds(lines, dpi=200, copies=1, mm_per_s=NOMINAL_MM_PER_S, feed=N
     return (CONNECT_S if connect else 0.0) + max(1, copies) * per_copy
 
 
+def hold_seconds(estimate, elapsed):
+    """How much longer a finished print still counts as printing.
+
+    The printer can report "ready" as soon as it has the data, seconds before the paper stops (it often
+    never reports "printing" at all). The estimate wins: a job stays "printing" (countdown shown, next
+    job and other programs kept waiting) until its estimated time is up, and only then is it "printed".
+    """
+    return max(0.0, estimate - elapsed)
+
+
 def measured_speed(lines, dpi, copies, seconds, feed=None):
     """mm/s shown by one timed print (connection excluded), or None if it can't tell.
 
